@@ -1,0 +1,5 @@
+{
+	"StringTestProperty": "TestValue",
+	"IntTestProperty": 100,
+	"DoubleTestProperty":  100.50
+}

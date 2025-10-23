@@ -1,0 +1,88 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+
+		<IsPackable>false</IsPackable>
+
+		<RootNamespace>AMCode.Common.UnitTests</RootNamespace>
+
+		<AssemblyName>AMCode.Common.UnitTests</AssemblyName>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Moq" Version="4.18.2" />
+		<PackageReference Include="NUnit" Version="3.13.2" />
+		<PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\AMCode.Common\AMCode.Common.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Components\Dynamic\MockFiles\DynamicObjectHelperTest_One_Row_No_Space_In_Headers.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\Filter\MockFiles\filter-data.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\IO\CSV\MockFiles\CSVReaderTest_10_Rows_No_Space_In_Headers_Pipe_Delimited.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\IO\CSV\MockFiles\CSVReaderTest_No_Rows.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\IO\CSV\MockFiles\CSVReaderTest_One_Row_No_Headers.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\IO\CSV\MockFiles\CSVWriterTest_Two_Rows.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\IO\CSV\MockFiles\CSVReaderTest_10_Rows_No_Space_In_Headers_Comma_Delimited.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\IO\CSV\MockFiles\CSVWriterTest_Two_Rows_Delimiters_In_Cells.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\IO\CSV\MockFiles\CSVReaderTest_One_Row_No_Space_In_Headers.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\IO\CSV\MockFiles\CSVReaderTest_One_Row_Space_In_Headers_No_Data_At_End.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\IO\CSV\MockFiles\CSVReaderTest_One_Row_Space_In_Headers_Commas_In_Data.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\IO\CSV\MockFiles\CSVReaderTest_One_Row_Space_In_Headers.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\IO\CSV\TestWorkDirectory\tmp.txt">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\IO\JSON\MockFiles\JsonFileReaderTest_Json_Object_Mock.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\IO\JSON\TestWorkDirectory\tmp.txt">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\IO\Zip\TestWorkDirectory\tmp.txt">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<!-- Ensure TestWorkDirectory folders are created in output -->
+	<ItemGroup>
+		<Content Include="Components\IO\CSV\TestWorkDirectory\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Components\IO\JSON\TestWorkDirectory\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Components\IO\Zip\TestWorkDirectory\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+</Project>

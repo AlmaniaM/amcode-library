@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package>
+	<metadata>
+		<id>AMCode.Common</id>
+		<version>2.3.4</version>
+		<authors>Alex Molodyh</authors>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<title>AMCode Common Library</title>
+		<description>A library of AMCode common data structures, Extension, and Objects</description>
+		<releaseNotes>Added extension methods for c# Types</releaseNotes>
+		<tags>AMCode Common Library DataStructures</tags>
+		<dependencies>
+			<group targetFramework="netcore5.0">
+				<dependency id="NetStandard.Library" version="2.0.3"></dependency>
+				<dependency id="System.Dynamic.Runtime" version="4.3.0"></dependency>
+				<dependency id="System.Reflection.TypeExtensions" version="4.7.0"></dependency>
+			</group>
+			<group targetFramework="netstandard1.0">
+				<dependency id="NetStandard.Library" version="2.0.3"></dependency>
+				<dependency id="System.Dynamic.Runtime" version="4.3.0"></dependency>
+			</group>
+			<group targetFramework="netstandard1.3">
+				<dependency id="NetStandard.Library" version="2.0.3"></dependency>
+				<dependency id="System.Dynamic.Runtime" version="4.3.0"></dependency>
+				<dependency id="System.Reflection.TypeExtensions" version="4.7.0"></dependency>
+				<dependency id="Newtonsoft.Json" version="13.0.1"></dependency>
+			</group>
+			<group targetFramework="netstandard2.0">
+				<dependency id="NetStandard.Library" version="2.0.3"></dependency>
+			</group>
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="bin\Release\netstandard2.0\AMCode.Common.dll" target="lib\netstandard2.0\AMCode.Common.dll" />
+		<file src="bin\Release\netstandard2.0\AMCode.Common.xml" target="lib\netstandard2.0\AMCode.Common.xml" />
+	</files>
+</package>

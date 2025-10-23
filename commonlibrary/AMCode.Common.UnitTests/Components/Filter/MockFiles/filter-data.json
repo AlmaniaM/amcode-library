@@ -1,0 +1,24 @@
+{
+  "FilterName": {
+    "DisplayName": "Filter 1",
+    "FieldName": "Filter1"
+  },
+  "FilterIdName": {
+    "DisplayName": "Filter 1 ID",
+    "FieldName": "Filter1Id"
+  },
+  "FilterItems": [
+    {
+      "Disabled": false,
+      "FilterId": null,
+      "FilterVal": "Value 1",
+      "Selected": false
+    },
+    {
+      "Disabled": true,
+      "FilterId": 2,
+      "FilterVal": "Value 2",
+      "Selected": true
+    }
+  ]
+}

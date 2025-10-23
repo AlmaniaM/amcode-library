@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<RootNamespace>AMCode.Documents.UnitTests</RootNamespace>
+		<AssemblyName>AMCode.Documents.UnitTests</AssemblyName>
+
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AMCode.Common" Version="1.0.0" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
+		<PackageReference Include="Moq" Version="4.20.69" />
+		<PackageReference Include="NUnit" Version="3.13.2" />
+		<PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
+		<PackageReference Include="coverlet.collector" Version="3.1.2">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\AMCode.Documents\AMCode.Documents.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Remove="Factories\ExcelFactoryTests.cs" />
+		<Compile Remove="Integration\CrossFormatCompatibilityTests.cs" />
+		<Compile Remove="Integration\FormatComparisonTests.cs" />
+		<Compile Remove="Integration\FormatConversionTests.cs" />
+		<Compile Remove="Integration\MultiFormatDocumentTests.cs" />
+		<Compile Remove="Integration\PerformanceComparisonTests.cs" />
+		<Compile Remove="Integration\StyleConsistencyTests.cs" />
+		<Compile Remove="Performance\**/*" />
+	</ItemGroup>
+
+</Project>

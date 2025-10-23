@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+	<metadata>
+		<id>AMCode.Sql.Builder</id>
+		<version>1.2.1</version>
+		<authors>AMCode</authors>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<title>AMCode SQL Builder Library</title>
+		<description>Provides an API for building SQL components/clauses for a SQL database in a C# project. Currently targeting a Vertica database.</description>
+		<releaseNotes>Added BETWEEN clause builder</releaseNotes>
+		<tags>AMCode SQL Builder Where GroupBy OrderBy Clause Builder Vertica</tags>
+		<dependencies>
+			<group targetFramework="net8.0">
+				<dependency id="AMCode.Common" version="1.0.0"></dependency>
+			</group>
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="bin\Release\net8.0\AMCode.Sql.Builder.dll" target="lib\net8.0\AMCode.Sql.Builder.dll" />
+		<file src="bin\Release\net8.0\AMCode.Sql.Builder.xml" target="lib\net8.0\AMCode.Sql.Builder.xml" />
+	</files>
+</package>

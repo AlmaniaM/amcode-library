@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<IsPackable>false</IsPackable>
+		<RootNamespace>AMCode.Sql.Builder.UnitTests</RootNamespace>
+		<LangVersion>9.0</LangVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Components\Where\Models\**" />
+	  <EmbeddedResource Remove="Components\Where\Models\**" />
+	  <None Remove="Components\Where\Models\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="coverlet.collector" Version="3.1.2">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="AMCode.Common" Version="1.0.0" />
+		<PackageReference Include="Moq" Version="4.16.1" />
+		<PackageReference Include="NUnit" Version="3.13.2" />
+		<PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\AMCode.Sql.Builder\AMCode.Sql.Builder.csproj" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>AMCode.Columns</AssemblyName>
+    <RootNamespace>AMCode.Columns</RootNamespace>
+    <NeutralLanguage>en</NeutralLanguage>
+    <IsPackable>true</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\commonlibrary\AMCode.Common\AMCode.Common.csproj" />
+  </ItemGroup>
+
+</Project>

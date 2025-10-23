@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+		<AssemblyName>AMCode.Storage</AssemblyName>
+		<RootNamespace>AMCode.Storage</RootNamespace>
+		<NeutralLanguage>en</NeutralLanguage>
+		<IsPackable>true</IsPackable>
+		<PackageId>AMCode.Storage</PackageId>
+		<Version>1.1.2</Version>
+		<Authors>AMCode</Authors>
+		<Company>AMCode</Company>
+		<Product>AMCode Storage Library</Product>
+		<Description>AMCode Storage Library with recipe-specific image and file storage capabilities</Description>
+		<Copyright>Copyright © AMCode 2024</Copyright>
+		<PackageTags>storage;files;images;recipes;azure-blob</PackageTags>
+		<PackageProjectUrl>https://github.com/AMCode/AMCode.Storage</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/AMCode/AMCode.Storage</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageReleaseNotes>Added recipe-specific storage features including RecipeImageStorageService for managing recipe images, documents, and exports</PackageReleaseNotes>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
+
+
+	<ItemGroup>
+	  <PackageReference Include="Azure.Storage.Blobs" Version="12.10.0" />
+	  <ProjectReference Include="../../commonlibrary/AMCode.Common/AMCode.Common.csproj" />
+	  <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Remove="Recipes/Tests/**/*" />
+		<Compile Remove="**/Tests/**/*" />
+	</ItemGroup>
+
+</Project>

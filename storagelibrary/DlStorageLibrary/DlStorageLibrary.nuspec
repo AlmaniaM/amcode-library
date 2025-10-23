@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+	<metadata>
+		<id>DemandLink.Storage</id>
+		<version>1.1.2</version>
+		<authors>DemandLink</authors>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<projectUrl>https://bitbucket.org/demandlinkdevelopment/dlcolumnslibrary/src/master/</projectUrl>
+		<title>DemandLink Cloud and local Storage</title>
+		<description>A DemandLink library to store files in the cloud or locally.</description>
+		<releaseNotes></releaseNotes>
+		<tags>DemandLink Library Storage Cloud Local</tags>
+		<dependencies>
+			<group targetFramework="netstandard2.0">
+				<dependency id="Azure.Storage.Blobs" version="12.10.0"></dependency>
+				<dependency id="DemandLink.Common" version="1.0.0"></dependency>
+			</group>
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="bin\Release\netstandard2.0\DemandLink.Storage.dll" target="lib\netstandard2.0\DemandLink.Storage.dll" />
+		<file src="bin\Release\netstandard2.0\DemandLink.Storage.xml" target="lib\netstandard2.0\DemandLink.Storage.xml" />
+	</files>
+</package>

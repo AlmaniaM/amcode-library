@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<AssemblyName>AMCode.Data</AssemblyName>
+		<RootNamespace>AMCode.Data</RootNamespace>
+		<IsPackable>true</IsPackable>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="MongoDB.Driver" Version="3.5.0" />
+		<ProjectReference Include="..\..\columnslibrary\AMCode.Columns\AMCode.Columns.csproj" />
+		<ProjectReference Include="..\..\commonlibrary\AMCode.Common\AMCode.Common.csproj" />
+		<ProjectReference Include="..\..\verticalibrary\AMCode.Vertica.Client\AMCode.Vertica.Client.csproj" />
+		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="8.0.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+		<PackageReference Include="System.Data.Odbc" Version="6.0.0" />
+	</ItemGroup>
+
+
+</Project>

@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
+		<PackageReference Include="Moq" Version="4.20.69" />
+		<PackageReference Include="NUnit" Version="3.13.2" />
+		<PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
+		<PackageReference Include="coverlet.collector" Version="3.1.2">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\AMCode.Exports.SharedTestLibrary\AMCode.Exports.SharedTestLibrary.csproj" />
+		<ProjectReference Include="..\AMCode.Exports\AMCode.Exports.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- Exclude test files that depend on components we've excluded from the main project -->
+		<Compile Remove="Components/BookBuilder/**/*" />
+		<Compile Remove="Components/DataSources/**/*" />
+		<Compile Remove="Components/Results/**/*" />
+		<Compile Remove="Components/ExportBuilder/BookBuilderFactoryTest.cs" />
+		<Compile Remove="Components/ExportBuilder/CsvExportBuilderTest.cs" />
+		<Compile Remove="Components/ExportBuilder/ExcelExportBuilderTest.cs" />
+		<Compile Remove="Components/Book/Excel/ExcelBookColumnsTest.cs" />
+		<Compile Remove="Components/Book/Excel/ExcelBookRangeTest.cs" />
+		<Compile Remove="Components/BookBuilder/Actions/ApplyColumnStylesActionTest.cs" />
+		<Compile Remove="Components/BookBuilder/SimpleColumnBasedStylerTest.cs" />
+		<Compile Remove="Components/BookBuilder/Mocks/TestBookBuilder.cs" />
+		<Compile Remove="Components/BookBuilder/ExcelBookBuilderDataTest.cs" />
+	</ItemGroup>
+
+</Project>

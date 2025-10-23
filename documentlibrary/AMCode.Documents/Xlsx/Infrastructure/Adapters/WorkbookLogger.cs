@@ -1,0 +1,191 @@
+using System;
+using System.Collections.Generic;
+using AMCode.Documents.Common.Logging;
+using AMCode.Documents.Common.Logging.Configuration;
+using AMCode.Documents.Common.Logging.Infrastructure;
+using AMCode.Documents.Common.Logging.Models;
+
+namespace AMCode.Documents.Xlsx.Infrastructure.Adapters
+{
+    /// <summary>
+    /// Workbook logger implementation using the unified logging infrastructure
+    /// </summary>
+    public class WorkbookLogger : IWorkbookLogger
+    {
+        private readonly ExcelDocumentLogger _documentLogger;
+
+        /// <summary>
+        /// Create workbook logger with default configuration
+        /// </summary>
+        public WorkbookLogger(string category = "AMCode.Xlsx.Workbook")
+        {
+            var configuration = new DocumentLoggingConfiguration();
+            var provider = new CompositeDocumentLoggerProvider(configuration);
+            var consoleConfig = new ConsoleDocumentLoggerConfiguration();
+            
+            // Add console provider
+            provider.AddProvider(new ConsoleDocumentLoggerProvider(configuration, consoleConfig));
+            
+            _documentLogger = new ExcelDocumentLogger(category, provider, configuration);
+        }
+
+        /// <summary>
+        /// Create workbook logger with custom configuration
+        /// </summary>
+        public WorkbookLogger(string category, IDocumentLoggerProvider provider, DocumentLoggingConfiguration configuration)
+        {
+            _documentLogger = new ExcelDocumentLogger(category, provider, configuration);
+        }
+
+        // Delegate all unified logging methods to the document logger
+        public void LogDocumentOperation(string operation, DocumentType documentType, object context = null)
+        {
+            _documentLogger.LogDocumentOperation(operation, documentType, context);
+        }
+
+        public void LogDocumentCreation(string documentType, TimeSpan duration, object properties = null)
+        {
+            _documentLogger.LogDocumentCreation(documentType, duration, properties);
+        }
+
+        public void LogContentOperation(string operation, string contentType, object context = null)
+        {
+            _documentLogger.LogContentOperation(operation, contentType, context);
+        }
+
+        public void LogFormattingOperation(string operation, object styleContext = null)
+        {
+            _documentLogger.LogFormattingOperation(operation, styleContext);
+        }
+
+        public void LogFileOperation(string operation, string filePath, long fileSizeBytes = 0)
+        {
+            _documentLogger.LogFileOperation(operation, filePath, fileSizeBytes);
+        }
+
+        public void LogProviderOperation(string providerName, string operation, object context = null)
+        {
+            _documentLogger.LogProviderOperation(providerName, operation, context);
+        }
+
+        public void LogDocumentPerformance(string operation, TimeSpan duration, object metrics = null)
+        {
+            _documentLogger.LogDocumentPerformance(operation, duration, metrics);
+        }
+
+        public void LogDocumentError(string operation, Exception exception, DocumentType documentType, object context = null)
+        {
+            _documentLogger.LogDocumentError(operation, exception, documentType, context);
+        }
+
+        public IDocumentLogger WithDocumentContext(string documentId, DocumentType documentType)
+        {
+            return _documentLogger.WithDocumentContext(documentId, documentType);
+        }
+
+        public IDocumentLogger WithOperationContext(string operationId, string operationName)
+        {
+            return _documentLogger.WithOperationContext(operationId, operationName);
+        }
+
+        // Legacy methods for backward compatibility
+        public void LogInformation(string message, Guid workbookId)
+        {
+            var context = new Dictionary<string, object> { ["WorkbookId"] = workbookId };
+            _documentLogger.LogInformation(message, context);
+        }
+
+        public void LogWarning(string message, Guid workbookId)
+        {
+            var context = new Dictionary<string, object> { ["WorkbookId"] = workbookId };
+            _documentLogger.LogWarning(message, context);
+        }
+
+        public void LogError(string message, Exception exception, Guid workbookId)
+        {
+            var context = new Dictionary<string, object> { ["WorkbookId"] = workbookId };
+            _documentLogger.LogDocumentError(message, exception, DocumentType.Excel, context);
+        }
+
+        public void LogWorkbookOperation(string operation, Guid workbookId)
+        {
+            var context = new Dictionary<string, object> { ["WorkbookId"] = workbookId };
+            _documentLogger.LogWorkbookOperation(operation, context);
+        }
+
+        public void LogWorksheetOperation(string operation, string worksheetName, Guid workbookId, object context = null)
+        {
+            var enhancedContext = new Dictionary<string, object>
+            {
+                ["WorkbookId"] = workbookId,
+                ["WorksheetName"] = worksheetName
+            };
+            
+            if (context != null)
+            {
+                foreach (var kvp in context as Dictionary<string, object> ?? new Dictionary<string, object>())
+                {
+                    enhancedContext[kvp.Key] = kvp.Value;
+                }
+            }
+            
+            _documentLogger.LogWorksheetOperation(operation, worksheetName, enhancedContext);
+        }
+
+        public void LogCellOperation(string operation, string cellAddress, Guid workbookId, object context = null)
+        {
+            var enhancedContext = new Dictionary<string, object>
+            {
+                ["WorkbookId"] = workbookId,
+                ["CellAddress"] = cellAddress
+            };
+            
+            if (context != null)
+            {
+                foreach (var kvp in context as Dictionary<string, object> ?? new Dictionary<string, object>())
+                {
+                    enhancedContext[kvp.Key] = kvp.Value;
+                }
+            }
+            
+            _documentLogger.LogCellOperation(operation, cellAddress, enhancedContext);
+        }
+
+        public void LogRangeOperation(string operation, string rangeAddress, Guid workbookId, object context = null)
+        {
+            var enhancedContext = new Dictionary<string, object>
+            {
+                ["WorkbookId"] = workbookId,
+                ["RangeAddress"] = rangeAddress
+            };
+            
+            if (context != null)
+            {
+                foreach (var kvp in context as Dictionary<string, object> ?? new Dictionary<string, object>())
+                {
+                    enhancedContext[kvp.Key] = kvp.Value;
+                }
+            }
+            
+            _documentLogger.LogRangeOperation(operation, rangeAddress, enhancedContext);
+        }
+
+        public void LogStylingOperation(string operation, Guid workbookId, object context = null)
+        {
+            var enhancedContext = new Dictionary<string, object>
+            {
+                ["WorkbookId"] = workbookId
+            };
+            
+            if (context != null)
+            {
+                foreach (var kvp in context as Dictionary<string, object> ?? new Dictionary<string, object>())
+                {
+                    enhancedContext[kvp.Key] = kvp.Value;
+                }
+            }
+            
+            _documentLogger.LogStylingOperation(operation, enhancedContext);
+        }
+    }
+}

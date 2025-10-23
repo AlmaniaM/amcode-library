@@ -1,0 +1,105 @@
+using NUnit.Framework;
+using AMCode.SyncfusionIo.Xlsx;
+using AMCode.Common.Xlsx;
+using AMCode.SyncfusionIo.Xlsx.Common;
+using AMCode.SyncfusionIo.Xlsx.Drawing;
+
+namespace AMCode.Documents.UnitTests.OpenXml
+{
+    [TestFixture]
+    public class BordersTests
+    {
+        private ExcelApplication _excelApplication;
+        private IWorkbook _workbook;
+        private IWorksheet _worksheet;
+        private IRange _range;
+        private IBorders _borders;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _excelApplication = new ExcelApplication();
+            _workbook = _excelApplication.Workbooks.Create();
+            _worksheet = _workbook.Worksheets.Create("TestSheet");
+            _range = _worksheet["A1"];
+            _borders = _range.Borders;
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            _excelApplication?.Dispose();
+        }
+
+        [Test]
+        public void ShouldCreateBorders()
+        {
+            // Assert
+            Assert.That(_borders, Is.Not.Null);
+        }
+
+        [Test]
+        public void ShouldHaveLeftBorder()
+        {
+            // Assert
+            Assert.That(_borders.Left, Is.Not.Null);
+        }
+
+        [Test]
+        public void ShouldHaveRightBorder()
+        {
+            // Assert
+            Assert.That(_borders.Right, Is.Not.Null);
+        }
+
+        [Test]
+        public void ShouldHaveTopBorder()
+        {
+            // Assert
+            Assert.That(_borders.Top, Is.Not.Null);
+        }
+
+        [Test]
+        public void ShouldHaveBottomBorder()
+        {
+            // Assert
+            Assert.That(_borders.Bottom, Is.Not.Null);
+        }
+
+        [Test]
+        public void ShouldSetBorderLineStyle()
+        {
+            // Act
+            _borders.Left.LineStyle = ExcelLineStyle.Thick;
+
+            // Assert
+            Assert.That(_borders.Left.LineStyle, Is.EqualTo(ExcelLineStyle.Thick));
+        }
+
+        [Test]
+        public void ShouldSetBorderColor()
+        {
+            // Act
+            _borders.Left.Color = Color.Red;
+
+            // Assert
+            Assert.That(_borders.Left.Color, Is.Not.Null);
+        }
+
+        [Test]
+        public void ShouldHandleMultipleBorderOperations()
+        {
+            // Act
+            _borders.Left.LineStyle = ExcelLineStyle.Thick;
+            _borders.Right.LineStyle = ExcelLineStyle.Thin;
+            _borders.Top.Color = Color.Blue;
+            _borders.Bottom.Color = Color.Green;
+
+            // Assert
+            Assert.That(_borders.Left.LineStyle, Is.EqualTo(ExcelLineStyle.Thick));
+            Assert.That(_borders.Right.LineStyle, Is.EqualTo(ExcelLineStyle.Thin));
+            Assert.That(_borders.Top.Color, Is.Not.Null);
+            Assert.That(_borders.Bottom.Color, Is.Not.Null);
+        }
+    }
+}

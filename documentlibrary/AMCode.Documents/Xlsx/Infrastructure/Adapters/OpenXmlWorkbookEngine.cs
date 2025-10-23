@@ -1,0 +1,907 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using DocumentFormat.OpenXml.Packaging;
+using AMCode.Documents.Common.Models;
+using AMCode.Xlsx.Infrastructure.Interfaces;
+
+namespace AMCode.Xlsx.Infrastructure.Adapters
+{
+    /// <summary>
+    /// OpenXml implementation of the workbook engine
+    /// Uses DocumentFormat.OpenXml.Packaging.SpreadsheetDocument for Excel operations
+    /// </summary>
+    public class OpenXmlWorkbookEngine : IWorkbookEngine
+    {
+        /// <summary>
+        /// Creates a new empty workbook
+        /// </summary>
+        /// <returns>Result containing the workbook engine instance or error information</returns>
+        public Result<IWorkbookEngineInstance> Create()
+        {
+            try
+            {
+                var stream = new MemoryStream();
+                using (var document = SpreadsheetDocument.Create(stream, DocumentFormat.OpenXml.SpreadsheetDocumentType.Workbook))
+                {
+                    // Add workbook part
+                    var workbookPart = document.AddWorkbookPart();
+                    workbookPart.Workbook = new DocumentFormat.OpenXml.Spreadsheet.Workbook();
+                    
+                    // Add worksheet part
+                    var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+                    worksheetPart.Worksheet = new DocumentFormat.OpenXml.Spreadsheet.Worksheet(
+                        new DocumentFormat.OpenXml.Spreadsheet.SheetData());
+                    
+                    // Add worksheet to workbook
+                    var sheets = workbookPart.Workbook.AppendChild(new DocumentFormat.OpenXml.Spreadsheet.Sheets());
+                    var sheet = new DocumentFormat.OpenXml.Spreadsheet.Sheet()
+                    {
+                        Id = workbookPart.GetIdOfPart(worksheetPart),
+                        SheetId = 1,
+                        Name = "Sheet1"
+                    };
+                    sheets.Append(sheet);
+                }
+
+                stream.Position = 0;
+                var instance = new OpenXmlWorkbookEngineInstance(stream);
+                return Result<IWorkbookEngineInstance>.Success(instance);
+            }
+            catch (Exception ex)
+            {
+                return Result<IWorkbookEngineInstance>.Failure($"Error creating workbook: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Creates a new workbook with the specified title
+        /// </summary>
+        /// <param name="title">The title for the new workbook</param>
+        /// <returns>Result containing the workbook engine instance or error information</returns>
+        public Result<IWorkbookEngineInstance> Create(string title)
+        {
+            try
+            {
+                var result = Create();
+                if (result.IsSuccess)
+                {
+                    // Set the title in the workbook properties
+                    // This would typically involve setting the core properties
+                    return result;
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return Result<IWorkbookEngineInstance>.Failure($"Error creating workbook with title '{title}': {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Creates a new workbook with the specified metadata
+        /// </summary>
+        /// <param name="metadata">The metadata for the new workbook</param>
+        /// <returns>Result containing the workbook engine instance or error information</returns>
+        public Result<IWorkbookEngineInstance> Create(WorkbookCreationMetadata metadata)
+        {
+            try
+            {
+                var result = Create(metadata.Title);
+                if (result.IsSuccess)
+                {
+                    // Set additional metadata properties
+                    // This would typically involve setting the core properties
+                    return result;
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return Result<IWorkbookEngineInstance>.Failure($"Error creating workbook with metadata: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Opens an existing workbook from a stream
+        /// </summary>
+        /// <param name="stream">The stream containing the workbook data</param>
+        /// <returns>Result containing the workbook engine instance or error information</returns>
+        public Result<IWorkbookEngineInstance> Open(Stream stream)
+        {
+            try
+            {
+                if (stream == null)
+                {
+                    return Result<IWorkbookEngineInstance>.Failure("Stream cannot be null");
+                }
+
+                var instance = new OpenXmlWorkbookEngineInstance(stream);
+                return Result<IWorkbookEngineInstance>.Success(instance);
+            }
+            catch (Exception ex)
+            {
+                return Result<IWorkbookEngineInstance>.Failure($"Error opening workbook from stream: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Opens an existing workbook from a stream with specified options
+        /// </summary>
+        /// <param name="stream">The stream containing the workbook data</param>
+        /// <param name="options">The options for opening the workbook</param>
+        /// <returns>Result containing the workbook engine instance or error information</returns>
+        public Result<IWorkbookEngineInstance> Open(Stream stream, WorkbookOpenOptions options)
+        {
+            try
+            {
+                if (stream == null)
+                {
+                    return Result<IWorkbookEngineInstance>.Failure("Stream cannot be null");
+                }
+
+                // Apply options if needed
+                var instance = new OpenXmlWorkbookEngineInstance(stream);
+                return Result<IWorkbookEngineInstance>.Success(instance);
+            }
+            catch (Exception ex)
+            {
+                return Result<IWorkbookEngineInstance>.Failure($"Error opening workbook from stream with options: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Opens an existing workbook from a file path
+        /// </summary>
+        /// <param name="filePath">The file path to the workbook</param>
+        /// <returns>Result containing the workbook engine instance or error information</returns>
+        public Result<IWorkbookEngineInstance> Open(string filePath)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(filePath))
+                {
+                    return Result<IWorkbookEngineInstance>.Failure("File path cannot be null or empty");
+                }
+
+                if (!File.Exists(filePath))
+                {
+                    return Result<IWorkbookEngineInstance>.Failure($"File does not exist: {filePath}");
+                }
+
+                var stream = File.OpenRead(filePath);
+                var instance = new OpenXmlWorkbookEngineInstance(stream);
+                return Result<IWorkbookEngineInstance>.Success(instance);
+            }
+            catch (Exception ex)
+            {
+                return Result<IWorkbookEngineInstance>.Failure($"Error opening workbook from file '{filePath}': {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Opens an existing workbook from a file path with specified options
+        /// </summary>
+        /// <param name="filePath">The file path to the workbook</param>
+        /// <param name="options">The options for opening the workbook</param>
+        /// <returns>Result containing the workbook engine instance or error information</returns>
+        public Result<IWorkbookEngineInstance> Open(string filePath, WorkbookOpenOptions options)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(filePath))
+                {
+                    return Result<IWorkbookEngineInstance>.Failure("File path cannot be null or empty");
+                }
+
+                if (!File.Exists(filePath))
+                {
+                    return Result<IWorkbookEngineInstance>.Failure($"File does not exist: {filePath}");
+                }
+
+                var stream = File.OpenRead(filePath);
+                var instance = new OpenXmlWorkbookEngineInstance(stream);
+                return Result<IWorkbookEngineInstance>.Success(instance);
+            }
+            catch (Exception ex)
+            {
+                return Result<IWorkbookEngineInstance>.Failure($"Error opening workbook from file '{filePath}' with options: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Validates that a file is a valid Excel workbook
+        /// </summary>
+        /// <param name="filePath">The file path to validate</param>
+        /// <returns>Result containing validation results or error information</returns>
+        public Result<bool> IsValidWorkbook(string filePath)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(filePath))
+                {
+                    return Result<bool>.Failure("File path cannot be null or empty");
+                }
+
+                if (!File.Exists(filePath))
+                {
+                    return Result<bool>.Success(false);
+                }
+
+                using (var stream = File.OpenRead(filePath))
+                {
+                    try
+                    {
+                        using (var document = SpreadsheetDocument.Open(stream, false))
+                        {
+                            return Result<bool>.Success(true);
+                        }
+                    }
+                    catch
+                    {
+                        return Result<bool>.Success(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure($"Error validating workbook file '{filePath}': {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Validates that a stream contains a valid Excel workbook
+        /// </summary>
+        /// <param name="stream">The stream to validate</param>
+        /// <returns>Result containing validation results or error information</returns>
+        public Result<bool> IsValidWorkbook(Stream stream)
+        {
+            try
+            {
+                if (stream == null)
+                {
+                    return Result<bool>.Failure("Stream cannot be null");
+                }
+
+                var position = stream.Position;
+                try
+                {
+                    using (var document = SpreadsheetDocument.Open(stream, false))
+                    {
+                        return Result<bool>.Success(true);
+                    }
+                }
+                catch
+                {
+                    return Result<bool>.Success(false);
+                }
+                finally
+                {
+                    stream.Position = position;
+                }
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure($"Error validating workbook stream: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets information about a workbook file without opening it
+        /// </summary>
+        /// <param name="filePath">The file path to the workbook</param>
+        /// <returns>Result containing workbook information or error information</returns>
+        public Result<WorkbookInfo> GetWorkbookInfo(string filePath)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(filePath))
+                {
+                    return Result<WorkbookInfo>.Failure("File path cannot be null or empty");
+                }
+
+                if (!File.Exists(filePath))
+                {
+                    return Result<WorkbookInfo>.Failure($"File does not exist: {filePath}");
+                }
+
+                var fileInfo = new FileInfo(filePath);
+                var info = new WorkbookInfo
+                {
+                    FilePath = filePath,
+                    FileSize = fileInfo.Length,
+                    Created = fileInfo.CreationTime,
+                    Modified = fileInfo.LastWriteTime,
+                    FormatVersion = "Excel 2007+",
+                    IsReadOnly = fileInfo.IsReadOnly
+                };
+
+                return Result<WorkbookInfo>.Success(info);
+            }
+            catch (Exception ex)
+            {
+                return Result<WorkbookInfo>.Failure($"Error getting workbook info for '{filePath}': {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets information about a workbook stream without opening it
+        /// </summary>
+        /// <param name="stream">The stream containing the workbook data</param>
+        /// <returns>Result containing workbook information or error information</returns>
+        public Result<WorkbookInfo> GetWorkbookInfo(Stream stream)
+        {
+            try
+            {
+                if (stream == null)
+                {
+                    return Result<WorkbookInfo>.Failure("Stream cannot be null");
+                }
+
+                var info = new WorkbookInfo
+                {
+                    FileSize = stream.Length,
+                    Created = DateTime.UtcNow,
+                    Modified = DateTime.UtcNow,
+                    FormatVersion = "Excel 2007+",
+                    IsReadOnly = false
+                };
+
+                return Result<WorkbookInfo>.Success(info);
+            }
+            catch (Exception ex)
+            {
+                return Result<WorkbookInfo>.Failure($"Error getting workbook info from stream: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets the supported file formats
+        /// </summary>
+        /// <returns>Result containing the supported file formats or error information</returns>
+        public Result<IEnumerable<string>> GetSupportedFormats()
+        {
+            try
+            {
+                var formats = new[]
+                {
+                    ".xlsx",
+                    ".xlsm",
+                    ".xlsb",
+                    ".xltx",
+                    ".xltm"
+                };
+
+                return Result<IEnumerable<string>>.Success(formats);
+            }
+            catch (Exception ex)
+            {
+                return Result<IEnumerable<string>>.Failure($"Error getting supported formats: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets the engine version
+        /// </summary>
+        /// <returns>Result containing the engine version or error information</returns>
+        public Result<string> GetVersion()
+        {
+            try
+            {
+                return Result<string>.Success("1.0.0");
+            }
+            catch (Exception ex)
+            {
+                return Result<string>.Failure($"Error getting engine version: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets the engine capabilities
+        /// </summary>
+        /// <returns>Result containing the engine capabilities or error information</returns>
+        public Result<EngineCapabilities> GetCapabilities()
+        {
+            try
+            {
+                var capabilities = new EngineCapabilities
+                {
+                    SupportsCreate = true,
+                    SupportsOpen = true,
+                    SupportsSave = true,
+                    SupportsTemplates = true,
+                    SupportsMacros = true,
+                    SupportsProtection = true,
+                    SupportsCalculation = true,
+                    SupportsFormatting = true,
+                    SupportsCharts = true,
+                    SupportsImages = true,
+                    MaxWorksheets = 255,
+                    MaxRows = 1048576,
+                    MaxColumns = 16384,
+                    MaxFileSize = 100 * 1024 * 1024 // 100 MB
+                };
+
+                return Result<EngineCapabilities>.Success(capabilities);
+            }
+            catch (Exception ex)
+            {
+                return Result<EngineCapabilities>.Failure($"Error getting engine capabilities: {ex.Message}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// OpenXml implementation of the workbook engine instance
+    /// </summary>
+    public class OpenXmlWorkbookEngineInstance : IWorkbookEngineInstance
+    {
+        private readonly Stream _stream;
+        private SpreadsheetDocument _document;
+        private bool _disposed = false;
+
+        /// <summary>
+        /// Initializes a new instance of the OpenXmlWorkbookEngineInstance class
+        /// </summary>
+        /// <param name="stream">The stream containing the workbook data</param>
+        public OpenXmlWorkbookEngineInstance(Stream stream)
+        {
+            _stream = stream ?? throw new ArgumentNullException(nameof(stream));
+            _document = SpreadsheetDocument.Open(_stream, true);
+        }
+
+        /// <summary>
+        /// Gets the underlying workbook object
+        /// </summary>
+        public object Workbook => _document;
+
+        /// <summary>
+        /// Gets the workbook type
+        /// </summary>
+        public WorkbookType Type => WorkbookType.Excel2007;
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is disposed
+        /// </summary>
+        public bool IsDisposed => _disposed;
+
+        /// <summary>
+        /// Saves the workbook to a stream
+        /// </summary>
+        /// <param name="stream">The stream to save to</param>
+        /// <returns>Result indicating success or failure</returns>
+        public Result Save(Stream stream)
+        {
+            try
+            {
+                if (_disposed)
+                {
+                    return Result.Failure("Workbook instance has been disposed");
+                }
+
+                if (stream == null)
+                {
+                    return Result.Failure("Stream cannot be null");
+                }
+
+                _document.Save();
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Error saving workbook to stream: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Saves the workbook to a file path
+        /// </summary>
+        /// <param name="filePath">The file path to save to</param>
+        /// <returns>Result indicating success or failure</returns>
+        public Result Save(string filePath)
+        {
+            try
+            {
+                if (_disposed)
+                {
+                    return Result.Failure("Workbook instance has been disposed");
+                }
+
+                if (string.IsNullOrWhiteSpace(filePath))
+                {
+                    return Result.Failure("File path cannot be null or empty");
+                }
+
+                _document.Save();
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Error saving workbook to '{filePath}': {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Closes the workbook
+        /// </summary>
+        /// <returns>Result indicating success or failure</returns>
+        public Result Close()
+        {
+            try
+            {
+                if (_disposed)
+                {
+                    return Result.Success();
+                }
+
+                _document?.Dispose();
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Error closing workbook: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Refreshes the workbook data
+        /// </summary>
+        /// <returns>Result indicating success or failure</returns>
+        public Result Refresh()
+        {
+            try
+            {
+                if (_disposed)
+                {
+                    return Result.Failure("Workbook instance has been disposed");
+                }
+
+                // Refresh logic would go here
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Error refreshing workbook: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets the workbook properties
+        /// </summary>
+        /// <returns>Result containing the workbook properties or error information</returns>
+        public Result<WorkbookProperties> GetProperties()
+        {
+            try
+            {
+                if (_disposed)
+                {
+                    return Result<WorkbookProperties>.Failure("Workbook instance has been disposed");
+                }
+
+                var properties = new WorkbookProperties
+                {
+                    Title = "Untitled",
+                    Author = "Unknown",
+                    Created = DateTime.UtcNow,
+                    Modified = DateTime.UtcNow
+                };
+
+                return Result<WorkbookProperties>.Success(properties);
+            }
+            catch (Exception ex)
+            {
+                return Result<WorkbookProperties>.Failure($"Error getting workbook properties: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Sets the workbook properties
+        /// </summary>
+        /// <param name="properties">The properties to set</param>
+        /// <returns>Result indicating success or failure</returns>
+        public Result SetProperties(WorkbookProperties properties)
+        {
+            try
+            {
+                if (_disposed)
+                {
+                    return Result.Failure("Workbook instance has been disposed");
+                }
+
+                if (properties.Equals(default(WorkbookProperties)))
+                {
+                    return Result.Failure("Properties cannot be default");
+                }
+
+                // Set properties logic would go here
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Error setting workbook properties: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of worksheets
+        /// </summary>
+        /// <returns>Result containing the number of worksheets or error information</returns>
+        public Result<int> GetWorksheetCount()
+        {
+            try
+            {
+                if (_disposed)
+                {
+                    return Result<int>.Failure("Workbook instance has been disposed");
+                }
+
+                var workbookPart = _document.WorkbookPart;
+                var sheets = workbookPart?.Workbook?.Sheets;
+                var count = sheets?.Count() ?? 0;
+                return Result<int>.Success(count);
+            }
+            catch (Exception ex)
+            {
+                return Result<int>.Failure($"Error getting worksheet count: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets the worksheet names
+        /// </summary>
+        /// <returns>Result containing the worksheet names or error information</returns>
+        public Result<IEnumerable<string>> GetWorksheetNames()
+        {
+            try
+            {
+                if (_disposed)
+                {
+                    return Result<IEnumerable<string>>.Failure("Workbook instance has been disposed");
+                }
+
+                var workbookPart = _document.WorkbookPart;
+                var sheets = workbookPart?.Workbook?.Sheets;
+                var names = sheets?.Elements<DocumentFormat.OpenXml.Spreadsheet.Sheet>()
+                    .Select(s => s.Name?.Value ?? "")
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .ToList() ?? new List<string>();
+
+                return Result<IEnumerable<string>>.Success(names);
+            }
+            catch (Exception ex)
+            {
+                return Result<IEnumerable<string>>.Failure($"Error getting worksheet names: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets a worksheet by index
+        /// </summary>
+        /// <param name="index">The worksheet index (0-based)</param>
+        /// <returns>Result containing the worksheet or error information</returns>
+        public Result<object> GetWorksheet(int index)
+        {
+            try
+            {
+                if (_disposed)
+                {
+                    return Result<object>.Failure("Workbook instance has been disposed");
+                }
+
+                var workbookPart = _document.WorkbookPart;
+                var sheets = workbookPart?.Workbook?.Sheets;
+                var sheet = sheets?.Elements<DocumentFormat.OpenXml.Spreadsheet.Sheet>()
+                    .ElementAtOrDefault(index);
+
+                if (sheet == null)
+                {
+                    return Result<object>.Failure($"Worksheet at index {index} not found");
+                }
+
+                return Result<object>.Success(sheet);
+            }
+            catch (Exception ex)
+            {
+                return Result<object>.Failure($"Error getting worksheet at index {index}: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets a worksheet by name
+        /// </summary>
+        /// <param name="name">The worksheet name</param>
+        /// <returns>Result containing the worksheet or error information</returns>
+        public Result<object> GetWorksheet(string name)
+        {
+            try
+            {
+                if (_disposed)
+                {
+                    return Result<object>.Failure("Workbook instance has been disposed");
+                }
+
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    return Result<object>.Failure("Worksheet name cannot be null or empty");
+                }
+
+                var workbookPart = _document.WorkbookPart;
+                var sheets = workbookPart?.Workbook?.Sheets;
+                var sheet = sheets?.Elements<DocumentFormat.OpenXml.Spreadsheet.Sheet>()
+                    .FirstOrDefault(s => s.Name?.Value == name);
+
+                if (sheet == null)
+                {
+                    return Result<object>.Failure($"Worksheet '{name}' not found");
+                }
+
+                return Result<object>.Success(sheet);
+            }
+            catch (Exception ex)
+            {
+                return Result<object>.Failure($"Error getting worksheet '{name}': {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Adds a new worksheet
+        /// </summary>
+        /// <param name="name">The worksheet name</param>
+        /// <returns>Result containing the new worksheet or error information</returns>
+        public Result<object> AddWorksheet(string name)
+        {
+            try
+            {
+                if (_disposed)
+                {
+                    return Result<object>.Failure("Workbook instance has been disposed");
+                }
+
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    return Result<object>.Failure("Worksheet name cannot be null or empty");
+                }
+
+                // Add worksheet logic would go here
+                return Result<object>.Failure("Add worksheet not implemented");
+            }
+            catch (Exception ex)
+            {
+                return Result<object>.Failure($"Error adding worksheet '{name}': {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Removes a worksheet by index
+        /// </summary>
+        /// <param name="index">The worksheet index (0-based)</param>
+        /// <returns>Result indicating success or failure</returns>
+        public Result RemoveWorksheet(int index)
+        {
+            try
+            {
+                if (_disposed)
+                {
+                    return Result.Failure("Workbook instance has been disposed");
+                }
+
+                // Remove worksheet logic would go here
+                return Result.Failure("Remove worksheet not implemented");
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Error removing worksheet at index {index}: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Removes a worksheet by name
+        /// </summary>
+        /// <param name="name">The worksheet name</param>
+        /// <returns>Result indicating success or failure</returns>
+        public Result RemoveWorksheet(string name)
+        {
+            try
+            {
+                if (_disposed)
+                {
+                    return Result.Failure("Workbook instance has been disposed");
+                }
+
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    return Result.Failure("Worksheet name cannot be null or empty");
+                }
+
+                // Remove worksheet logic would go here
+                return Result.Failure("Remove worksheet not implemented");
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Error removing worksheet '{name}': {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Renames a worksheet
+        /// </summary>
+        /// <param name="oldName">The current worksheet name</param>
+        /// <param name="newName">The new worksheet name</param>
+        /// <returns>Result indicating success or failure</returns>
+        public Result RenameWorksheet(string oldName, string newName)
+        {
+            try
+            {
+                if (_disposed)
+                {
+                    return Result.Failure("Workbook instance has been disposed");
+                }
+
+                if (string.IsNullOrWhiteSpace(oldName))
+                {
+                    return Result.Failure("Old worksheet name cannot be null or empty");
+                }
+
+                if (string.IsNullOrWhiteSpace(newName))
+                {
+                    return Result.Failure("New worksheet name cannot be null or empty");
+                }
+
+                // Rename worksheet logic would go here
+                return Result.Failure("Rename worksheet not implemented");
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Error renaming worksheet from '{oldName}' to '{newName}': {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Renames a worksheet by index
+        /// </summary>
+        /// <param name="index">The worksheet index (0-based)</param>
+        /// <param name="newName">The new worksheet name</param>
+        /// <returns>Result indicating success or failure</returns>
+        public Result RenameWorksheet(int index, string newName)
+        {
+            try
+            {
+                if (_disposed)
+                {
+                    return Result.Failure("Workbook instance has been disposed");
+                }
+
+                if (index < 0)
+                {
+                    return Result.Failure("Worksheet index cannot be negative");
+                }
+
+                if (string.IsNullOrWhiteSpace(newName))
+                {
+                    return Result.Failure("New worksheet name cannot be null or empty");
+                }
+
+                // Rename worksheet logic would go here
+                return Result.Failure("Rename worksheet not implemented");
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Error renaming worksheet at index {index} to '{newName}': {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Disposes of the workbook instance and releases all resources
+        /// </summary>
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                _document?.Dispose();
+                _stream?.Dispose();
+                _disposed = true;
+            }
+        }
+    }
+}

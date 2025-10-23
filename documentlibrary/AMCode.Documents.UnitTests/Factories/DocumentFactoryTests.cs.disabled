@@ -1,0 +1,428 @@
+using System;
+using System.IO;
+using NUnit.Framework;
+using AMCode.Documents.Common.Models;
+using AMCode.Docx;
+using AMCode.Docx.Providers.OpenXml;
+using AMCode.Docx.Infrastructure.Factories;
+using AMCode.Docx.Infrastructure.Interfaces;
+using AMCode.Docx.Domain.Models;
+
+namespace AMCode.Documents.UnitTests.Factories
+{
+    /// <summary>
+    /// Unit tests for DOCX factory classes
+    /// Tests both static DocumentFactory and infrastructure DocumentFactory with DI
+    /// </summary>
+    [TestFixture]
+    public class DocumentFactoryTests
+    {
+        private IWordprocessingDocumentFactory _documentFactory;
+        private IDocumentLogger _logger;
+        private IDocumentValidator _validator;
+        private DocumentFactory _infrastructureFactory;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _documentFactory = new TestWordprocessingDocumentFactory();
+            _logger = new TestDocumentLogger();
+            _validator = new TestDocumentValidator();
+            _infrastructureFactory = new DocumentFactory(_documentFactory, _logger, _validator);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            _infrastructureFactory = null;
+            _documentFactory = null;
+            _logger = null;
+            _validator = null;
+        }
+
+        #region Static DocumentFactory Tests
+
+        [Test]
+        public void ShouldCreateDocument()
+        {
+            // Act
+            var document = DocumentFactory.CreateDocument();
+
+            // Assert
+            Assert.IsNotNull(document);
+            Assert.IsNotNull(document.Paragraphs);
+            Assert.IsNotNull(document.Tables);
+        }
+
+        [Test]
+        public void ShouldCreateDocumentWithContent()
+        {
+            // Arrange
+            var title = "Test Document";
+            var content = "This is test content";
+
+            // Act
+            var document = DocumentFactory.CreateDocument(title, content);
+
+            // Assert
+            Assert.IsNotNull(document);
+            Assert.AreEqual(title, document.Properties.Title);
+            Assert.IsTrue(document.Paragraphs.Count > 0);
+        }
+
+        [Test]
+        public void ShouldCreateDocumentWithTable()
+        {
+            // Arrange
+            var title = "Table Document";
+            var rows = 3;
+            var columns = 4;
+
+            // Act
+            var document = DocumentFactory.CreateDocumentWithTable(title, rows, columns);
+
+            // Assert
+            Assert.IsNotNull(document);
+            Assert.AreEqual(title, document.Properties.Title);
+            Assert.IsTrue(document.Tables.Count > 0);
+        }
+
+        [Test]
+        public void ShouldCreateFormattedDocument()
+        {
+            // Arrange
+            var title = "Formatted Document";
+            var content = "This is formatted content";
+            var fontStyle = new FontStyle
+            {
+                FontName = "Arial",
+                Size = 12,
+                Bold = true,
+                Italic = false
+            };
+
+            // Act
+            var document = DocumentFactory.CreateFormattedDocument(title, content, fontStyle);
+
+            // Assert
+            Assert.IsNotNull(document);
+            Assert.AreEqual(title, document.Properties.Title);
+            Assert.IsTrue(document.Paragraphs.Count > 0);
+        }
+
+        [Test]
+        public void ShouldOpenDocumentFromStream()
+        {
+            // Arrange
+            var originalDocument = DocumentFactory.CreateDocument("Test Document", "Test Content");
+            using var stream = new MemoryStream();
+            originalDocument.SaveAs(stream);
+            stream.Position = 0;
+
+            // Act
+            var openedDocument = DocumentFactory.OpenDocument(stream);
+
+            // Assert
+            Assert.IsNotNull(openedDocument);
+            Assert.AreEqual("Test Document", openedDocument.Properties.Title);
+        }
+
+        [Test]
+        public void ShouldOpenDocumentFromFile()
+        {
+            // Arrange
+            var originalDocument = DocumentFactory.CreateDocument("Test Document", "Test Content");
+            var tempFile = Path.GetTempFileName();
+            try
+            {
+                originalDocument.SaveAs(tempFile);
+
+                // Act
+                var openedDocument = DocumentFactory.OpenDocument(tempFile);
+
+                // Assert
+                Assert.IsNotNull(openedDocument);
+                Assert.AreEqual("Test Document", openedDocument.Properties.Title);
+            }
+            finally
+            {
+                if (File.Exists(tempFile))
+                    File.Delete(tempFile);
+            }
+        }
+
+        [Test]
+        public void ShouldHandleInvalidStream()
+        {
+            // Arrange
+            using var invalidStream = new MemoryStream();
+            invalidStream.Write(new byte[] { 0x00, 0x01, 0x02 }, 0, 3);
+            invalidStream.Position = 0;
+
+            // Act & Assert
+            Assert.Throws<Exception>(() => DocumentFactory.OpenDocument(invalidStream));
+        }
+
+        [Test]
+        public void ShouldHandleInvalidFilePath()
+        {
+            // Arrange
+            var invalidPath = "C:\\NonExistent\\Path\\Document.docx";
+
+            // Act & Assert
+            Assert.Throws<FileNotFoundException>(() => DocumentFactory.OpenDocument(invalidPath));
+        }
+
+        #endregion
+
+        #region Infrastructure DocumentFactory Tests
+
+        [Test]
+        public void ShouldCreateDocumentWithInfrastructureFactory()
+        {
+            // Act
+            var result = _infrastructureFactory.CreateDocument();
+
+            // Assert
+            Assert.IsTrue(result.IsSuccess);
+            Assert.IsNotNull(result.Value);
+        }
+
+        [Test]
+        public void ShouldCreateDocumentWithContentUsingInfrastructureFactory()
+        {
+            // Arrange
+            var title = "Infrastructure Document";
+            var content = "This is infrastructure content";
+
+            // Act
+            var result = _infrastructureFactory.CreateDocument(title, content);
+
+            // Assert
+            Assert.IsTrue(result.IsSuccess);
+            Assert.IsNotNull(result.Value);
+        }
+
+        [Test]
+        public void ShouldOpenDocumentFromStreamUsingInfrastructureFactory()
+        {
+            // Arrange
+            var createResult = _infrastructureFactory.CreateDocument("Test Document", "Test Content");
+            Assert.IsTrue(createResult.IsSuccess);
+
+            using var stream = new MemoryStream();
+            var saveResult = createResult.Value.SaveAs(stream);
+            Assert.IsTrue(saveResult.IsSuccess);
+
+            stream.Position = 0;
+
+            // Act
+            var openResult = _infrastructureFactory.OpenDocument(stream);
+
+            // Assert
+            Assert.IsTrue(openResult.IsSuccess);
+            Assert.IsNotNull(openResult.Value);
+        }
+
+        [Test]
+        public void ShouldOpenDocumentFromFileUsingInfrastructureFactory()
+        {
+            // Arrange
+            var createResult = _infrastructureFactory.CreateDocument("Test Document", "Test Content");
+            Assert.IsTrue(createResult.IsSuccess);
+
+            var tempFile = Path.GetTempFileName();
+            try
+            {
+                var saveResult = createResult.Value.SaveAs(tempFile);
+                Assert.IsTrue(saveResult.IsSuccess);
+
+                // Act
+                var openResult = _infrastructureFactory.OpenDocument(tempFile);
+
+                // Assert
+                Assert.IsTrue(openResult.IsSuccess);
+                Assert.IsNotNull(openResult.Value);
+            }
+            finally
+            {
+                if (File.Exists(tempFile))
+                    File.Delete(tempFile);
+            }
+        }
+
+        [Test]
+        public void ShouldHandleNullDependenciesInInfrastructureFactory()
+        {
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() => new DocumentFactory(null, _logger, _validator));
+            Assert.Throws<ArgumentNullException>(() => new DocumentFactory(_documentFactory, null, _validator));
+            Assert.Throws<ArgumentNullException>(() => new DocumentFactory(_documentFactory, _logger, null));
+        }
+
+        [Test]
+        public void ShouldHandleInvalidStreamInInfrastructureFactory()
+        {
+            // Arrange
+            using var invalidStream = new MemoryStream();
+            invalidStream.Write(new byte[] { 0x00, 0x01, 0x02 }, 0, 3);
+            invalidStream.Position = 0;
+
+            // Act
+            var result = _infrastructureFactory.OpenDocument(invalidStream);
+
+            // Assert
+            Assert.IsFalse(result.IsSuccess);
+            Assert.IsNotNull(result.Error);
+        }
+
+        [Test]
+        public void ShouldHandleInvalidFilePathInInfrastructureFactory()
+        {
+            // Arrange
+            var invalidPath = "C:\\NonExistent\\Path\\Document.docx";
+
+            // Act
+            var result = _infrastructureFactory.OpenDocument(invalidPath);
+
+            // Assert
+            Assert.IsFalse(result.IsSuccess);
+            Assert.IsNotNull(result.Error);
+        }
+
+        #endregion
+    }
+
+    #region Test Helpers
+
+    /// <summary>
+    /// Test implementation of IWordprocessingDocumentFactory
+    /// </summary>
+    public class TestWordprocessingDocumentFactory : IWordprocessingDocumentFactory
+    {
+        public Result<IDocumentDomain> CreateDocument()
+        {
+            try
+            {
+                var document = DocumentFactory.CreateDocument();
+                return Result<IDocumentDomain>.Success(new TestDocumentDomain(document));
+            }
+            catch (Exception ex)
+            {
+                return Result<IDocumentDomain>.Failure($"Failed to create document: {ex.Message}");
+            }
+        }
+
+        public Result<IDocumentDomain> CreateDocument(string title, string content)
+        {
+            try
+            {
+                var document = DocumentFactory.CreateDocument(title, content);
+                return Result<IDocumentDomain>.Success(new TestDocumentDomain(document));
+            }
+            catch (Exception ex)
+            {
+                return Result<IDocumentDomain>.Failure($"Failed to create document: {ex.Message}");
+            }
+        }
+
+        public Result<IDocumentDomain> OpenDocument(Stream stream)
+        {
+            try
+            {
+                var document = DocumentFactory.OpenDocument(stream);
+                return Result<IDocumentDomain>.Success(new TestDocumentDomain(document));
+            }
+            catch (Exception ex)
+            {
+                return Result<IDocumentDomain>.Failure($"Failed to open document: {ex.Message}");
+            }
+        }
+
+        public Result<IDocumentDomain> OpenDocument(string filePath)
+        {
+            try
+            {
+                var document = DocumentFactory.OpenDocument(filePath);
+                return Result<IDocumentDomain>.Success(new TestDocumentDomain(document));
+            }
+            catch (Exception ex)
+            {
+                return Result<IDocumentDomain>.Failure($"Failed to open document: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Test implementation of IDocumentLogger
+    /// </summary>
+    public class TestDocumentLogger : IDocumentLogger
+    {
+        public void LogInfo(string message) { }
+        public void LogWarning(string message) { }
+        public void LogError(string message) { }
+        public void LogError(string message, Exception exception) { }
+    }
+
+    /// <summary>
+    /// Test implementation of IDocumentValidator
+    /// </summary>
+    public class TestDocumentValidator : IDocumentValidator
+    {
+        public Result ValidateDocument(IDocumentDomain document)
+        {
+            return Result.Success();
+        }
+
+        public Result ValidateDocumentCreation(string title, string content)
+        {
+            return Result.Success();
+        }
+    }
+
+    /// <summary>
+    /// Test implementation of IDocumentDomain
+    /// </summary>
+    public class TestDocumentDomain : IDocumentDomain
+    {
+        private readonly IDocument _document;
+
+        public TestDocumentDomain(IDocument document)
+        {
+            _document = document ?? throw new ArgumentNullException(nameof(document));
+        }
+
+        public IDocumentProperties Properties => _document.Properties;
+        public IParagraphs Paragraphs => _document.Paragraphs;
+        public ITables Tables => _document.Tables;
+        public ISections Sections => _document.Sections;
+
+        public Result SaveAs(Stream stream)
+        {
+            try
+            {
+                _document.SaveAs(stream);
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Failed to save document: {ex.Message}");
+            }
+        }
+
+        public Result SaveAs(string filePath)
+        {
+            try
+            {
+                _document.SaveAs(filePath);
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Failed to save document: {ex.Message}");
+            }
+        }
+    }
+
+    #endregion
+}

@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <AssemblyName>AMCode.Common.Testing</AssemblyName>
+    <RootNamespace>AMCode.Common.Testing</RootNamespace>
+		<NeutralLanguage>en</NeutralLanguage>
+		<IsPackable>true</IsPackable>
+  </PropertyGroup>
+	
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AMCode.Common" Version="1.0.0" />
+    <PackageReference Include="Docker.DotNet" Version="3.125.5" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+
+</Project>

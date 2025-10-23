@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+	<metadata>
+		<id>AMCode.Exports</id>
+		<version>1.2.2</version>
+		<authors>AMCode</authors>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<title>AMCode Exports Builder Library</title>
+		<description>A library for building Excel and CSV file exports</description>
+		<releaseNotes>Updated IBook to accept TColumn as an out variant.</releaseNotes>
+		<tags>AMCode Exports Excel CSV Library</tags>
+				<dependencies>
+					<group targetFramework="netstandard2.0">
+						<dependency id="AMCode.Columns" version="1.2.1"></dependency>
+						<dependency id="AMCode.Common" version="1.0.0"></dependency>
+						<dependency id="AMCode.Storage" version="1.1.2"></dependency>
+						<dependency id="AMCode.Xlsx" version="1.1.0"></dependency>
+					</group>
+				</dependencies>
+	</metadata>
+	<files>
+		<file src="bin\Release\netstandard2.0\AMCode.Exports.dll" target="lib\netstandard2.0\AMCode.Exports.dll" />
+		<file src="bin\Release\netstandard2.0\AMCode.Exports.xml" target="lib\netstandard2.0\AMCode.Exports.xml" />
+	</files>
+</package>

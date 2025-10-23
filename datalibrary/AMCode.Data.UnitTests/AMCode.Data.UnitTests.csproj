@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
+		<PackageReference Include="Moq" Version="4.18.2" />
+		<PackageReference Include="NUnit" Version="3.13.2" />
+		<PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
+		<PackageReference Include="coverlet.collector" Version="3.1.2">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\AMCode.Data\AMCode.Data.csproj" />
+		<ProjectReference Include="..\..\commonlibrary\AMCode.Common.UnitTests\AMCode.Common.UnitTests.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Components\Extensions\MockFiles\DataReaderExtensionsTest_Eight_Rows_Type_Values.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\Extensions\MockFiles\DataReaderExtensionsTest_One_Row_Object_Values.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\Extensions\MockFiles\DataReaderExtensionsTest_Five_Rows_No_Space_In_Headers_Pipe_Delimited.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\Extensions\MockFiles\DataReaderExtensionsTest_Five_Rows_No_Space_In_Headers.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\Extensions\MockFiles\DataReaderExtensionsTest_Five_Rows_Space_In_Headers_Pipe_Delimited.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Components\Extensions\MockFiles\DataReaderExtensionsTest_Five_Rows_Space_In_Headers.csv">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+</Project>

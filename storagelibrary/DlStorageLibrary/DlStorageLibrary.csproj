@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+		<AssemblyName>DemandLink.Storage</AssemblyName>
+		<RootNamespace>DemandLink.Storage</RootNamespace>
+		<NeutralLanguage>en</NeutralLanguage>
+		<IsPackable>true</IsPackable>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+		<Exec Command="pwsh -ExecutionPolicy Bypass -NoProfile -NonInteractive -File ./Scripts/pre-build.ps1 -expectedSolutionName DlStoragelibrary.sln -solutionDirectory $(SolutionDir) -solutionName $(SolutionFileName) -projectName $(ProjectName)" />
+	</Target>
+
+	<ItemGroup>
+	  <PackageReference Include="Azure.Storage.Blobs" Version="12.10.0" />
+	  <PackageReference Include="DemandLink.Common" Version="1.0.0" />
+	</ItemGroup>
+
+</Project>

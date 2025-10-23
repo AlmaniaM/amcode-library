@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+	<metadata>
+		<id>AMCode.Storage</id>
+		<version>1.1.2</version>
+		<authors>AMCode</authors>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<title>AMCode Cloud and Local Storage</title>
+		<description>An AMCode library to store files in the cloud or locally.</description>
+		<releaseNotes></releaseNotes>
+		<tags>AMCode Library Storage Cloud Local</tags>
+		<dependencies>
+			<group targetFramework="netstandard2.0">
+				<dependency id="Azure.Storage.Blobs" version="12.10.0"></dependency>
+				<dependency id="AMCode.Common" version="1.0.0"></dependency>
+			</group>
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="bin\Release\netstandard2.0\AMCode.Storage.dll" target="lib\netstandard2.0\AMCode.Storage.dll" />
+		<file src="bin\Release\netstandard2.0\AMCode.Storage.xml" target="lib\netstandard2.0\AMCode.Storage.xml" />
+	</files>
+</package>
