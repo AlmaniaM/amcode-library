@@ -144,7 +144,22 @@ public class EnhancedHybridOCRService : IOCRService
                 }
             }
 
-            return Result.Failure<OCRResult>("All OCR providers failed or returned low confidence results");
+            // Get list of available providers for better error message
+            var availableProviders = await _providerSelector.GetAvailableProvidersAsync();
+            var providerNames = availableProviders.Select(p => p.ProviderName).ToList();
+            
+            if (!availableProviders.Any())
+            {
+                return Result.Failure<OCRResult>(
+                    "No OCR providers are available. Please configure at least one provider (Azure, AWS, or Google Cloud Vision) with valid credentials. " +
+                    "See SETUP_OCR.md for setup instructions.");
+            }
+            
+            var providerList = string.Join(", ", providerNames);
+            return Result.Failure<OCRResult>(
+                $"All OCR providers ({providerList}) failed or returned low confidence results. " +
+                "This may indicate missing credentials or configuration issues. " +
+                "Check your provider configuration in appsettings.json and see SETUP_OCR.md for setup instructions.");
         }
         catch (Exception ex)
         {

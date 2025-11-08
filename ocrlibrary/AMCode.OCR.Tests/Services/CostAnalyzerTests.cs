@@ -1,4 +1,4 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using FluentAssertions;
 using Moq;
 using Microsoft.Extensions.Logging;
@@ -8,20 +8,20 @@ using AMCode.OCR.Providers;
 
 namespace AMCode.OCR.Tests.Services;
 
-[TestClass]
+[TestFixture]
 public class CostAnalyzerTests
 {
     private Mock<ILogger<CostAnalyzer>> _mockLogger = null!;
     private CostAnalyzer _costAnalyzer = null!;
     
-    [TestInitialize]
+    [SetUp]
     public void Setup()
     {
         _mockLogger = new Mock<ILogger<CostAnalyzer>>();
         _costAnalyzer = new CostAnalyzer(_mockLogger.Object);
     }
     
-    [TestMethod]
+    [Test]
     public async Task CalculateCostAsync_ShouldReturnBaseCost()
     {
         // Arrange
@@ -43,7 +43,7 @@ public class CostAnalyzerTests
         cost.Should().Be(0.001m);
     }
     
-    [TestMethod]
+    [Test]
     public async Task CalculateCostAsync_ShouldAddSizeBasedCost()
     {
         // Arrange
@@ -68,7 +68,7 @@ public class CostAnalyzerTests
         cost.Should().BeApproximately(0.0011m, 0.00001m);
     }
     
-    [TestMethod]
+    [Test]
     public async Task RecordCostAsync_ShouldRecordCost()
     {
         // Arrange
@@ -84,7 +84,7 @@ public class CostAnalyzerTests
         totalCost.Should().Be(cost);
     }
     
-    [TestMethod]
+    [Test]
     public async Task GenerateCostReportAsync_ShouldReturnCorrectReport()
     {
         // Arrange
@@ -107,7 +107,7 @@ public class CostAnalyzerTests
         report.ProviderBreakdown[providerName].Should().Be(0.003m);
     }
     
-    [TestMethod]
+    [Test]
     public async Task GetCostBreakdownAsync_ShouldReturnCorrectBreakdown()
     {
         // Arrange

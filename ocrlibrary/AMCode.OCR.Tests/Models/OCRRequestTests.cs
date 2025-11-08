@@ -1,13 +1,13 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using FluentAssertions;
 using AMCode.OCR.Models;
 
 namespace AMCode.OCR.Tests.Models;
 
-[TestClass]
+[TestFixture]
 public class OCRRequestTests
 {
-    [TestMethod]
+    [Test]
     public void OCRRequest_ShouldInitializeWithDefaultValues()
     {
         // Act
@@ -23,7 +23,7 @@ public class OCRRequestTests
         request.MaxCostPerRequest.Should().Be(1.0m);
     }
     
-    [TestMethod]
+    [Test]
     public void OCRRequest_ShouldSetPropertiesCorrectly()
     {
         // Arrange

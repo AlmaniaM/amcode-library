@@ -1,4 +1,4 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using AMCode.OCR;
 using AMCode.AI;
 using AMCode.Documents;
@@ -16,7 +16,7 @@ namespace AMCode.Phase5B.Testing
     /// Production Readiness Tests for AMCode Libraries
     /// Tests security, monitoring, error handling, and production deployment readiness
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class ProductionReadinessTests
     {
         private ServiceProvider _serviceProvider;
@@ -26,7 +26,7 @@ namespace AMCode.Phase5B.Testing
         private IRecipeExportBuilder _exportBuilder;
         private IRecipeImageStorageService _storageService;
 
-        [TestInitialize]
+        [SetUp]
         public void Setup()
         {
             var services = new ServiceCollection();
@@ -51,7 +51,7 @@ namespace AMCode.Phase5B.Testing
             _storageService = _serviceProvider.GetRequiredService<IRecipeImageStorageService>();
         }
 
-        [TestCleanup]
+        [TearDown]
         public void Cleanup()
         {
             _serviceProvider?.Dispose();
@@ -60,7 +60,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test API key security validation
         /// </summary>
-        [TestMethod]
+        [Test]
         public void APIKeySecurity_ShouldBeValidated()
         {
             // Arrange
@@ -83,7 +83,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test data encryption validation
         /// </summary>
-        [TestMethod]
+        [Test]
         public void DataEncryption_ShouldBeImplemented()
         {
             // Arrange
@@ -105,7 +105,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test input validation
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task InputValidation_ShouldBeComprehensive()
         {
             // Arrange
@@ -156,7 +156,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test output sanitization
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task OutputSanitization_ShouldBeImplemented()
         {
             // Arrange
@@ -204,7 +204,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test error handling and recovery
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task ErrorHandling_ShouldBeComprehensive()
         {
             // Arrange
@@ -238,7 +238,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test monitoring and logging
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task MonitoringAndLogging_ShouldBeComprehensive()
         {
             // Arrange
@@ -284,7 +284,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test health checks
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task HealthChecks_ShouldBeImplemented()
         {
             // Act - Check health of all services
@@ -312,7 +312,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test configuration validation
         /// </summary>
-        [TestMethod]
+        [Test]
         public void ConfigurationValidation_ShouldBeComprehensive()
         {
             // Arrange
@@ -333,7 +333,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test deployment readiness
         /// </summary>
-        [TestMethod]
+        [Test]
         public void DeploymentReadiness_ShouldBeConfirmed()
         {
             // Arrange

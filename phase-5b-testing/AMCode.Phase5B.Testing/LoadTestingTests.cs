@@ -1,4 +1,4 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using AMCode.OCR;
 using AMCode.AI;
 using AMCode.Documents;
@@ -15,7 +15,7 @@ namespace AMCode.Phase5B.Testing
     /// Load Testing for AMCode Libraries
     /// Tests system behavior under various loads and stress conditions
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class LoadTestingTests
     {
         private ServiceProvider _serviceProvider;
@@ -25,7 +25,7 @@ namespace AMCode.Phase5B.Testing
         private IRecipeExportBuilder _exportBuilder;
         private IRecipeImageStorageService _storageService;
 
-        [TestInitialize]
+        [SetUp]
         public void Setup()
         {
             var services = new ServiceCollection();
@@ -50,7 +50,7 @@ namespace AMCode.Phase5B.Testing
             _storageService = _serviceProvider.GetRequiredService<IRecipeImageStorageService>();
         }
 
-        [TestCleanup]
+        [TearDown]
         public void Cleanup()
         {
             _serviceProvider?.Dispose();
@@ -59,7 +59,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test concurrent users with AMCode libraries
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task ConcurrentUsers_WithAMCodeLibraries_ShouldHandleLoad()
         {
             // Arrange
@@ -99,7 +99,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test high-volume processing
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task HighVolumeProcessing_WithAMCodeLibraries_ShouldHandleVolume()
         {
             // Arrange
@@ -154,7 +154,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test memory usage under load
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task MemoryUsage_UnderLoad_ShouldBeStable()
         {
             // Arrange
@@ -210,7 +210,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test CPU usage under load
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task CPUUsage_UnderLoad_ShouldBeEfficient()
         {
             // Arrange
@@ -259,7 +259,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test error handling under load
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task ErrorHandling_UnderLoad_ShouldBeRobust()
         {
             // Arrange
@@ -301,7 +301,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test provider selection under load
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task ProviderSelection_UnderLoad_ShouldDistributeEvenly()
         {
             // Arrange

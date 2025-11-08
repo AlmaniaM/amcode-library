@@ -8,11 +8,11 @@ using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
 using Moq;
 using FluentAssertions;
 using System.Text;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace AMCode.OCR.Tests.Providers;
 
-[TestClass]
+[TestFixture]
 public class SimpleAzureOCRServiceTests
 {
     private Mock<ComputerVisionClient> _mockClient = null!;
@@ -21,7 +21,7 @@ public class SimpleAzureOCRServiceTests
     private AzureComputerVisionOCRService _service = null!;
     private AzureOCRConfiguration _config = null!;
 
-    [TestInitialize]
+    [SetUp]
     public void Setup()
     {
         _mockClient = new Mock<ComputerVisionClient>();
@@ -39,7 +39,7 @@ public class SimpleAzureOCRServiceTests
         _service = new AzureComputerVisionOCRService(_mockClient.Object, _mockLogger.Object, _mockOptions.Object);
     }
 
-    [TestMethod]
+    [Test]
     public void ProviderName_ShouldReturnCorrectName()
     {
         // Act
@@ -49,7 +49,7 @@ public class SimpleAzureOCRServiceTests
         result.Should().Be("Azure Computer Vision");
     }
 
-    [TestMethod]
+    [Test]
     public void Capabilities_ShouldReturnCorrectCapabilities()
     {
         // Act
@@ -67,7 +67,7 @@ public class SimpleAzureOCRServiceTests
         capabilities.SupportedLanguages.Should().Contain("de");
     }
 
-    [TestMethod]
+    [Test]
     public void RequiresInternet_ShouldReturnTrue()
     {
         // Act
@@ -77,7 +77,7 @@ public class SimpleAzureOCRServiceTests
         result.Should().BeTrue();
     }
 
-    [TestMethod]
+    [Test]
     public void IsAvailable_ShouldReturnTrue()
     {
         // Act
@@ -87,7 +87,7 @@ public class SimpleAzureOCRServiceTests
         result.Should().BeTrue();
     }
 
-    [TestMethod]
+    [Test]
     public async Task CheckHealthAsync_WhenHealthy_ShouldReturnHealthy()
     {
         // Arrange
@@ -104,7 +104,7 @@ public class SimpleAzureOCRServiceTests
         result.LastChecked.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }
 
-    [TestMethod]
+    [Test]
     public async Task CheckHealthAsync_WhenUnhealthy_ShouldReturnUnhealthy()
     {
         // Arrange
@@ -121,7 +121,7 @@ public class SimpleAzureOCRServiceTests
         result.LastChecked.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }
 
-    [TestMethod]
+    [Test]
     public async Task ProcessImageAsync_WithValidImage_ShouldReturnOCRResult()
     {
         // Arrange
@@ -151,14 +151,14 @@ public class SimpleAzureOCRServiceTests
             }
         };
 
-        _mockClient.Setup(x => x.ReadInStreamAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+        _mockClient.Setup(x => x.ReadInStreamAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ReadInStreamHeaders { OperationLocation = $"https://test.com/operations/{operationId}" });
         
         _mockClient.Setup(x => x.GetReadResultAsync(Guid.Parse(operationId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(readResult);
 
         // Act
-        var result = await _service.ProcessImageAsync(imageStream, CancellationToken.None);
+        var result = await _service.ProcessImageAsync(imageStream, new OCRRequest(), CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -174,7 +174,7 @@ public class SimpleAzureOCRServiceTests
         result.TextBlocks[0].BoundingBox.Height.Should().Be(20);
     }
 
-    [TestMethod]
+    [Test]
     public async Task ProcessImageAsync_WithEmptyImage_ShouldReturnEmptyResult()
     {
         // Arrange
@@ -190,14 +190,14 @@ public class SimpleAzureOCRServiceTests
             }
         };
 
-        _mockClient.Setup(x => x.ReadInStreamAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+        _mockClient.Setup(x => x.ReadInStreamAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ReadInStreamHeaders { OperationLocation = $"https://test.com/operations/{operationId}" });
         
         _mockClient.Setup(x => x.GetReadResultAsync(Guid.Parse(operationId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(readResult);
 
         // Act
-        var result = await _service.ProcessImageAsync(imageStream, CancellationToken.None);
+        var result = await _service.ProcessImageAsync(imageStream, new OCRRequest(), CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -205,16 +205,16 @@ public class SimpleAzureOCRServiceTests
         result.TextBlocks.Should().BeEmpty();
     }
 
-    [TestMethod]
+    [Test]
     public async Task ProcessImageAsync_WhenServiceFails_ShouldThrowException()
     {
         // Arrange
         var imageStream = new MemoryStream(Encoding.UTF8.GetBytes("test image"));
         
-        _mockClient.Setup(x => x.ReadInStreamAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+        _mockClient.Setup(x => x.ReadInStreamAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Service error"));
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<Exception>(() => _service.ProcessImageAsync(imageStream));
+        Assert.ThrowsAsync<Exception>(() => _service.ProcessImageAsync(imageStream));
     }
 }

@@ -1,13 +1,12 @@
 using AMCode.AI.Models;
 using FluentAssertions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace AMCode.AI.Tests.Models;
 
-[TestClass]
 public class AIRequestTests
 {
-    [TestMethod]
+    [Fact]
     public void AIRequest_ShouldInitializeWithDefaultValues()
     {
         // Act
@@ -26,7 +25,7 @@ public class AIRequestTests
         request.Metadata.Should().NotBeNull().And.BeEmpty();
     }
     
-    [TestMethod]
+    [Fact]
     public void AIRequest_ShouldSetPropertiesCorrectly()
     {
         // Arrange

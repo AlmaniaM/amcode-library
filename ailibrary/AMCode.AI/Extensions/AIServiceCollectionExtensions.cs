@@ -30,6 +30,7 @@ public static class AIServiceCollectionExtensions
         services.Configure<GrokConfiguration>(configuration.GetSection("AI:Grok"));
         services.Configure<AWSBedrockConfiguration>(configuration.GetSection("AI:AWSBedrock"));
         services.Configure<OllamaConfiguration>(configuration.GetSection("AI:Ollama"));
+        services.Configure<LMStudioConfiguration>(configuration.GetSection("AI:LMStudio"));
         services.Configure<HuggingFaceConfiguration>(configuration.GetSection("AI:HuggingFace"));
         
         // Register HTTP clients
@@ -38,6 +39,7 @@ public static class AIServiceCollectionExtensions
         services.AddHttpClient<GrokProvider>();
         services.AddHttpClient<AWSBedrockProvider>();
         services.AddHttpClient<OllamaAIProvider>();
+        services.AddHttpClient<LMStudioAIProvider>();
         services.AddHttpClient<HuggingFaceAIProvider>();
         
         // Register providers
@@ -46,6 +48,7 @@ public static class AIServiceCollectionExtensions
         services.AddSingleton<IAIProvider, GrokProvider>();
         services.AddSingleton<IAIProvider, AWSBedrockProvider>();
         services.AddSingleton<IAIProvider, OllamaAIProvider>();
+        services.AddSingleton<IAIProvider, LMStudioAIProvider>();
         services.AddSingleton<IAIProvider, HuggingFaceAIProvider>();
         
         // Register services

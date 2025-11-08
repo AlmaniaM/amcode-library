@@ -30,7 +30,9 @@ public class PromptBuilderService
             var optionsText = options != null ? BuildOptionsText(options) : string.Empty;
             
             var prompt = $@"
-Please parse the following recipe text and extract structured information. Return the result as JSON in the following format:
+You are a recipe parser. Parse the following recipe text and return ONLY valid JSON. Do not include any explanations, code, or other text. Return ONLY the JSON object.
+
+Required JSON format:
 
 {{
   ""title"": ""Recipe Title"",
@@ -40,7 +42,7 @@ Please parse the following recipe text and extract structured information. Retur
       ""name"": ""ingredient name"",
       ""amount"": ""amount"",
       ""unit"": ""unit"",
-      ""text"": ""full ingredient text"",
+      ""text"": ""full original ingredient line exactly as written"",
       ""notes"": ""optional notes""
     }}
   ],
@@ -56,9 +58,27 @@ Please parse the following recipe text and extract structured information. Retur
   ""notes"": ""Additional notes or tips""
 }}
 
+**CRITICAL INGREDIENT EXAMPLES** - The ""text"" field MUST preserve the EXACT original line:
+
+If recipe text says: ""1 cup Sugar""
+Then ingredient should be: {{""name"": ""Sugar"", ""amount"": ""1"", ""unit"": ""cup"", ""text"": ""1 cup Sugar""}}
+
+If recipe text says: ""2 tablespoons olive oil""
+Then ingredient should be: {{""name"": ""olive oil"", ""amount"": ""2"", ""unit"": ""tablespoons"", ""text"": ""2 tablespoons olive oil""}}
+
+If recipe text says: ""Salt, to taste""
+Then ingredient should be: {{""name"": ""Salt"", ""amount"": """", ""unit"": """", ""text"": ""Salt, to taste""}}
+
+If recipe text says: ""1/2 cup of flour""
+Then ingredient should be: {{""name"": ""flour"", ""amount"": ""1/2"", ""unit"": ""cup"", ""text"": ""1/2 cup of flour""}}
+
+**The ""text"" field MUST contain the COMPLETE, ORIGINAL ingredient line exactly as written in the recipe.**
+
 Rules:
-- Extract ingredients as structured objects with name, amount, unit, and full text
-- Extract instructions as step-by-step strings
+- Return ONLY valid JSON - no code, no explanations, no markdown blocks
+- **CRITICAL**: The ""text"" field for each ingredient MUST be the complete original line from the recipe text
+- Extract ingredients as structured objects with name, amount, unit, and full text (preserve original)
+- Extract instructions as step-by-step strings - preserve the original instruction text
 - Convert times to minutes (e.g., ""30 minutes"" becomes 30)
 - Estimate confidence based on text clarity (0.0 to 1.0)
 - If information is missing, use null or empty string
@@ -70,7 +90,7 @@ Rules:
 Recipe text:
 {text}
 
-JSON response:";
+Return ONLY the JSON object:";
             
             return prompt.Trim();
         }

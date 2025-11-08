@@ -1,4 +1,4 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using AMCode.OCR;
 using AMCode.AI;
 using AMCode.Documents;
@@ -15,7 +15,7 @@ namespace AMCode.Phase5B.Testing
     /// Performance Optimization Tests for AMCode Libraries
     /// Tests performance benchmarks, load handling, and optimization strategies
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class PerformanceOptimizationTests
     {
         private ServiceProvider _serviceProvider;
@@ -25,7 +25,7 @@ namespace AMCode.Phase5B.Testing
         private IRecipeExportBuilder _exportBuilder;
         private IRecipeImageStorageService _storageService;
 
-        [TestInitialize]
+        [SetUp]
         public void Setup()
         {
             var services = new ServiceCollection();
@@ -50,7 +50,7 @@ namespace AMCode.Phase5B.Testing
             _storageService = _serviceProvider.GetRequiredService<IRecipeImageStorageService>();
         }
 
-        [TestCleanup]
+        [TearDown]
         public void Cleanup()
         {
             _serviceProvider?.Dispose();
@@ -59,7 +59,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test OCR processing performance with optimization
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task OCRProcessing_WithOptimization_ShouldMeetPerformanceBenchmarks()
         {
             // Arrange
@@ -104,7 +104,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test AI parsing performance with optimization
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task AIParsing_WithOptimization_ShouldMeetPerformanceBenchmarks()
         {
             // Arrange
@@ -142,7 +142,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test document generation performance
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task DocumentGeneration_WithOptimization_ShouldMeetPerformanceBenchmarks()
         {
             // Arrange
@@ -180,7 +180,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test export generation performance
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task ExportGeneration_WithOptimization_ShouldMeetPerformanceBenchmarks()
         {
             // Arrange
@@ -218,7 +218,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test concurrent processing performance
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task ConcurrentProcessing_WithAMCodeLibraries_ShouldHandleLoad()
         {
             // Arrange
@@ -258,7 +258,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test memory usage optimization
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task MemoryUsage_WithOptimization_ShouldBeEfficient()
         {
             // Arrange
@@ -300,7 +300,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test cost optimization strategies
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task CostOptimization_WithSmartProviderSelection_ShouldMinimizeCosts()
         {
             // Arrange

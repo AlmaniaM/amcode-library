@@ -1,4 +1,4 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using FluentAssertions;
 using AMCode.OCR.Models;
 using AMCode.OCR.Providers;
@@ -9,14 +9,14 @@ using Moq;
 
 namespace AMCode.OCR.Tests.Providers;
 
-[TestClass]
+[TestFixture]
 public class SimpleOCRProviderTests
 {
     private Mock<ILogger> _mockLogger = null!;
     private Mock<IHttpClientFactory> _mockHttpClientFactory = null!;
     private TestOCRProvider _provider = null!;
 
-    [TestInitialize]
+    [SetUp]
     public void Setup()
     {
         _mockLogger = new Mock<ILogger>();
@@ -24,7 +24,7 @@ public class SimpleOCRProviderTests
         _provider = new TestOCRProvider(_mockLogger.Object, _mockHttpClientFactory.Object);
     }
 
-    [TestMethod]
+    [Test]
     public void ProviderName_ShouldReturnCorrectName()
     {
         // Act
@@ -34,7 +34,7 @@ public class SimpleOCRProviderTests
         result.Should().Be("Test OCR Provider");
     }
 
-    [TestMethod]
+    [Test]
     public void RequiresInternet_ShouldReturnFalse()
     {
         // Act
@@ -44,7 +44,7 @@ public class SimpleOCRProviderTests
         result.Should().BeFalse();
     }
 
-    [TestMethod]
+    [Test]
     public void IsAvailable_ShouldReturnTrue()
     {
         // Act
@@ -54,7 +54,7 @@ public class SimpleOCRProviderTests
         result.Should().BeTrue();
     }
 
-    [TestMethod]
+    [Test]
     public void Capabilities_ShouldReturnValidCapabilities()
     {
         // Act
@@ -67,7 +67,7 @@ public class SimpleOCRProviderTests
         capabilities.SupportsConfidenceScores.Should().BeTrue();
     }
 
-    [TestMethod]
+    [Test]
     public async Task ProcessImageAsync_WithValidStream_ShouldReturnResult()
     {
         // Arrange
@@ -83,7 +83,7 @@ public class SimpleOCRProviderTests
         result.Provider.Should().Be("Test OCR Provider");
     }
 
-    [TestMethod]
+    [Test]
     public async Task ProcessImageAsync_WithOptions_ShouldReturnResult()
     {
         // Arrange
@@ -104,7 +104,7 @@ public class SimpleOCRProviderTests
         result.Provider.Should().Be("Test OCR Provider");
     }
 
-    [TestMethod]
+    [Test]
     public async Task CheckHealthAsync_ShouldReturnHealthyStatus()
     {
         // Arrange
@@ -120,7 +120,7 @@ public class SimpleOCRProviderTests
         health.Status.Should().Be("Healthy");
     }
 
-    [TestMethod]
+    [Test]
     public async Task GetCostEstimateAsync_ShouldReturnZero()
     {
         // Arrange
@@ -134,7 +134,7 @@ public class SimpleOCRProviderTests
         cost.Should().Be(0);
     }
 
-    [TestMethod]
+    [Test]
     public async Task ProcessBatchAsync_WithMultipleStreams_ShouldReturnResults()
     {
         // Arrange
@@ -155,7 +155,7 @@ public class SimpleOCRProviderTests
         results.All(r => !string.IsNullOrEmpty(r.Text)).Should().BeTrue();
     }
 
-    [TestMethod]
+    [Test]
     public void CanProcess_WithValidOptions_ShouldReturnTrue()
     {
         // Arrange
@@ -172,7 +172,7 @@ public class SimpleOCRProviderTests
         canProcess.Should().BeTrue();
     }
 
-    [TestMethod]
+    [Test]
     public void GetEstimatedProcessingTime_ShouldReturnReasonableTime()
     {
         // Arrange
@@ -187,7 +187,7 @@ public class SimpleOCRProviderTests
         time.Should().BeLessThan(TimeSpan.FromMinutes(1));
     }
 
-    [TestMethod]
+    [Test]
     public void GetReliabilityScore_ShouldReturnValidScore()
     {
         // Arrange
@@ -201,7 +201,7 @@ public class SimpleOCRProviderTests
         score.Should().BeLessOrEqualTo(1.0);
     }
 
-    [TestMethod]
+    [Test]
     public void GetQualityScore_ShouldReturnValidScore()
     {
         // Arrange

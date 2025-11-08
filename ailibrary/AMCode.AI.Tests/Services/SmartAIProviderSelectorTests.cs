@@ -3,12 +3,11 @@ using AMCode.AI.Models;
 using AMCode.AI.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 using Moq;
 
 namespace AMCode.AI.Tests.Services;
 
-[TestClass]
 public class SmartAIProviderSelectorTests
 {
     private Mock<ILogger<SmartAIProviderSelector>> _mockLogger;
@@ -16,8 +15,7 @@ public class SmartAIProviderSelectorTests
     private List<IAIProvider> _providers;
     private SmartAIProviderSelector _selector;
     
-    [TestInitialize]
-    public void Setup()
+    public SmartAIProviderSelectorTests()
     {
         _mockLogger = new Mock<ILogger<SmartAIProviderSelector>>();
         _mockCostAnalyzer = new Mock<ICostAnalyzer>();
@@ -35,7 +33,7 @@ public class SmartAIProviderSelectorTests
         _selector = new SmartAIProviderSelector(_providers, _mockLogger.Object, _mockCostAnalyzer.Object, AIProviderSelectionStrategy.Balanced);
     }
     
-    [TestMethod]
+    [Fact]
     public async Task SelectBestProviderAsync_CostOptimized_ShouldSelectCheapestProvider()
     {
         // Arrange
@@ -54,7 +52,7 @@ public class SmartAIProviderSelectorTests
         result.ProviderName.Should().Be("Provider3"); // Cheapest
     }
     
-    [TestMethod]
+    [Fact]
     public async Task SelectBestProviderAsync_PerformanceOptimized_ShouldSelectFastestProvider()
     {
         // Arrange
@@ -73,7 +71,7 @@ public class SmartAIProviderSelectorTests
         result.ProviderName.Should().Be("Provider1"); // Fastest
     }
     
-    [TestMethod]
+    [Fact]
     public async Task SelectBestProviderAsync_CapabilityOptimized_ShouldSelectProviderWithRequiredCapabilities()
     {
         // Arrange
@@ -93,7 +91,7 @@ public class SmartAIProviderSelectorTests
         result.ProviderName.Should().Be("Provider1"); // Has function calling
     }
     
-    [TestMethod]
+    [Fact]
     public async Task GetAvailableProvidersAsync_ShouldReturnAllAvailableProviders()
     {
         // Act
@@ -106,7 +104,7 @@ public class SmartAIProviderSelectorTests
         result.Should().Contain(p => p.ProviderName == "Provider3");
     }
     
-    [TestMethod]
+    [Fact]
     public async Task GetProviderHealthAsync_ShouldReturnHealthStatus()
     {
         // Arrange
@@ -131,7 +129,7 @@ public class SmartAIProviderSelectorTests
         result.Status.Should().Be("Healthy");
     }
     
-    [TestMethod]
+    [Fact]
     public async Task GetProviderHealthAsync_WithNonExistentProvider_ShouldReturnUnhealthy()
     {
         // Act
@@ -143,7 +141,7 @@ public class SmartAIProviderSelectorTests
         result.Status.Should().Be("Provider not found");
     }
     
-    [TestMethod]
+    [Fact]
     public async Task GetCostEstimateAsync_ShouldReturnCostEstimate()
     {
         // Arrange

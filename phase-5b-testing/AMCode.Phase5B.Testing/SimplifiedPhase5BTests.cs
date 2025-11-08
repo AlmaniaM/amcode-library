@@ -1,4 +1,4 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using AMCode.OCR;
 using AMCode.AI;
 using AMCode.Documents.Docx.Interfaces;
@@ -14,7 +14,7 @@ namespace AMCode.Phase5B.Testing
     /// <summary>
     /// Simplified Phase 5B Tests using actual AMCode library interfaces
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class SimplifiedPhase5BTests
     {
         private ServiceProvider _serviceProvider;
@@ -24,7 +24,7 @@ namespace AMCode.Phase5B.Testing
         private IRecipeExportBuilder _exportBuilder;
         private ISimpleFileStorage _storageService;
 
-        [TestInitialize]
+        [SetUp]
         public void Setup()
         {
             var services = new ServiceCollection();
@@ -49,7 +49,7 @@ namespace AMCode.Phase5B.Testing
             _storageService = _serviceProvider.GetRequiredService<ISimpleFileStorage>();
         }
 
-        [TestCleanup]
+        [TearDown]
         public void Cleanup()
         {
             _serviceProvider?.Dispose();
@@ -58,7 +58,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test complete recipe processing workflow
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task CompleteRecipeWorkflow_WithAMCodeLibraries_ShouldWorkEndToEnd()
         {
             // Arrange
@@ -132,7 +132,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test performance benchmarks
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task PerformanceOptimization_ShouldMeetBenchmarks()
         {
             // Arrange
@@ -194,7 +194,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test concurrent processing
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task ConcurrentProcessing_WithAMCodeLibraries_ShouldHandleLoad()
         {
             // Arrange
@@ -234,7 +234,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test error handling
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task ErrorHandling_ShouldBeRobust()
         {
             // Arrange
@@ -254,7 +254,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test production readiness
         /// </summary>
-        [TestMethod]
+        [Test]
         public void ProductionReadiness_ShouldBeConfirmed()
         {
             // Arrange

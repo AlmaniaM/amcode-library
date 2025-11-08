@@ -1,13 +1,13 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using FluentAssertions;
 using AMCode.OCR.Models;
 
 namespace AMCode.OCR.Tests.Models;
 
-[TestClass]
+[TestFixture]
 public class OCRProviderCapabilitiesTests
 {
-    [TestMethod]
+    [Test]
     public void OCRProviderCapabilities_ShouldInitializeWithDefaultValues()
     {
         // Act
@@ -26,7 +26,7 @@ public class OCRProviderCapabilitiesTests
         capabilities.AverageResponseTime.Should().Be(TimeSpan.Zero);
     }
     
-    [TestMethod]
+    [Test]
     public void OCRProviderCapabilities_ShouldSetPropertiesCorrectly()
     {
         // Arrange

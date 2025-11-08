@@ -1,4 +1,4 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using AMCode.OCR;
 using AMCode.AI;
 using AMCode.Documents;
@@ -15,7 +15,7 @@ namespace AMCode.Phase5B.Testing
     /// End-to-End Testing for Complete Recipe Processing Workflow
     /// Tests the complete flow: Image → OCR → AI Parsing → Recipe Creation → Document Generation → Export → Storage
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class CompleteRecipeWorkflowTests
     {
         private ServiceProvider _serviceProvider;
@@ -25,7 +25,7 @@ namespace AMCode.Phase5B.Testing
         private IRecipeExportBuilder _exportBuilder;
         private IRecipeImageStorageService _storageService;
 
-        [TestInitialize]
+        [SetUp]
         public void Setup()
         {
             var services = new ServiceCollection();
@@ -50,7 +50,7 @@ namespace AMCode.Phase5B.Testing
             _storageService = _serviceProvider.GetRequiredService<IRecipeImageStorageService>();
         }
 
-        [TestCleanup]
+        [TearDown]
         public void Cleanup()
         {
             _serviceProvider?.Dispose();
@@ -59,7 +59,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test complete recipe processing workflow with AMCode libraries
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task CompleteRecipeWorkflow_WithAMCodeLibraries_ShouldWorkEndToEnd()
         {
             // Arrange
@@ -140,7 +140,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test error handling and recovery mechanisms
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task CompleteRecipeWorkflow_WithErrorHandling_ShouldRecoverGracefully()
         {
             // Arrange
@@ -160,7 +160,7 @@ namespace AMCode.Phase5B.Testing
         /// <summary>
         /// Test performance benchmarks
         /// </summary>
-        [TestMethod]
+        [Test]
         public async Task CompleteRecipeWorkflow_Performance_ShouldMeetBenchmarks()
         {
             // Arrange

@@ -1,13 +1,13 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using FluentAssertions;
 using AMCode.OCR.Models;
 
 namespace AMCode.OCR.Tests.Models;
 
-[TestClass]
+[TestFixture]
 public class OCRResultTests
 {
-    [TestMethod]
+    [Test]
     public void OCRResult_ShouldInitializeWithDefaultValues()
     {
         // Act
@@ -30,7 +30,7 @@ public class OCRResultTests
         result.Error.Should().BeEmpty();
     }
 
-    [TestMethod]
+    [Test]
     public void OCRResult_ShouldSetPropertiesCorrectly()
     {
         // Arrange
@@ -81,7 +81,7 @@ public class OCRResultTests
         result.Error.Should().BeEmpty();
     }
 
-    [TestMethod]
+    [Test]
     public void WordCount_WithText_ShouldReturnCorrectCount()
     {
         // Arrange
@@ -97,7 +97,7 @@ public class OCRResultTests
         wordCount.Should().Be(8);
     }
 
-    [TestMethod]
+    [Test]
     public void WordCount_WithEmptyText_ShouldReturnZero()
     {
         // Arrange
@@ -113,7 +113,7 @@ public class OCRResultTests
         wordCount.Should().Be(0);
     }
 
-    [TestMethod]
+    [Test]
     public void WordCount_WithWhitespaceOnly_ShouldReturnZero()
     {
         // Arrange
@@ -129,7 +129,7 @@ public class OCRResultTests
         wordCount.Should().Be(0);
     }
 
-    [TestMethod]
+    [Test]
     public void LineCount_WithText_ShouldReturnCorrectCount()
     {
         // Arrange
@@ -145,7 +145,7 @@ public class OCRResultTests
         lineCount.Should().Be(3);
     }
 
-    [TestMethod]
+    [Test]
     public void LineCount_WithEmptyText_ShouldReturnZero()
     {
         // Arrange
@@ -161,7 +161,7 @@ public class OCRResultTests
         lineCount.Should().Be(0);
     }
 
-    [TestMethod]
+    [Test]
     public void LineCount_WithSingleLine_ShouldReturnOne()
     {
         // Arrange
@@ -177,7 +177,7 @@ public class OCRResultTests
         lineCount.Should().Be(1);
     }
 
-    [TestMethod]
+    [Test]
     public void OCRResult_WithTextBlocks_ShouldCalculatePropertiesCorrectly()
     {
         // Arrange
@@ -202,7 +202,7 @@ public class OCRResultTests
         result.ContainsPrintedText.Should().BeTrue();
     }
 
-    [TestMethod]
+    [Test]
     public void OCRResult_WithError_ShouldSetErrorCorrectly()
     {
         // Arrange

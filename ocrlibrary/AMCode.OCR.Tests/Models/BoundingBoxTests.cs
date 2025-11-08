@@ -1,13 +1,13 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using FluentAssertions;
 using AMCode.OCR.Models;
 
 namespace AMCode.OCR.Tests.Models;
 
-[TestClass]
+[TestFixture]
 public class BoundingBoxTests
 {
-    [TestMethod]
+    [Test]
     public void BoundingBox_ShouldInitializeWithDefaultValues()
     {
         // Act
@@ -20,7 +20,7 @@ public class BoundingBoxTests
         boundingBox.Height.Should().Be(0);
     }
 
-    [TestMethod]
+    [Test]
     public void BoundingBox_ShouldSetPropertiesCorrectly()
     {
         // Arrange
@@ -45,7 +45,7 @@ public class BoundingBoxTests
         boundingBox.Height.Should().Be(height);
     }
 
-    [TestMethod]
+    [Test]
     public void BoundingBox_WithNegativeValues_ShouldAcceptThem()
     {
         // Arrange
@@ -64,7 +64,7 @@ public class BoundingBoxTests
         boundingBox.Height.Should().Be(50);
     }
 
-    [TestMethod]
+    [Test]
     public void BoundingBox_WithZeroDimensions_ShouldBeValid()
     {
         // Arrange
@@ -83,7 +83,7 @@ public class BoundingBoxTests
         boundingBox.Height.Should().Be(0);
     }
 
-    [TestMethod]
+    [Test]
     public void BoundingBox_WithLargeValues_ShouldAcceptThem()
     {
         // Arrange
@@ -102,7 +102,7 @@ public class BoundingBoxTests
         boundingBox.Height.Should().Be(int.MaxValue);
     }
 
-    [TestMethod]
+    [Test]
     public void BoundingBox_Equality_ShouldWorkCorrectly()
     {
         // Arrange

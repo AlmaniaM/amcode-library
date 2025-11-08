@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace AMCode.AI.Providers;
 
@@ -214,6 +215,7 @@ public class OllamaAIProvider : GenericAIProvider
             model = _config.Model,
             prompt = prompt,
             stream = false,
+            format = "json", // Force JSON output format
             options = new
             {
                 temperature = options.Temperature ?? _config.Temperature,
@@ -222,6 +224,151 @@ public class OllamaAIProvider : GenericAIProvider
                 use_gpu = _config.UseGpu
             }
         };
+    }
+    
+    /// <summary>
+    /// Override ParseJsonResponse to extract JSON from mixed responses
+    /// </summary>
+    protected override ParsedRecipeResult ParseJsonResponse(string jsonResponse, string providerName, decimal cost, int tokensUsed)
+    {
+        try
+        {
+            _logger.LogDebug("Processing Ollama response (length: {Length})", jsonResponse.Length);
+            
+            // Extract JSON from response if it contains code blocks or extra text
+            var extractedJson = ExtractJsonFromResponse(jsonResponse);
+            
+            if (string.IsNullOrWhiteSpace(extractedJson))
+            {
+                _logger.LogWarning("No JSON found in Ollama response. Response preview: {Preview}", 
+                    jsonResponse.Length > 200 ? jsonResponse.Substring(0, 200) + "..." : jsonResponse);
+                throw new InvalidOperationException("No JSON found in Ollama response");
+            }
+            
+            _logger.LogDebug("Extracted JSON from Ollama response (length: {Length})", extractedJson.Length);
+            
+            // Log a preview of the extracted JSON for debugging (first 500 chars) - Information level
+            var jsonPreview = extractedJson.Length > 500 ? extractedJson.Substring(0, 500) + "..." : extractedJson;
+            _logger.LogInformation("Extracted JSON preview: {Preview}", jsonPreview);
+            
+            var recipe = JsonSerializer.Deserialize<ParsedRecipe>(extractedJson, _jsonOptions);
+            if (recipe == null)
+            {
+                throw new InvalidOperationException("Failed to deserialize recipe from JSON response");
+            }
+            
+            // Log ingredient details for debugging (Information level so it shows up)
+            if (recipe.Ingredients != null && recipe.Ingredients.Count > 0)
+            {
+                _logger.LogInformation("Parsed {Count} ingredients from Ollama response", recipe.Ingredients.Count);
+                foreach (var ingredient in recipe.Ingredients.Take(3)) // Log first 3 for debugging
+                {
+                    _logger.LogInformation("Ingredient - Name: '{Name}', Amount: '{Amount}', Unit: '{Unit}', Text: '{Text}'", 
+                        ingredient.Name, ingredient.Amount, ingredient.Unit, ingredient.Text ?? "(empty)");
+                }
+            }
+            
+            return new ParsedRecipeResult
+            {
+                Recipes = new[] { recipe },
+                Confidence = recipe.Confidence,
+                Source = providerName,
+                ProcessingTime = DateTime.UtcNow,
+                Cost = cost,
+                TokensUsed = tokensUsed,
+                RawResponse = jsonResponse // Keep original response for debugging
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to parse JSON response from {Provider}. Response preview: {Preview}", 
+                providerName, jsonResponse.Length > 500 ? jsonResponse.Substring(0, 500) + "..." : jsonResponse);
+            throw new InvalidOperationException($"Failed to parse JSON response from {providerName}: {ex.Message}", ex);
+        }
+    }
+    
+    /// <summary>
+    /// Extract JSON from a response that may contain code blocks, explanations, or other text
+    /// </summary>
+    private string ExtractJsonFromResponse(string response)
+    {
+        if (string.IsNullOrWhiteSpace(response))
+        {
+            return string.Empty;
+        }
+        
+        // Try to find JSON in markdown code blocks first
+        var jsonBlockMatch = Regex.Match(
+            response, 
+            @"```(?:json)?\s*(\{[\s\S]*?\})\s*```",
+            RegexOptions.IgnoreCase
+        );
+        if (jsonBlockMatch.Success)
+        {
+            return jsonBlockMatch.Groups[1].Value;
+        }
+        
+        // Try to find JSON object directly
+        var jsonObjectMatch = Regex.Match(
+            response,
+            @"(\{[\s\S]*\})",
+            RegexOptions.Singleline
+        );
+        if (jsonObjectMatch.Success)
+        {
+            var jsonCandidate = jsonObjectMatch.Groups[1].Value;
+            // Validate it's valid JSON by trying to parse it
+            try
+            {
+                using var doc = JsonDocument.Parse(jsonCandidate);
+                return jsonCandidate;
+            }
+            catch
+            {
+                // Not valid JSON, continue searching
+            }
+        }
+        
+        // Try to find JSON after common prefixes
+        var prefixes = new[] { "JSON:", "json:", "Response:", "response:", "```json", "```" };
+        foreach (var prefix in prefixes)
+        {
+            var index = response.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
+            if (index >= 0)
+            {
+                var afterPrefix = response.Substring(index + prefix.Length).TrimStart();
+                var jsonMatch = Regex.Match(
+                    afterPrefix,
+                    @"(\{[\s\S]*\})",
+                    RegexOptions.Singleline
+                );
+                if (jsonMatch.Success)
+                {
+                    try
+                    {
+                        var jsonCandidate = jsonMatch.Groups[1].Value;
+                        using var doc = JsonDocument.Parse(jsonCandidate);
+                        return jsonCandidate;
+                    }
+                    catch
+                    {
+                        // Continue searching
+                    }
+                }
+            }
+        }
+        
+        // Last resort: try parsing the entire response as JSON
+        try
+        {
+            using var doc = JsonDocument.Parse(response);
+            return response;
+        }
+        catch
+        {
+            // Return empty if nothing works
+            return string.Empty;
+        }
     }
 }
 

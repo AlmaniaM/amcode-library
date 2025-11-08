@@ -1,13 +1,12 @@
 using AMCode.AI.Models;
 using FluentAssertions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace AMCode.AI.Tests.Models;
 
-[TestClass]
 public class AIProviderCapabilitiesTests
 {
-    [TestMethod]
+    [Fact]
     public void AIProviderCapabilities_ShouldInitializeWithDefaultValues()
     {
         // Act
@@ -32,7 +31,7 @@ public class AIProviderCapabilitiesTests
         capabilities.MaxRequestsPerDay.Should().Be(0);
     }
     
-    [TestMethod]
+    [Fact]
     public void AIProviderCapabilities_ShouldSetPropertiesCorrectly()
     {
         // Arrange

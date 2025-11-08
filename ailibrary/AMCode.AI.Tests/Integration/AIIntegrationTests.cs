@@ -1,5 +1,8 @@
 using AMCode.AI.Models;
 using AMCode.AI.Services;
+using AMCode.AI.Factories;
+using AMCode.AI.Providers;
+using AMCode.AI.Extensions;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,7 +36,7 @@ public class AIIntegrationTests
             })
             .Build();
 
-        services.AddLogging(builder => builder.AddConsole());
+        services.AddLogging();
         services.AddHttpClient();
         services.AddMultiCloudAI(configuration);
 
@@ -133,19 +136,10 @@ public class AIIntegrationTests
     {
         // Arrange
         var costAnalyzer = _serviceProvider.GetRequiredService<ICostAnalyzer>();
-        var cost = new CostRecord
-        {
-            ProviderName = "OpenAI",
-            Operation = "ParseText",
-            InputTokens = 100,
-            OutputTokens = 50,
-            Cost = 0.001m,
-            Timestamp = DateTime.UtcNow
-        };
 
         // Act
-        costAnalyzer.RecordCostAsync(cost).Wait();
-        var totalCost = costAnalyzer.CalculateCostAsync(DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(1)).Result;
+        costAnalyzer.RecordCost("OpenAI", 0.001m);
+        var totalCost = costAnalyzer.GetTotalCost("OpenAI");
 
         // Assert
         totalCost.Should().Be(0.001m);

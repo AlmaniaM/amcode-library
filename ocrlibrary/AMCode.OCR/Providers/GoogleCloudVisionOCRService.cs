@@ -27,7 +27,9 @@ public class GoogleCloudVisionOCRService : IOCRProvider
         ILogger<GoogleCloudVisionOCRService> logger,
         IOptions<GoogleVisionConfiguration> config)
     {
-        _client = client ?? throw new ArgumentNullException(nameof(client));
+        // Allow null client - provider will be marked as unavailable if credentials are missing
+        // This enables graceful fallback to other providers instead of failing during initialization
+        _client = client;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
     }
@@ -92,6 +94,11 @@ public class GoogleCloudVisionOCRService : IOCRProvider
     /// <returns>OCR result containing extracted text and metadata</returns>
     public async Task<OCRResult> ProcessImageAsync(Stream imageStream, OCRRequest options, CancellationToken cancellationToken = default)
     {
+        if (_client == null)
+        {
+            throw new InvalidOperationException("Google Cloud Vision client is not available. Please check your credentials configuration.");
+        }
+
         try
         {
             _logger.LogInformation("Processing image with Google Cloud Vision");
@@ -125,6 +132,21 @@ public class GoogleCloudVisionOCRService : IOCRProvider
     /// <returns>Health status information</returns>
     public async Task<OCRProviderHealth> CheckHealthAsync()
     {
+        if (_client == null)
+        {
+            return new OCRProviderHealth
+            {
+                IsHealthy = false,
+                IsAvailable = false,
+                Status = "Client not initialized",
+                ResponseTime = TimeSpan.Zero,
+                LastChecked = DateTime.UtcNow,
+                ErrorMessage = "Google Cloud Vision client not initialized - check credentials configuration",
+                SuccessRate = 0.0,
+                AverageProcessingTime = TimeSpan.Zero
+            };
+        }
+
         try
         {
             var startTime = DateTime.UtcNow;

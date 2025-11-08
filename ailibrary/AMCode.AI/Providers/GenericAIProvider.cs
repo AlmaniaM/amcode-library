@@ -1,6 +1,7 @@
 using AMCode.AI.Models;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace AMCode.AI.Providers;
 
@@ -150,6 +151,7 @@ JSON response:";
     {
         try
         {
+            Debug.WriteLine($"Extracted LLM text for parsed recipe: {jsonResponse}");
             var recipe = JsonSerializer.Deserialize<ParsedRecipe>(jsonResponse, _jsonOptions);
             if (recipe == null)
             {

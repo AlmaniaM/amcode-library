@@ -1,4 +1,4 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using System.Diagnostics;
 using System.Text;
 
@@ -7,13 +7,13 @@ namespace AMCode.Phase5B.Testing
     /// <summary>
     /// Phase 5B Test Runner - Comprehensive testing and optimization execution
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class Phase5BTestRunner
     {
         private readonly StringBuilder _testResults = new();
         private readonly Stopwatch _totalStopwatch = new();
 
-        [TestMethod]
+        [Test]
         public async Task RunPhase5BCompleteTestSuite()
         {
             _totalStopwatch.Start();

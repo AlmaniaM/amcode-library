@@ -1,9 +1,11 @@
-﻿namespace AMCode.Phase5B.Testing;
+﻿using NUnit.Framework;
 
-[TestClass]
+namespace AMCode.Phase5B.Testing;
+
+[TestFixture]
 public sealed class Test1
 {
-    [TestMethod]
+    [Test]
     public void TestMethod1()
     {
     }

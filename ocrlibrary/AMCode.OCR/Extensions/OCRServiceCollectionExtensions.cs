@@ -40,31 +40,76 @@ public static class OCRServiceCollectionExtensions
         services.AddSingleton<ComputerVisionClient>(provider =>
         {
             var config = provider.GetRequiredService<IOptions<AzureOCRConfiguration>>().Value;
-            var credentials = new ApiKeyServiceClientCredentials(config.SubscriptionKey);
-            return new ComputerVisionClient(credentials)
+            var logger = provider.GetRequiredService<ILogger<AzureComputerVisionOCRService>>();
+            
+            try
             {
-                Endpoint = config.Endpoint
-            };
+                if (string.IsNullOrEmpty(config.SubscriptionKey) || string.IsNullOrEmpty(config.Endpoint))
+                {
+                    logger.LogWarning("Azure Computer Vision credentials not configured (SubscriptionKey or Endpoint missing). Provider will be marked as unavailable.");
+                    return null!; // Return null to allow provider initialization, but mark it as unavailable
+                }
+                
+                var credentials = new ApiKeyServiceClientCredentials(config.SubscriptionKey);
+                return new ComputerVisionClient(credentials)
+                {
+                    Endpoint = config.Endpoint
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to initialize Azure Computer Vision client. Provider will be marked as unavailable. Error: {Message}", ex.Message);
+                return null!; // Return null to allow provider initialization, but mark it as unavailable
+            }
         });
 
         // Register AWS Textract client
         services.AddSingleton<IAmazonTextract>(provider =>
         {
             var config = provider.GetRequiredService<IOptions<AWSTextractConfiguration>>().Value;
-            var clientConfig = new AmazonTextractConfig
+            var logger = provider.GetRequiredService<ILogger<AWSTextractOCRService>>();
+            
+            try
             {
-                RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(config.Region)
-            };
-            return new AmazonTextractClient(config.AccessKeyId, config.SecretAccessKey, clientConfig);
+                if (string.IsNullOrEmpty(config.AccessKeyId) || string.IsNullOrEmpty(config.SecretAccessKey) || string.IsNullOrEmpty(config.Region))
+                {
+                    logger.LogWarning("AWS Textract credentials not configured (AccessKeyId, SecretAccessKey, or Region missing). Provider will be marked as unavailable.");
+                    return null!; // Return null to allow provider initialization, but mark it as unavailable
+                }
+                
+                var clientConfig = new AmazonTextractConfig
+                {
+                    RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(config.Region)
+                };
+                return new AmazonTextractClient(config.AccessKeyId, config.SecretAccessKey, clientConfig);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to initialize AWS Textract client. Provider will be marked as unavailable. Error: {Message}", ex.Message);
+                return null!; // Return null to allow provider initialization, but mark it as unavailable
+            }
         });
 
         // Register Google Cloud Vision client
         services.AddSingleton<ImageAnnotatorClient>(provider =>
         {
             var config = provider.GetRequiredService<IOptions<GoogleVisionConfiguration>>().Value;
+            var logger = provider.GetRequiredService<ILogger<GoogleCloudVisionOCRService>>();
             
-            // Use default credentials for now
-            return ImageAnnotatorClient.Create();
+            try
+            {
+                // Use default credentials (Application Default Credentials)
+                // If credentials are not found, this will throw and return null
+                // The provider's IsAvailable check will then return false
+                return ImageAnnotatorClient.Create();
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to initialize Google Cloud Vision client. Provider will be marked as unavailable. Error: {Message}", ex.Message);
+                // Return null to allow provider initialization, but mark it as unavailable
+                // This allows fallback to other providers instead of failing completely
+                return null!; // Use null-forgiving operator since provider handles null client
+            }
         });
 
         // Register OCR providers
@@ -153,6 +198,7 @@ public static class OCRServiceCollectionExtensions
         });
 
         services.AddSingleton<IOCRProvider, GoogleCloudVisionOCRService>();
+        services.AddSingleton<IOCRProviderSelector, SmartOCRProviderSelector>();
         services.AddSingleton<IOCRService, EnhancedHybridOCRService>();
 
         return services;

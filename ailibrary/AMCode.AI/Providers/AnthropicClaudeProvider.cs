@@ -9,7 +9,19 @@ using System.Text;
 namespace AMCode.AI.Providers;
 
 /// <summary>
-/// Anthropic Claude provider for recipe parsing
+/// Anthropic Claude provider for recipe parsing.
+/// 
+/// <para>
+/// Model Selection: This provider supports selection from Anthropic's pre-built models via the Model configuration property.
+/// Available models include: claude-3-opus, claude-3-sonnet, claude-3-haiku, claude-3-5-sonnet, claude-3-5-haiku.
+/// Users can configure their preferred model in appsettings.json under "AI:Anthropic:Model".
+/// </para>
+/// 
+/// <para>
+/// Custom Models: Anthropic does NOT support custom models or fine-tuning for general users.
+/// Custom model creation is only available to enterprise customers for specialized use cases (e.g., "Claude Gov" for government applications).
+/// The SupportsCustomModels capability is correctly set to false.
+/// </para>
 /// </summary>
 public class AnthropicClaudeProvider : GenericAIProvider
 {
@@ -21,6 +33,11 @@ public class AnthropicClaudeProvider : GenericAIProvider
     public override bool RequiresInternet => true;
     public override bool IsAvailable => _httpClient != null;
     
+    /// <summary>
+    /// Provider capabilities for Anthropic Claude.
+    /// Note: SupportsCustomModels is false because Anthropic only offers pre-built models (no custom model creation for general users).
+    /// Model selection is available via the Model configuration property.
+    /// </summary>
     public override AIProviderCapabilities Capabilities => new AIProviderCapabilities
     {
         SupportsStreaming = true,
@@ -33,7 +50,7 @@ public class AnthropicClaudeProvider : GenericAIProvider
         CostPerToken = _config.CostPerInputToken,
         CostPerRequest = 0.008m,
         AverageResponseTime = TimeSpan.FromSeconds(2.5),
-        SupportsCustomModels = false,
+        SupportsCustomModels = false, // Anthropic does not support custom models for general users
         SupportsFineTuning = false,
         SupportsEmbeddings = false,
         SupportsModeration = false,

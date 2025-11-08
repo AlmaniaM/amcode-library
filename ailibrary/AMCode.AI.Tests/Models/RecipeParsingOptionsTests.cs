@@ -1,13 +1,12 @@
 using AMCode.AI.Models;
 using FluentAssertions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace AMCode.AI.Tests.Models;
 
-[TestClass]
 public class RecipeParsingOptionsTests
 {
-    [TestMethod]
+    [Fact]
     public void RecipeParsingOptions_ShouldInitializeWithDefaultValues()
     {
         // Act
@@ -29,7 +28,7 @@ public class RecipeParsingOptionsTests
         options.ValidateData.Should().BeTrue();
     }
     
-    [TestMethod]
+    [Fact]
     public void RecipeParsingOptions_ShouldSetPropertiesCorrectly()
     {
         // Arrange

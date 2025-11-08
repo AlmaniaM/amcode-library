@@ -1,4 +1,4 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using FluentAssertions;
 using Moq;
 using Microsoft.Extensions.Logging;
@@ -9,14 +9,14 @@ using AMCode.OCR.Enums;
 
 namespace AMCode.OCR.Tests.Services;
 
-[TestClass]
+[TestFixture]
 public class SmartOCRProviderSelectorTests
 {
     private Mock<ILogger<SmartOCRProviderSelector>> _mockLogger = null!;
     private List<IOCRProvider> _providers = null!;
     private SmartOCRProviderSelector _selector = null!;
     
-    [TestInitialize]
+    [SetUp]
     public void Setup()
     {
         _mockLogger = new Mock<ILogger<SmartOCRProviderSelector>>();
@@ -30,7 +30,7 @@ public class SmartOCRProviderSelectorTests
         _selector = new SmartOCRProviderSelector(_providers, _mockLogger.Object, OCRProviderSelectionStrategy.PerformanceOptimized);
     }
     
-    [TestMethod]
+    [Test]
     public async Task SelectBestProviderAsync_PerformanceOptimized_ShouldSelectFastestProvider()
     {
         // Arrange
@@ -47,7 +47,7 @@ public class SmartOCRProviderSelectorTests
         selectedProvider.ProviderName.Should().Be("Google Cloud Vision"); // Fastest response time
     }
     
-    [TestMethod]
+    [Test]
     public async Task SelectBestProviderAsync_CostOptimized_ShouldSelectCheapestProvider()
     {
         // Arrange
@@ -65,7 +65,7 @@ public class SmartOCRProviderSelectorTests
         selectedProvider.ProviderName.Should().Be("Azure Computer Vision"); // Cheapest cost
     }
     
-    [TestMethod]
+    [Test]
     public async Task SelectBestProviderAsync_CapabilityOptimized_ShouldSelectProviderWithRequiredCapabilities()
     {
         // Arrange
@@ -83,7 +83,7 @@ public class SmartOCRProviderSelectorTests
         selectedProvider.ProviderName.Should().Be("Azure Computer Vision"); // Only one with both capabilities
     }
     
-    [TestMethod]
+    [Test]
     public async Task GetAvailableProvidersAsync_ShouldReturnAllAvailableProviders()
     {
         // Act
@@ -96,7 +96,7 @@ public class SmartOCRProviderSelectorTests
         availableProviders.Should().Contain(p => p.ProviderName == "Google Cloud Vision");
     }
     
-    [TestMethod]
+    [Test]
     public async Task GetProviderHealthAsync_ShouldReturnHealthStatus()
     {
         // Arrange
@@ -110,7 +110,7 @@ public class SmartOCRProviderSelectorTests
         health.IsHealthy.Should().BeTrue();
     }
     
-    [TestMethod]
+    [Test]
     public async Task GetProviderHealthAsync_WithNonExistentProvider_ShouldReturnUnhealthy()
     {
         // Arrange

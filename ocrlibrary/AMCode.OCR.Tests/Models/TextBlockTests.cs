@@ -1,13 +1,13 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using FluentAssertions;
 using AMCode.OCR.Models;
 
 namespace AMCode.OCR.Tests.Models;
 
-[TestClass]
+[TestFixture]
 public class TextBlockTests
 {
-    [TestMethod]
+    [Test]
     public void TextBlock_ShouldInitializeWithDefaultValues()
     {
         // Act
@@ -22,7 +22,7 @@ public class TextBlockTests
         textBlock.IsPrinted.Should().BeFalse();
     }
 
-    [TestMethod]
+    [Test]
     public void TextBlock_ShouldSetPropertiesCorrectly()
     {
         // Arrange
@@ -53,7 +53,7 @@ public class TextBlockTests
         textBlock.IsPrinted.Should().Be(isPrinted);
     }
 
-    [TestMethod]
+    [Test]
     public void TextBlock_WithBoundingBox_ShouldHaveCorrectProperties()
     {
         // Arrange
@@ -72,7 +72,7 @@ public class TextBlockTests
         textBlock.BoundingBox.Height.Should().Be(20);
     }
 
-    [TestMethod]
+    [Test]
     public void TextBlock_WithHandwriting_ShouldSetCorrectFlags()
     {
         // Arrange
@@ -88,7 +88,7 @@ public class TextBlockTests
         textBlock.IsPrinted.Should().BeFalse();
     }
 
-    [TestMethod]
+    [Test]
     public void TextBlock_WithPrintedText_ShouldSetCorrectFlags()
     {
         // Arrange

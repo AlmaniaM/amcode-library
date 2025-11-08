@@ -2,25 +2,23 @@ using AMCode.AI.Models;
 using AMCode.AI.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 using Moq;
 
 namespace AMCode.AI.Tests.Services;
 
-[TestClass]
 public class CostAnalyzerTests
 {
     private Mock<ILogger<CostAnalyzer>> _mockLogger;
     private CostAnalyzer _costAnalyzer;
     
-    [TestInitialize]
-    public void Setup()
+    public CostAnalyzerTests()
     {
         _mockLogger = new Mock<ILogger<CostAnalyzer>>();
         _costAnalyzer = new CostAnalyzer(_mockLogger.Object);
     }
     
-    [TestMethod]
+    [Fact]
     public void CalculateCost_ShouldReturnCorrectCost()
     {
         // Arrange
@@ -41,7 +39,7 @@ public class CostAnalyzerTests
         cost.Should().Be(expectedCost);
     }
     
-    [TestMethod]
+    [Fact]
     public void RecordCost_ShouldRecordCostCorrectly()
     {
         // Arrange
@@ -56,7 +54,7 @@ public class CostAnalyzerTests
         totalCost.Should().Be(cost);
     }
     
-    [TestMethod]
+    [Fact]
     public void RecordCost_MultipleTimes_ShouldAccumulateCost()
     {
         // Arrange
@@ -73,7 +71,7 @@ public class CostAnalyzerTests
         totalCost.Should().Be(cost1 + cost2);
     }
     
-    [TestMethod]
+    [Fact]
     public void GetTotalCost_WithNoRecordedCosts_ShouldReturnZero()
     {
         // Act
@@ -83,7 +81,7 @@ public class CostAnalyzerTests
         totalCost.Should().Be(0m);
     }
     
-    [TestMethod]
+    [Fact]
     public void GetCostBreakdown_ShouldReturnCorrectBreakdown()
     {
         // Arrange
@@ -102,7 +100,7 @@ public class CostAnalyzerTests
         breakdown.Should().ContainKey(provider2).WhoseValue.Should().Be(cost2);
     }
     
-    [TestMethod]
+    [Fact]
     public void GetRequestCounts_ShouldReturnCorrectCounts()
     {
         // Arrange
@@ -120,7 +118,7 @@ public class CostAnalyzerTests
         counts.Should().ContainKey(provider2).WhoseValue.Should().Be(1);
     }
     
-    [TestMethod]
+    [Fact]
     public void GenerateCostReport_ShouldReturnCorrectReport()
     {
         // Arrange
@@ -142,7 +140,7 @@ public class CostAnalyzerTests
         report.GeneratedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
     }
     
-    [TestMethod]
+    [Fact]
     public void Reset_ShouldClearAllCosts()
     {
         // Arrange

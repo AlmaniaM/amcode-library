@@ -2,25 +2,23 @@ using AMCode.AI.Models;
 using AMCode.AI.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 using Moq;
 
 namespace AMCode.AI.Tests.Services;
 
-[TestClass]
 public class PromptBuilderServiceTests
 {
     private Mock<ILogger<PromptBuilderService>> _mockLogger;
     private PromptBuilderService _service;
     
-    [TestInitialize]
-    public void Setup()
+    public PromptBuilderServiceTests()
     {
         _mockLogger = new Mock<ILogger<PromptBuilderService>>();
         _service = new PromptBuilderService(_mockLogger.Object);
     }
     
-    [TestMethod]
+    [Fact]
     public void BuildRecipeParsingPrompt_WithDefaultOptions_ShouldReturnFormattedPrompt()
     {
         // Arrange
@@ -37,7 +35,7 @@ public class PromptBuilderServiceTests
         result.Should().Contain("JSON response:");
     }
     
-    [TestMethod]
+    [Fact]
     public void BuildRecipeParsingPrompt_WithCustomOptions_ShouldIncludeOptionsInPrompt()
     {
         // Arrange
@@ -63,7 +61,7 @@ public class PromptBuilderServiceTests
         result.Should().Contain("Focus on cooking techniques");
     }
     
-    [TestMethod]
+    [Fact]
     public void BuildSimpleRecipeParsingPrompt_ShouldReturnSimplifiedPrompt()
     {
         // Arrange
@@ -82,7 +80,7 @@ public class PromptBuilderServiceTests
         result.Should().Contain("JSON:");
     }
     
-    [TestMethod]
+    [Fact]
     public void BuildFunctionCallingPrompt_ShouldReturnFunctionCallingPrompt()
     {
         // Arrange
@@ -105,7 +103,7 @@ public class PromptBuilderServiceTests
         result.Should().Contain(text);
     }
     
-    [TestMethod]
+    [Fact]
     public void BuildRecipeParsingPrompt_WithNullOptions_ShouldNotThrow()
     {
         // Arrange
@@ -116,7 +114,7 @@ public class PromptBuilderServiceTests
         action.Should().NotThrow();
     }
     
-    [TestMethod]
+    [Fact]
     public void BuildRecipeParsingPrompt_WithEmptyText_ShouldReturnValidPrompt()
     {
         // Arrange
@@ -130,7 +128,7 @@ public class PromptBuilderServiceTests
         result.Should().Contain("Please parse the following recipe text");
     }
     
-    [TestMethod]
+    [Fact]
     public void BuildRecipeParsingPrompt_WithAllOptions_ShouldIncludeAllOptions()
     {
         // Arrange
