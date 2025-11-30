@@ -24,7 +24,7 @@ public class AIIntegrationTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["AI:DefaultProvider"] = "OpenAI",
+                ["AI:Provider"] = "OpenAI",
                 ["AI:ConfidenceThreshold"] = "0.7",
                 ["AI:FallbackEnabled"] = "true",
                 ["AI:MaxRetries"] = "3",

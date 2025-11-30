@@ -1,3 +1,4 @@
+using AMCode.AI.Configurations;
 using AMCode.AI.Providers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,7 +9,8 @@ using System.Reflection;
 namespace AMCode.AI.Factories;
 
 /// <summary>
-/// Factory for creating AI providers dynamically
+/// Factory for creating AI providers dynamically.
+/// Uses the AIProvider property from configuration sections to determine which provider implementation to use.
 /// </summary>
 public class AIProviderFactory : IAIProviderFactory
 {
@@ -23,37 +25,352 @@ public class AIProviderFactory : IAIProviderFactory
         _providers = new Dictionary<string, Func<IServiceProvider, IAIProvider>>();
     }
 
-    public IAIProvider CreateProvider<T>(string name, IConfiguration configuration) where T : GenericAIProvider
+    public IAIProvider CreateProvider()
     {
-        _logger.LogInformation("Creating provider {ProviderType} with name {Name}", typeof(T).Name, name);
+        // Get the default provider from registered providers or configuration
+        var configuration = _serviceProvider.GetRequiredService<IConfiguration>();
+        var selectedProviderSection = configuration["AI:Provider"] ?? "OpenAI";
 
-        try
+        _logger.LogInformation("Creating provider from section {SectionName}", selectedProviderSection);
+
+        // Read the AIProvider property from the specific configuration section
+        var aiProviderType = configuration[$"AI:{selectedProviderSection}:AIProvider"];
+
+        if (string.IsNullOrWhiteSpace(aiProviderType))
         {
-            var logger = _serviceProvider.GetRequiredService<ILogger<T>>();
-            var httpClientFactory = _serviceProvider.GetRequiredService<IHttpClientFactory>();
+            _logger.LogWarning("AIProvider property not found in AI:{SectionName}, falling back to section name matching", selectedProviderSection);
+            aiProviderType = selectedProviderSection;
+        }
+        else
+        {
+            _logger.LogDebug("Found AIProvider type '{AIProviderType}' in section AI:{SectionName}", aiProviderType, selectedProviderSection);
+        }
 
-            // Get configuration type
-            var configType = GetConfigurationType<T>();
-            var config = CreateConfiguration(configType, configuration, name);
+        // Try to get from registered providers first
+        if (_providers.TryGetValue(selectedProviderSection, out var factory))
+        {
+            return factory(_serviceProvider);
+        }
 
-            // Create provider instance
-            var constructor = GetProviderConstructor<T>(configType);
-            if (constructor == null)
+        // Find provider using the AIProvider type mapping
+        var provider = FindProviderByAIProviderType(aiProviderType, selectedProviderSection);
+
+        if (provider == null)
+        {
+            throw new InvalidOperationException($"Provider for AIProvider type '{aiProviderType}' (section: '{selectedProviderSection}') not found");
+        }
+
+        return provider;
+    }
+
+    public IAIProvider CreateRecipeTextParserProvider()
+    {
+        var configuration = _serviceProvider.GetRequiredService<IConfiguration>();
+        var providerSection = configuration["AI:OCRTextParserProvider"] ?? "OCRTextParserAI";
+
+        _logger.LogInformation("Creating recipe text parser provider from section {SectionName}", providerSection);
+
+        // Read the AIProvider property from the specific configuration section
+        var aiProviderType = configuration[$"AI:{providerSection}:AIProvider"];
+
+        if (string.IsNullOrWhiteSpace(aiProviderType))
+        {
+            _logger.LogWarning("AIProvider property not found in AI:{SectionName}, falling back to section name matching", providerSection);
+            aiProviderType = providerSection;
+        }
+        else
+        {
+            _logger.LogDebug("Found AIProvider type '{AIProviderType}' in section AI:{SectionName}", aiProviderType, providerSection);
+        }
+
+        // Try to get from registered providers first
+        if (_providers.TryGetValue(providerSection, out var factory))
+        {
+            return factory(_serviceProvider);
+        }
+
+        // Find provider using the AIProvider type mapping
+        var provider = FindProviderByAIProviderType(aiProviderType, providerSection);
+
+        if (provider == null)
+        {
+            throw new InvalidOperationException($"Recipe text parser provider for AIProvider type '{aiProviderType}' (section: '{providerSection}') not found");
+        }
+
+        return provider;
+    }
+
+    /// <summary>
+    /// Create the primary AI provider based on AI:Provider configuration.
+    /// Uses the AIProvider property from the specified section to determine the provider type.
+    /// </summary>
+    /// <returns>Configured AI provider, or null if not found</returns>
+    public IAIProvider? CreateAIProvider()
+    {
+        var configuration = _serviceProvider.GetRequiredService<IConfiguration>();
+        var providerSection = configuration["AI:Provider"] ?? configuration["AI:SelectedProvider"];
+
+        if (string.IsNullOrWhiteSpace(providerSection))
+        {
+            _logger.LogWarning("AI:Provider is not configured");
+            return null;
+        }
+
+        _logger.LogInformation("Creating AI provider from section {SectionName}", providerSection);
+
+        // Read the AIProvider property from the specific configuration section
+        var aiProviderType = configuration[$"AI:{providerSection}:AIProvider"];
+
+        if (string.IsNullOrWhiteSpace(aiProviderType))
+        {
+            _logger.LogDebug("AIProvider property not found in AI:{SectionName}, falling back to section name matching", providerSection);
+            aiProviderType = providerSection;
+        }
+
+        var provider = FindProviderByAIProviderType(aiProviderType, providerSection);
+        if (provider == null)
+        {
+            _logger.LogWarning("AI provider for AIProvider type '{AIProviderType}' (section: '{SectionName}') not found", aiProviderType, providerSection);
+        }
+
+        return provider;
+    }
+
+    /// <summary>
+    /// Create the fallback AI provider based on AI:FallbackProvider configuration.
+    /// Uses the AIProvider property from the specified section to determine the provider type.
+    /// </summary>
+    /// <returns>Configured fallback AI provider, or null if not found</returns>
+    public IAIProvider? CreateFallbackAIProvider()
+    {
+        var configuration = _serviceProvider.GetRequiredService<IConfiguration>();
+        var providerSection = configuration["AI:FallbackProvider"];
+
+        if (string.IsNullOrWhiteSpace(providerSection))
+        {
+            _logger.LogDebug("AI:FallbackProvider is not configured");
+            return null;
+        }
+
+        _logger.LogInformation("Creating fallback AI provider from section {SectionName}", providerSection);
+
+        // Read the AIProvider property from the specific configuration section
+        var aiProviderType = configuration[$"AI:{providerSection}:AIProvider"];
+
+        if (string.IsNullOrWhiteSpace(aiProviderType))
+        {
+            _logger.LogDebug("AIProvider property not found in AI:{SectionName}, falling back to section name matching", providerSection);
+            aiProviderType = providerSection;
+        }
+
+        var provider = FindProviderByAIProviderType(aiProviderType, providerSection);
+        if (provider == null)
+        {
+            _logger.LogWarning("Fallback AI provider for AIProvider type '{AIProviderType}' (section: '{SectionName}') not found", aiProviderType, providerSection);
+        }
+
+        return provider;
+    }
+
+    /// <summary>
+    /// Create the primary OCR text parser provider based on AI:OCRTextParserProvider configuration.
+    /// Uses the AIProvider property from the specified section to determine the provider type.
+    /// </summary>
+    /// <returns>Configured OCR text parser provider, or null if not found</returns>
+    public IAIProvider? CreateOCRTextParserProvider()
+    {
+        var configuration = _serviceProvider.GetRequiredService<IConfiguration>();
+        var providerSection = configuration["AI:OCRTextParserProvider"];
+
+        if (string.IsNullOrWhiteSpace(providerSection))
+        {
+            _logger.LogWarning("AI:OCRTextParserProvider is not configured");
+            return null;
+        }
+
+        _logger.LogInformation("Creating OCR text parser provider from section {SectionName}", providerSection);
+
+        // Read the AIProvider property from the specific configuration section
+        var aiProviderType = configuration[$"AI:{providerSection}:AIProvider"];
+
+        if (string.IsNullOrWhiteSpace(aiProviderType))
+        {
+            _logger.LogDebug("AIProvider property not found in AI:{SectionName}, falling back to section name matching", providerSection);
+            aiProviderType = providerSection;
+        }
+
+        var provider = FindProviderByAIProviderType(aiProviderType, providerSection);
+        if (provider == null)
+        {
+            _logger.LogWarning("OCR text parser provider for AIProvider type '{AIProviderType}' (section: '{SectionName}') not found", aiProviderType, providerSection);
+        }
+
+        return provider;
+    }
+
+    /// <summary>
+    /// Create the fallback OCR text parser provider based on AI:FallbackOCRTextParserProvider configuration.
+    /// Uses the AIProvider property from the specified section to determine the provider type.
+    /// </summary>
+    /// <returns>Configured fallback OCR text parser provider, or null if not found</returns>
+    public IAIProvider? CreateFallbackOCRTextParserProvider()
+    {
+        var configuration = _serviceProvider.GetRequiredService<IConfiguration>();
+        var providerSection = configuration["AI:FallbackOCRTextParserProvider"];
+
+        if (string.IsNullOrWhiteSpace(providerSection))
+        {
+            _logger.LogDebug("AI:FallbackOCRTextParserProvider is not configured");
+            return null;
+        }
+
+        _logger.LogInformation("Creating fallback OCR text parser provider from section {SectionName}", providerSection);
+
+        // Read the AIProvider property from the specific configuration section
+        var aiProviderType = configuration[$"AI:{providerSection}:AIProvider"];
+
+        if (string.IsNullOrWhiteSpace(aiProviderType))
+        {
+            _logger.LogDebug("AIProvider property not found in AI:{SectionName}, falling back to section name matching", providerSection);
+            aiProviderType = providerSection;
+        }
+
+        var provider = FindProviderByAIProviderType(aiProviderType, providerSection);
+        if (provider == null)
+        {
+            _logger.LogWarning("Fallback OCR text parser provider for AIProvider type '{AIProviderType}' (section: '{SectionName}') not found", aiProviderType, providerSection);
+        }
+
+        return provider;
+    }
+
+    /// <summary>
+    /// Finds an AI provider by its AIProvider type value from configuration.
+    /// Uses the AIProviderRegistry.ProviderNameAliases to determine which provider names to look for.
+    /// </summary>
+    /// <param name="aiProviderType">The AIProvider type value (e.g., "openai", "azure-openai", "aws-bedrock")</param>
+    /// <param name="configSectionName">The configuration section name for logging purposes</param>
+    /// <returns>The matching AI provider, or null if not found</returns>
+    private IAIProvider? FindProviderByAIProviderType(string aiProviderType, string configSectionName)
+    {
+        var providers = _serviceProvider.GetServices<IAIProvider>().ToList();
+        if (providers.Count == 0)
+        {
+            _logger.LogWarning("No AI providers registered in service collection");
+            return null;
+        }
+
+        // First, try to find using the AIProvider type mapping
+        if (AIProviderRegistry.ProviderNameAliases.TryGetValue(aiProviderType, out var targetProviderNames))
+        {
+            foreach (var targetName in targetProviderNames)
             {
-                throw new InvalidOperationException($"No suitable constructor found for {typeof(T).Name}");
+                var provider = providers.FirstOrDefault(p =>
+                    p.ProviderName.Equals(targetName, StringComparison.OrdinalIgnoreCase) ||
+                    p.ProviderName.Contains(targetName, StringComparison.OrdinalIgnoreCase));
+
+                if (provider != null)
+                {
+                    _logger.LogDebug("Found provider '{ProviderName}' for AIProvider type '{AIProviderType}'",
+                        provider.ProviderName, aiProviderType);
+                    return provider;
+                }
             }
+        }
 
-            var parameters = new object[] { logger, httpClientFactory, config };
-            var provider = (IAIProvider)constructor.Invoke(parameters);
+        // If no mapping found, try to match by config section name (backward compatibility)
+        _logger.LogDebug("No mapping found for AIProvider type '{AIProviderType}', trying section name '{SectionName}'",
+            aiProviderType, configSectionName);
 
-            _logger.LogInformation("Successfully created provider {ProviderType}", typeof(T).Name);
+        return FindProviderByName(configSectionName) ?? FindProviderByName(aiProviderType);
+    }
+
+    /// <summary>
+    /// Finds an AI provider by name, supporting exact match, partial match, and common aliases
+    /// </summary>
+    /// <param name="providerName">The provider name to find</param>
+    /// <returns>The matching AI provider, or null if not found</returns>
+    private IAIProvider? FindProviderByName(string providerName)
+    {
+        // Try to get from registered providers first
+        if (_providers.TryGetValue(providerName, out var factory))
+        {
+            return factory(_serviceProvider);
+        }
+
+        var providers = _serviceProvider.GetServices<IAIProvider>().ToList();
+        if (providers.Count == 0)
+        {
+            _logger.LogWarning("No AI providers registered in service collection");
+            return null;
+        }
+
+        // Try exact match first (case-insensitive)
+        var provider = providers.FirstOrDefault(p =>
+            p.ProviderName.Equals(providerName, StringComparison.OrdinalIgnoreCase));
+
+        if (provider != null)
+        {
             return provider;
         }
-        catch (Exception ex)
+
+        // Try partial match (provider name contains the search term)
+        provider = providers.FirstOrDefault(p =>
+            p.ProviderName.Contains(providerName, StringComparison.OrdinalIgnoreCase));
+
+        if (provider != null)
         {
-            _logger.LogError(ex, "Failed to create provider {ProviderType}", typeof(T).Name);
-            throw new InvalidOperationException($"Failed to create provider {typeof(T).Name}: {ex.Message}", ex);
+            return provider;
         }
+
+        // Try reverse partial match (search term contains provider name)
+        provider = providers.FirstOrDefault(p =>
+            providerName.Contains(p.ProviderName, StringComparison.OrdinalIgnoreCase));
+
+        if (provider != null)
+        {
+            return provider;
+        }
+
+        // Try common aliases
+        provider = FindProviderByAlias(providerName, providers);
+        if (provider != null)
+        {
+            return provider;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Finds a provider using common aliases
+    /// </summary>
+    /// <param name="alias">The alias to search for</param>
+    /// <param name="providers">The list of available providers</param>
+    /// <returns>The matching provider, or null if not found</returns>
+    private IAIProvider? FindProviderByAlias(string alias, List<IAIProvider> providers)
+    {
+        var normalizedAlias = alias.ToLowerInvariant().Trim();
+
+        // Use registry instead of inline map
+        if (!AIProviderRegistry.ProviderNameAliases.TryGetValue(normalizedAlias, out var targetNames))
+        {
+            return null;
+        }
+
+        foreach (var targetName in targetNames)
+        {
+            var provider = providers.FirstOrDefault(p =>
+                p.ProviderName.Equals(targetName, StringComparison.OrdinalIgnoreCase) ||
+                p.ProviderName.Contains(targetName, StringComparison.OrdinalIgnoreCase));
+
+            if (provider != null)
+            {
+                return provider;
+            }
+        }
+
+        return null;
     }
 
     public IAIProvider CreateCustomProvider(string name, Type providerType, IConfiguration configuration)
@@ -196,7 +513,7 @@ public class AIProviderFactory : IAIProviderFactory
 
     private static bool IsLoggerType(Type type)
     {
-        return type.IsGenericType && 
+        return type.IsGenericType &&
                type.GetGenericTypeDefinition() == typeof(ILogger<>) ||
                type == typeof(ILogger);
     }

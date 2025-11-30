@@ -30,7 +30,7 @@ public class SimpleAzureOCRServiceTests
         
         _config = new AzureOCRConfiguration
         {
-            SubscriptionKey = "test-key",
+            ApiKey = "test-key",
             Endpoint = "https://test.cognitiveservices.azure.com/",
             Region = "eastus"
         };

@@ -46,7 +46,7 @@ public class SmartAIProviderSelectorTests
         };
         
         // Act
-        var result = await selector.SelectBestProviderAsync(request);
+        var result = await selector.SelectOCRProvider(request);
         
         // Assert
         result.ProviderName.Should().Be("Provider3"); // Cheapest
@@ -65,7 +65,7 @@ public class SmartAIProviderSelectorTests
         };
         
         // Act
-        var result = await selector.SelectBestProviderAsync(request);
+        var result = await selector.SelectOCRProvider(request);
         
         // Assert
         result.ProviderName.Should().Be("Provider1"); // Fastest
@@ -85,7 +85,7 @@ public class SmartAIProviderSelectorTests
         };
         
         // Act
-        var result = await selector.SelectBestProviderAsync(request);
+        var result = await selector.SelectOCRProvider(request);
         
         // Assert
         result.ProviderName.Should().Be("Provider1"); // Has function calling

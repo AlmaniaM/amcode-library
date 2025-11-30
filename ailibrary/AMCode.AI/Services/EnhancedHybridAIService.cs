@@ -56,7 +56,7 @@ public class EnhancedHybridAIService : IRecipeParserService
             // Try primary provider first
             try
             {
-                var primaryProvider = await _providerSelector.SelectBestProviderAsync(request);
+                var primaryProvider = await _providerSelector.SelectOCRProvider(request);
                 var result = await ProcessWithProvider(primaryProvider, request, cancellationToken);
                 
                 if (result.Confidence >= _config.ConfidenceThreshold)

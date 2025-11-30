@@ -14,7 +14,7 @@ public interface IAIProviderSelector
     /// </summary>
     /// <param name="request">AI request</param>
     /// <returns>Selected provider</returns>
-    Task<IAIProvider> SelectBestProviderAsync(AIRequest request);
+    Task<IAIProvider> SelectOCRProvider(AIRequest request);
     
     /// <summary>
     /// Get all available providers
@@ -61,7 +61,7 @@ public class SmartAIProviderSelector : IAIProviderSelector
         _strategy = strategy;
     }
     
-    public async Task<IAIProvider> SelectBestProviderAsync(AIRequest request)
+    public async Task<IAIProvider> SelectOCRProvider(AIRequest request)
     {
         try
         {

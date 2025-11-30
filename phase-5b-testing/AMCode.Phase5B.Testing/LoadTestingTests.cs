@@ -29,19 +29,19 @@ namespace AMCode.Phase5B.Testing
         public void Setup()
         {
             var services = new ServiceCollection();
-            
+
             // Add logging
             services.AddLogging(builder => builder.AddConsole());
-            
+
             // Add AMCode services with load testing optimizations
             services.AddAMCodeOCR(GetLoadTestOCRConfiguration());
             services.AddAMCodeAI(GetLoadTestAIConfiguration());
             services.AddAMCodeDocuments(GetLoadTestDocumentsConfiguration());
             services.AddAMCodeExports(GetLoadTestExportsConfiguration());
             services.AddAMCodeStorage(GetLoadTestStorageConfiguration());
-            
+
             _serviceProvider = services.BuildServiceProvider();
-            
+
             // Get services
             _ocrService = _serviceProvider.GetRequiredService<IOCRService>();
             _aiService = _serviceProvider.GetRequiredService<IAIRecipeParsingService>();
@@ -66,31 +66,31 @@ namespace AMCode.Phase5B.Testing
             var concurrentUsers = 10;
             var tasks = new List<Task<LoadTestResult>>();
             var stopwatch = Stopwatch.StartNew();
-            
+
             // Act - Process multiple recipes concurrently
             for (int i = 0; i < concurrentUsers; i++)
             {
                 tasks.Add(ProcessRecipeLoadTestAsync($"load-test-recipe-{i}"));
             }
-            
+
             var results = await Task.WhenAll(tasks);
             stopwatch.Stop();
-            
+
             // Assert - All tasks should complete successfully
             var successfulResults = results.Where(r => r.IsSuccess).ToList();
             var failedResults = results.Where(r => !r.IsSuccess).ToList();
-            
+
             Console.WriteLine($"Concurrent Load Test Results:");
             Console.WriteLine($"  Total tasks: {results.Length}");
             Console.WriteLine($"  Successful: {successfulResults.Count}");
             Console.WriteLine($"  Failed: {failedResults.Count}");
             Console.WriteLine($"  Total time: {stopwatch.ElapsedMilliseconds}ms");
             Console.WriteLine($"  Average time per task: {stopwatch.ElapsedMilliseconds / (double)results.Length:F2}ms");
-            
+
             // At least 80% should succeed
             var successRate = (double)successfulResults.Count / results.Length;
             Assert.IsTrue(successRate >= 0.8, $"Success rate too low: {successRate:P2}");
-            
+
             // All successful tasks should complete within 30 seconds
             var maxProcessingTime = successfulResults.Any() ? successfulResults.Max(r => r.ElapsedMilliseconds) : 0;
             Assert.IsTrue(maxProcessingTime < 30000, $"Max processing time too long: {maxProcessingTime}ms");
@@ -107,33 +107,33 @@ namespace AMCode.Phase5B.Testing
             var batchSize = 10; // Process in batches of 10
             var results = new List<LoadTestResult>();
             var stopwatch = Stopwatch.StartNew();
-            
+
             // Act - Process in batches to simulate high volume
             for (int batch = 0; batch < volume / batchSize; batch++)
             {
                 var batchTasks = new List<Task<LoadTestResult>>();
-                
+
                 for (int i = 0; i < batchSize; i++)
                 {
                     var recipeId = batch * batchSize + i;
                     batchTasks.Add(ProcessRecipeLoadTestAsync($"volume-test-recipe-{recipeId}"));
                 }
-                
+
                 var batchResults = await Task.WhenAll(batchTasks);
                 results.AddRange(batchResults);
-                
+
                 Console.WriteLine($"Batch {batch + 1} completed: {batchResults.Count(r => r.IsSuccess)}/{batchSize} successful");
-                
+
                 // Small delay between batches to simulate real-world usage
                 await Task.Delay(100);
             }
-            
+
             stopwatch.Stop();
-            
+
             // Assert - Results analysis
             var successfulResults = results.Where(r => r.IsSuccess).ToList();
             var failedResults = results.Where(r => !r.IsSuccess).ToList();
-            
+
             Console.WriteLine($"High Volume Test Results:");
             Console.WriteLine($"  Total recipes processed: {results.Count}");
             Console.WriteLine($"  Successful: {successfulResults.Count}");
@@ -141,11 +141,11 @@ namespace AMCode.Phase5B.Testing
             Console.WriteLine($"  Success rate: {(double)successfulResults.Count / results.Count:P2}");
             Console.WriteLine($"  Total time: {stopwatch.ElapsedMilliseconds}ms");
             Console.WriteLine($"  Throughput: {results.Count / (stopwatch.ElapsedMilliseconds / 1000.0):F2} recipes/second");
-            
+
             // At least 70% should succeed for high volume
             var successRate = (double)successfulResults.Count / results.Count;
             Assert.IsTrue(successRate >= 0.7, $"Success rate too low for high volume: {successRate:P2}");
-            
+
             // Should process at least 1 recipe per second
             var throughput = results.Count / (stopwatch.ElapsedMilliseconds / 1000.0);
             Assert.IsTrue(throughput >= 1.0, $"Throughput too low: {throughput:F2} recipes/second");
@@ -161,13 +161,13 @@ namespace AMCode.Phase5B.Testing
             var iterations = 30;
             var memorySamples = new List<long>();
             var initialMemory = GC.GetTotalMemory(true);
-            
+
             // Act - Process recipes and monitor memory usage
             for (int i = 0; i < iterations; i++)
             {
                 var recipe = CreateTestRecipe($"memory-test-recipe-{i}");
                 var result = await _documentFactory.CreateRecipeDocumentAsync(recipe);
-                
+
                 // Sample memory every 5 iterations
                 if (i % 5 == 0)
                 {
@@ -178,18 +178,18 @@ namespace AMCode.Phase5B.Testing
                     Console.WriteLine($"Iteration {i}: Memory usage: {currentMemory / (1024 * 1024):F2}MB");
                 }
             }
-            
+
             // Force final garbage collection
             GC.Collect();
             GC.WaitForPendingFinalizers();
             var finalMemory = GC.GetTotalMemory(false);
-            
+
             // Assert - Memory should be stable
             var maxMemory = memorySamples.Max();
             var minMemory = memorySamples.Min();
             var memoryVariation = maxMemory - minMemory;
             var maxMemoryIncrease = finalMemory - initialMemory;
-            
+
             Console.WriteLine($"Memory Usage Under Load:");
             Console.WriteLine($"  Initial memory: {initialMemory / (1024 * 1024):F2}MB");
             Console.WriteLine($"  Final memory: {finalMemory / (1024 * 1024):F2}MB");
@@ -197,13 +197,13 @@ namespace AMCode.Phase5B.Testing
             Console.WriteLine($"  Min memory: {minMemory / (1024 * 1024):F2}MB");
             Console.WriteLine($"  Memory variation: {memoryVariation / (1024 * 1024):F2}MB");
             Console.WriteLine($"  Total memory increase: {maxMemoryIncrease / (1024 * 1024):F2}MB");
-            
+
             // Memory increase should be reasonable (less than 200MB)
-            Assert.IsTrue(maxMemoryIncrease < 200 * 1024 * 1024, 
+            Assert.IsTrue(maxMemoryIncrease < 200 * 1024 * 1024,
                 $"Memory increase too high: {maxMemoryIncrease / (1024 * 1024):F2}MB");
-            
+
             // Memory variation should be stable (less than 100MB variation)
-            Assert.IsTrue(memoryVariation < 100 * 1024 * 1024, 
+            Assert.IsTrue(memoryVariation < 100 * 1024 * 1024,
                 $"Memory variation too high: {memoryVariation / (1024 * 1024):F2}MB");
         }
 
@@ -217,10 +217,10 @@ namespace AMCode.Phase5B.Testing
             var iterations = 20;
             var concurrentTasks = 5;
             var stopwatch = Stopwatch.StartNew();
-            
+
             // Act - Run concurrent tasks to test CPU usage
             var tasks = new List<Task<LoadTestResult>>();
-            
+
             for (int i = 0; i < iterations; i++)
             {
                 if (tasks.Count >= concurrentTasks)
@@ -229,28 +229,28 @@ namespace AMCode.Phase5B.Testing
                     var completedTask = await Task.WhenAny(tasks);
                     tasks.Remove(completedTask);
                 }
-                
+
                 tasks.Add(ProcessRecipeLoadTestAsync($"cpu-test-recipe-{i}"));
             }
-            
+
             // Wait for all remaining tasks
             var results = await Task.WhenAll(tasks);
             stopwatch.Stop();
-            
+
             // Assert - All tasks should complete
             var successfulResults = results.Where(r => r.IsSuccess).ToList();
             var successRate = (double)successfulResults.Count / results.Length;
-            
+
             Console.WriteLine($"CPU Usage Under Load:");
             Console.WriteLine($"  Total tasks: {results.Length}");
             Console.WriteLine($"  Successful: {successfulResults.Count}");
             Console.WriteLine($"  Success rate: {successRate:P2}");
             Console.WriteLine($"  Total time: {stopwatch.ElapsedMilliseconds}ms");
             Console.WriteLine($"  Average time per task: {stopwatch.ElapsedMilliseconds / (double)results.Length:F2}ms");
-            
+
             // At least 80% should succeed
             Assert.IsTrue(successRate >= 0.8, $"Success rate too low: {successRate:P2}");
-            
+
             // Average processing time should be reasonable
             var averageTime = successfulResults.Any() ? successfulResults.Average(r => r.ElapsedMilliseconds) : 0;
             Assert.IsTrue(averageTime < 15000, $"Average processing time too long: {averageTime:F2}ms");
@@ -266,33 +266,33 @@ namespace AMCode.Phase5B.Testing
             var iterations = 20;
             var errorRate = 0.3; // 30% of requests will have errors
             var tasks = new List<Task<LoadTestResult>>();
-            
+
             // Act - Mix successful and error scenarios
             for (int i = 0; i < iterations; i++)
             {
                 var shouldError = (i % 10) < (iterations * errorRate);
                 tasks.Add(ProcessRecipeLoadTestAsync($"error-test-recipe-{i}", shouldError));
             }
-            
+
             var results = await Task.WhenAll(tasks);
-            
+
             // Assert - System should handle errors gracefully
             var successfulResults = results.Where(r => r.IsSuccess).ToList();
             var failedResults = results.Where(r => !r.IsSuccess).ToList();
-            
+
             Console.WriteLine($"Error Handling Under Load:");
             Console.WriteLine($"  Total tasks: {results.Length}");
             Console.WriteLine($"  Successful: {successfulResults.Count}");
             Console.WriteLine($"  Failed: {failedResults.Count}");
             Console.WriteLine($"  Success rate: {(double)successfulResults.Count / results.Length:P2}");
-            
+
             // Should have some failures (due to intentional errors)
             Assert.IsTrue(failedResults.Count > 0, "Should have some failures for error handling test");
-            
+
             // Success rate should be reasonable even with errors
             var successRate = (double)successfulResults.Count / results.Length;
             Assert.IsTrue(successRate >= 0.5, $"Success rate too low with errors: {successRate:P2}");
-            
+
             // Failed results should have proper error messages
             var resultsWithErrors = failedResults.Where(r => !string.IsNullOrEmpty(r.ErrorMessage)).ToList();
             Assert.IsTrue(resultsWithErrors.Count > 0, "Failed results should have error messages");
@@ -308,31 +308,31 @@ namespace AMCode.Phase5B.Testing
             var iterations = 30;
             var providerUsage = new ConcurrentDictionary<string, int>();
             var tasks = new List<Task<LoadTestResult>>();
-            
+
             // Act - Process multiple recipes and track provider usage
             for (int i = 0; i < iterations; i++)
             {
                 tasks.Add(ProcessRecipeWithProviderTrackingAsync($"provider-test-recipe-{i}", providerUsage));
             }
-            
+
             var results = await Task.WhenAll(tasks);
-            
+
             // Assert - Provider usage should be distributed
             Console.WriteLine($"Provider Selection Under Load:");
             foreach (var provider in providerUsage)
             {
                 Console.WriteLine($"  {provider.Key}: {provider.Value} uses");
             }
-            
+
             // Should have used multiple providers
             Assert.IsTrue(providerUsage.Count > 1, "Should use multiple providers");
-            
+
             // Provider usage should be reasonably distributed
             var totalUsage = providerUsage.Values.Sum();
             var averageUsage = totalUsage / (double)providerUsage.Count;
             var maxUsage = providerUsage.Values.Max();
             var minUsage = providerUsage.Values.Min();
-            
+
             // No single provider should dominate (max usage should be less than 80% of total)
             var maxProviderRatio = maxUsage / (double)totalUsage;
             Assert.IsTrue(maxProviderRatio < 0.8, $"Provider usage too concentrated: {maxProviderRatio:P2}");
@@ -343,7 +343,7 @@ namespace AMCode.Phase5B.Testing
         private async Task<LoadTestResult> ProcessRecipeLoadTestAsync(string recipeId, bool shouldError = false)
         {
             var stopwatch = Stopwatch.StartNew();
-            
+
             try
             {
                 if (shouldError)
@@ -351,56 +351,56 @@ namespace AMCode.Phase5B.Testing
                     // Simulate error scenario
                     throw new InvalidOperationException($"Simulated error for recipe {recipeId}");
                 }
-                
+
                 var testImagePath = CreateTestImage();
-                
+
                 // OCR
                 var ocrResult = await _ocrService.ExtractTextAsync(testImagePath);
-                if (!ocrResult.IsSuccess) 
+                if (!ocrResult.IsSuccess)
                 {
-                    return new LoadTestResult 
-                    { 
-                        IsSuccess = false, 
+                    return new LoadTestResult
+                    {
+                        IsSuccess = false,
                         ErrorMessage = ocrResult.ErrorMessage,
                         ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                         RecipeId = recipeId
                     };
                 }
-                
+
                 // AI Parsing
                 var aiResult = await _aiService.ParseRecipeAsync(ocrResult.Value.Text);
-                if (!aiResult.IsSuccess) 
+                if (!aiResult.IsSuccess)
                 {
-                    return new LoadTestResult 
-                    { 
-                        IsSuccess = false, 
+                    return new LoadTestResult
+                    {
+                        IsSuccess = false,
                         ErrorMessage = aiResult.ErrorMessage,
                         ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                         RecipeId = recipeId
                     };
                 }
-                
+
                 // Recipe Creation
                 var recipe = CreateRecipeFromParsedData(aiResult.Value);
-                
+
                 // Document Generation
                 var docResult = await _documentFactory.CreateRecipeDocumentAsync(recipe);
-                if (!docResult.IsSuccess) 
+                if (!docResult.IsSuccess)
                 {
-                    return new LoadTestResult 
-                    { 
-                        IsSuccess = false, 
+                    return new LoadTestResult
+                    {
+                        IsSuccess = false,
                         ErrorMessage = docResult.ErrorMessage,
                         ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                         RecipeId = recipeId
                     };
                 }
-                
+
                 stopwatch.Stop();
-                
-                return new LoadTestResult 
-                { 
-                    IsSuccess = true, 
+
+                return new LoadTestResult
+                {
+                    IsSuccess = true,
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                     RecipeId = recipeId
                 };
@@ -408,9 +408,9 @@ namespace AMCode.Phase5B.Testing
             catch (Exception ex)
             {
                 stopwatch.Stop();
-                return new LoadTestResult 
-                { 
-                    IsSuccess = false, 
+                return new LoadTestResult
+                {
+                    IsSuccess = false,
                     ErrorMessage = ex.Message,
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                     RecipeId = recipeId
@@ -421,11 +421,11 @@ namespace AMCode.Phase5B.Testing
         private async Task<LoadTestResult> ProcessRecipeWithProviderTrackingAsync(string recipeId, ConcurrentDictionary<string, int> providerUsage)
         {
             var stopwatch = Stopwatch.StartNew();
-            
+
             try
             {
                 var testImagePath = CreateTestImage();
-                
+
                 // OCR with provider tracking
                 var ocrResult = await _ocrService.ExtractTextAsync(testImagePath);
                 if (ocrResult.IsSuccess)
@@ -433,7 +433,7 @@ namespace AMCode.Phase5B.Testing
                     // Track OCR provider usage (simplified)
                     providerUsage.AddOrUpdate("OCR", 1, (key, value) => value + 1);
                 }
-                
+
                 // AI Parsing with provider tracking
                 var aiResult = await _aiService.ParseRecipeAsync(ocrResult.Value.Text);
                 if (aiResult.IsSuccess)
@@ -441,12 +441,12 @@ namespace AMCode.Phase5B.Testing
                     // Track AI provider usage (simplified)
                     providerUsage.AddOrUpdate("AI", 1, (key, value) => value + 1);
                 }
-                
+
                 stopwatch.Stop();
-                
-                return new LoadTestResult 
-                { 
-                    IsSuccess = ocrResult.IsSuccess && aiResult.IsSuccess, 
+
+                return new LoadTestResult
+                {
+                    IsSuccess = ocrResult.IsSuccess && aiResult.IsSuccess,
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                     RecipeId = recipeId
                 };
@@ -454,9 +454,9 @@ namespace AMCode.Phase5B.Testing
             catch (Exception ex)
             {
                 stopwatch.Stop();
-                return new LoadTestResult 
-                { 
-                    IsSuccess = false, 
+                return new LoadTestResult
+                {
+                    IsSuccess = false,
                     ErrorMessage = ex.Message,
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                     RecipeId = recipeId
@@ -541,7 +541,7 @@ namespace AMCode.Phase5B.Testing
         {
             return new OCRConfiguration
             {
-                DefaultProvider = "Azure",
+                Provider = "Azure",
                 Providers = new Dictionary<string, OCRProviderConfiguration>
                 {
                     ["Azure"] = new OCRProviderConfiguration
@@ -558,7 +558,7 @@ namespace AMCode.Phase5B.Testing
         {
             return new AIConfiguration
             {
-                DefaultProvider = "OpenAI",
+                Provider = "OpenAI",
                 Providers = new Dictionary<string, AIProviderConfiguration>
                 {
                     ["OpenAI"] = new AIProviderConfiguration

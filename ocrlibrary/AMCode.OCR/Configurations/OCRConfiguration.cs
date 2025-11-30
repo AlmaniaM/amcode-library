@@ -9,9 +9,22 @@ namespace AMCode.OCR.Configurations;
 public class OCRConfiguration
 {
     /// <summary>
+    /// The default provider name to use (e.g., "PaddleOCR", "Azure", "AWS", "Google")
+    /// If specified, this provider will be selected first if available
+    /// When ProviderSelectionStrategy is Configuration, this property specifies the manually selected provider
+    /// </summary>
+    public string? Provider { get; set; }
+
+    /// <summary>
+    /// The fallback provider name to use if the primary provider is unavailable
+    /// (e.g., "PaddleOCR", "Azure", "AWS", "Google")
+    /// </summary>
+    public string? FallbackProvider { get; set; }
+
+    /// <summary>
     /// The default selection strategy
     /// </summary>
-    public OCRProviderSelectionStrategy DefaultSelectionStrategy { get; set; } = OCRProviderSelectionStrategy.Balanced;
+    public OCRProviderSelectionStrategy ProviderSelectionStrategy { get; set; } = OCRProviderSelectionStrategy.Configuration;
 
     /// <summary>
     /// The default confidence threshold

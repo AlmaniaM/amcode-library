@@ -195,6 +195,122 @@ public class AnthropicClaudeProvider : GenericAIProvider
             return 0m;
         }
     }
+
+    #region General AI Methods
+
+    /// <summary>
+    /// Send a chat request using native Anthropic Messages API.
+    /// Note: Anthropic uses a separate "system" field rather than including it in messages.
+    /// </summary>
+    public override async Task<Models.AIChatResult> ChatAsync(Models.AIChatRequest request, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            if (_httpClient == null)
+            {
+                return Models.AIChatResult.Fail("Anthropic client not initialized", ProviderName);
+            }
+
+            _logger.LogInformation("Processing chat request with Anthropic Claude");
+
+            // Get all messages including system instruction
+            var allMessages = request.GetMessagesWithSystemInstruction();
+            
+            // Anthropic requires system message as a separate field, not in messages array
+            string? systemInstruction = null;
+            var messages = new List<object>();
+            
+            foreach (var msg in allMessages)
+            {
+                if (msg.Role == Models.AIChatRole.System)
+                {
+                    // Anthropic supports only one system message - use the first one (which is the SystemInstruction)
+                    if (systemInstruction == null)
+                    {
+                        systemInstruction = msg.Content;
+                    }
+                }
+                else
+                {
+                    messages.Add(new
+                    {
+                        role = msg.Role switch
+                        {
+                            Models.AIChatRole.User => "user",
+                            Models.AIChatRole.Assistant => "assistant",
+                            _ => "user"
+                        },
+                        content = msg.Content
+                    });
+                }
+            }
+
+            var requestBody = new Dictionary<string, object>
+            {
+                { "model", _config.Model },
+                { "max_tokens", request.MaxTokens ?? _config.MaxTokens },
+                { "temperature", request.Temperature ?? _config.Temperature },
+                { "messages", messages }
+            };
+
+            if (!string.IsNullOrEmpty(systemInstruction))
+            {
+                requestBody["system"] = systemInstruction;
+            }
+
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{_config.BaseUrl}/v1/messages")
+            {
+                Content = new StringContent(JsonSerializer.Serialize(requestBody, _jsonOptions), Encoding.UTF8, "application/json")
+            };
+            requestMessage.Headers.Add("x-api-key", _config.ApiKey);
+            requestMessage.Headers.Add("anthropic-version", "2023-06-01");
+
+            var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+            stopwatch.Stop();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return Models.AIChatResult.Fail($"API request failed: {response.StatusCode} - {errorContent}", ProviderName);
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var anthropicResponse = JsonSerializer.Deserialize<AnthropicResponse>(content, _jsonOptions);
+
+            if (anthropicResponse?.Content == null || !anthropicResponse.Content.Any())
+            {
+                return Models.AIChatResult.Fail("Invalid response from Anthropic", ProviderName);
+            }
+
+            var responseText = anthropicResponse.Content[0].Text;
+            var usage = anthropicResponse.Usage;
+
+            var cost = CalculateCost(new ProviderUsage
+            {
+                InputTokens = usage.InputTokens,
+                OutputTokens = usage.OutputTokens
+            });
+
+            return new Models.AIChatResult
+            {
+                Message = Models.AIChatMessage.Assistant(responseText),
+                Success = true,
+                Provider = ProviderName,
+                FinishReason = "end_turn",
+                Usage = CreateUsageStats(usage.InputTokens, usage.OutputTokens, _config.CostPerInputToken, _config.CostPerOutputToken),
+                Duration = stopwatch.Elapsed,
+                Timestamp = DateTime.UtcNow
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Anthropic Claude chat failed");
+            return Models.AIChatResult.Fail(ex.Message, ProviderName);
+        }
+    }
+
+    #endregion
     
     protected override bool CheckAvailability()
     {

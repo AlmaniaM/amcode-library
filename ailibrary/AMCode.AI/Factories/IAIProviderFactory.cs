@@ -11,11 +11,38 @@ public interface IAIProviderFactory
     /// <summary>
     /// Create a provider by type and name
     /// </summary>
-    /// <typeparam name="T">Provider type</typeparam>
-    /// <param name="name">Provider name</param>
-    /// <param name="configuration">Configuration section</param>
     /// <returns>Configured AI provider</returns>
-    IAIProvider CreateProvider<T>(string name, IConfiguration configuration) where T : GenericAIProvider;
+    IAIProvider CreateProvider();
+
+    /// <summary>
+    /// Create the primary AI provider based on AI:Provider configuration
+    /// </summary>
+    /// <returns>Configured AI provider, or null if not found</returns>
+    IAIProvider? CreateAIProvider();
+
+    /// <summary>
+    /// Create the fallback AI provider based on AI:FallbackProvider configuration
+    /// </summary>
+    /// <returns>Configured fallback AI provider, or null if not found</returns>
+    IAIProvider? CreateFallbackAIProvider();
+
+    /// <summary>
+    /// Create an AI provider specifically for parsing extracted text from recipes.
+    /// </summary>
+    /// <returns>Configured OCR parser provider</returns>
+    IAIProvider CreateRecipeTextParserProvider();
+
+    /// <summary>
+    /// Create the primary OCR text parser provider based on AI:OCRTextParserProvider configuration
+    /// </summary>
+    /// <returns>Configured OCR text parser provider, or null if not found</returns>
+    IAIProvider? CreateOCRTextParserProvider();
+
+    /// <summary>
+    /// Create the fallback OCR text parser provider based on AI:FallbackOCRTextParserProvider configuration
+    /// </summary>
+    /// <returns>Configured fallback OCR text parser provider, or null if not found</returns>
+    IAIProvider? CreateFallbackOCRTextParserProvider();
 
     /// <summary>
     /// Create a custom provider by type

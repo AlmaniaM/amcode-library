@@ -14,7 +14,7 @@ public interface IOCRProviderSelector
     /// </summary>
     /// <param name="request">The OCR request</param>
     /// <returns>The best OCR provider</returns>
-    Task<IOCRProvider> SelectBestProviderAsync(OCRRequest request);
+    Task<IOCRProvider> SelectOCRProvider(OCRRequest request);
 
     /// <summary>
     /// Gets all available OCR providers
@@ -45,6 +45,7 @@ public class SmartOCRProviderSelector : IOCRProviderSelector
     private readonly IEnumerable<IOCRProvider> _providers;
     private readonly ILogger<SmartOCRProviderSelector> _logger;
     private readonly OCRProviderSelectionStrategy _strategy;
+    private readonly string? _defaultProvider;
     private readonly Dictionary<string, OCRProviderHealth> _providerHealthCache;
     private readonly Dictionary<string, DateTime> _lastHealthCheck;
 
@@ -54,14 +55,17 @@ public class SmartOCRProviderSelector : IOCRProviderSelector
     /// <param name="providers">The available OCR providers</param>
     /// <param name="logger">The logger</param>
     /// <param name="strategy">The selection strategy</param>
+    /// <param name="defaultProvider">The default provider name to use if available (e.g., "PaddleOCR", "Azure")</param>
     public SmartOCRProviderSelector(
         IEnumerable<IOCRProvider> providers,
         ILogger<SmartOCRProviderSelector> logger,
-        OCRProviderSelectionStrategy strategy = OCRProviderSelectionStrategy.Balanced)
+        OCRProviderSelectionStrategy strategy = OCRProviderSelectionStrategy.Balanced,
+        string? defaultProvider = null)
     {
         _providers = providers ?? throw new ArgumentNullException(nameof(providers));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _strategy = strategy;
+        _defaultProvider = defaultProvider;
         _providerHealthCache = new Dictionary<string, OCRProviderHealth>();
         _lastHealthCheck = new Dictionary<string, DateTime>();
     }
@@ -71,7 +75,7 @@ public class SmartOCRProviderSelector : IOCRProviderSelector
     /// </summary>
     /// <param name="request">The OCR request</param>
     /// <returns>The best OCR provider</returns>
-    public async Task<IOCRProvider> SelectBestProviderAsync(OCRRequest request)
+    public async Task<IOCRProvider> SelectOCRProvider(OCRRequest request)
     {
         _logger.LogInformation("Selecting best OCR provider for request using strategy: {Strategy}", _strategy);
 
@@ -81,6 +85,26 @@ public class SmartOCRProviderSelector : IOCRProviderSelector
         if (!compatibleProviders.Any())
         {
             throw new InvalidOperationException("No compatible OCR providers available for the request");
+        }
+
+        // If Provider is specified, try to use it first
+        if (!string.IsNullOrWhiteSpace(_defaultProvider))
+        {
+            var defaultProvider = compatibleProviders.FirstOrDefault(p =>
+                p.ProviderName.Equals(_defaultProvider, StringComparison.OrdinalIgnoreCase));
+
+            if (defaultProvider != null)
+            {
+                _logger.LogInformation("Using default provider: {Provider} as specified in configuration", defaultProvider.ProviderName);
+                return defaultProvider;
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Default provider '{Provider}' is not available or not compatible. Available providers: {AvailableProviders}. Falling back to strategy selection.",
+                    _defaultProvider,
+                    string.Join(", ", compatibleProviders.Select(p => p.ProviderName)));
+            }
         }
 
         var selectedProvider = _strategy switch
@@ -115,6 +139,11 @@ public class SmartOCRProviderSelector : IOCRProviderSelector
                 if (provider.IsAvailable)
                 {
                     availableProviders.Add(provider);
+                    _logger.LogDebug("Provider {Provider} is available", provider.ProviderName);
+                }
+                else
+                {
+                    _logger.LogDebug("Provider {Provider} is not available (IsAvailable = false)", provider.ProviderName);
                 }
             }
             catch (Exception ex)
@@ -122,6 +151,10 @@ public class SmartOCRProviderSelector : IOCRProviderSelector
                 _logger.LogWarning(ex, "Provider {Provider} is not available", provider.ProviderName);
             }
         }
+
+        _logger.LogInformation("Found {Count} available OCR providers: {Providers}",
+            availableProviders.Count,
+            string.Join(", ", availableProviders.Select(p => p.ProviderName)));
 
         return availableProviders;
     }

@@ -90,7 +90,7 @@ public class EnhancedHybridOCRService : IOCRService
             // Try primary provider first
             try
             {
-                var primaryProvider = await _providerSelector.SelectBestProviderAsync(requestOptions);
+                var primaryProvider = await _providerSelector.SelectOCRProvider(requestOptions);
                 var result = await ProcessWithProvider(primaryProvider, requestOptions, cancellationToken);
 
                 if (result.Confidence >= requestOptions.ConfidenceThreshold)

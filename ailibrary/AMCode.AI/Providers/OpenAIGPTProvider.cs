@@ -16,8 +16,9 @@ public class OpenAIGPTProvider : GenericAIProvider
     private readonly HttpClient _httpClient;
     private readonly OpenAIConfiguration _config;
     private readonly PromptBuilderService _promptBuilder;
+    private readonly string _providerName;
     
-    public override string ProviderName => "OpenAI GPT";
+    public override string ProviderName => _providerName;
     public override bool RequiresInternet => true;
     public override bool IsAvailable => _httpClient != null;
     
@@ -45,11 +46,13 @@ public class OpenAIGPTProvider : GenericAIProvider
         ILogger<OpenAIGPTProvider> logger,
         IHttpClientFactory httpClientFactory,
         IOptions<OpenAIConfiguration> config,
-        PromptBuilderService promptBuilder)
+        PromptBuilderService promptBuilder,
+        string? providerName = null)
         : base(logger, httpClientFactory)
     {
         _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
         _promptBuilder = promptBuilder ?? throw new ArgumentNullException(nameof(promptBuilder));
+        _providerName = providerName ?? "OpenAI GPT";
         
         if (string.IsNullOrEmpty(_config.ApiKey))
         {
@@ -58,7 +61,7 @@ public class OpenAIGPTProvider : GenericAIProvider
         }
         else
         {
-            _httpClient = httpClientFactory.CreateClient(ProviderName);
+            _httpClient = httpClientFactory.CreateClient(_providerName);
         }
     }
     
@@ -177,6 +180,99 @@ public class OpenAIGPTProvider : GenericAIProvider
             return 0m;
         }
     }
+
+    #region General AI Methods
+
+    /// <summary>
+    /// Send a chat request using native OpenAI chat completions API
+    /// </summary>
+    public override async Task<Models.AIChatResult> ChatAsync(Models.AIChatRequest request, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            if (_httpClient == null)
+            {
+                return Models.AIChatResult.Fail("OpenAI client not initialized", ProviderName);
+            }
+
+            _logger.LogInformation("Processing chat request with OpenAI GPT");
+
+            // Get messages including system instruction
+            var allMessages = request.GetMessagesWithSystemInstruction();
+            
+            // Build messages array for OpenAI API
+            var messages = allMessages.Select(m => new
+            {
+                role = m.Role switch
+                {
+                    Models.AIChatRole.System => "system",
+                    Models.AIChatRole.User => "user",
+                    Models.AIChatRole.Assistant => "assistant",
+                    _ => "user"
+                },
+                content = m.Content
+            }).ToArray();
+
+            var requestBody = new
+            {
+                model = _config.Model,
+                messages = messages,
+                max_tokens = request.MaxTokens ?? _config.MaxTokens,
+                temperature = request.Temperature ?? _config.Temperature
+            };
+
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{_config.BaseUrl}/chat/completions")
+            {
+                Content = new StringContent(JsonSerializer.Serialize(requestBody, _jsonOptions), Encoding.UTF8, "application/json")
+            };
+            requestMessage.Headers.Add("Authorization", $"Bearer {_config.ApiKey}");
+
+            var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+            stopwatch.Stop();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return Models.AIChatResult.Fail($"API request failed: {response.StatusCode} - {errorContent}", ProviderName);
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var openAIResponse = JsonSerializer.Deserialize<OpenAIResponse>(content, _jsonOptions);
+
+            if (openAIResponse?.Choices == null || !openAIResponse.Choices.Any())
+            {
+                return Models.AIChatResult.Fail("Invalid response from OpenAI", ProviderName);
+            }
+
+            var responseText = openAIResponse.Choices[0].Message.Content;
+            var usage = openAIResponse.Usage;
+
+            var cost = CalculateCost(new ProviderUsage
+            {
+                InputTokens = usage.PromptTokens,
+                OutputTokens = usage.CompletionTokens
+            });
+
+            return new Models.AIChatResult
+            {
+                Message = Models.AIChatMessage.Assistant(responseText),
+                Success = true,
+                Provider = ProviderName,
+                FinishReason = openAIResponse.Choices[0].FinishReason,
+                Usage = CreateUsageStats(usage.PromptTokens, usage.CompletionTokens, _config.CostPerInputToken, _config.CostPerOutputToken),
+                Duration = stopwatch.Elapsed,
+                Timestamp = DateTime.UtcNow
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "OpenAI GPT chat failed");
+            return Models.AIChatResult.Fail(ex.Message, ProviderName);
+        }
+    }
+
+    #endregion
     
     protected override bool CheckAvailability()
     {

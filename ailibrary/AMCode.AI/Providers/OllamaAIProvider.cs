@@ -290,7 +290,7 @@ public class OllamaAIProvider : GenericAIProvider
     /// <summary>
     /// Extract JSON from a response that may contain code blocks, explanations, or other text
     /// </summary>
-    private string ExtractJsonFromResponse(string response)
+    private new string ExtractJsonFromResponse(string response)
     {
         if (string.IsNullOrWhiteSpace(response))
         {

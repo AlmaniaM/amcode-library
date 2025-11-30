@@ -41,7 +41,7 @@ public class SmartOCRProviderSelectorTests
         };
         
         // Act
-        var selectedProvider = await _selector.SelectBestProviderAsync(request);
+        var selectedProvider = await _selector.SelectOCRProvider(request);
         
         // Assert
         selectedProvider.ProviderName.Should().Be("Google Cloud Vision"); // Fastest response time
@@ -59,7 +59,7 @@ public class SmartOCRProviderSelectorTests
         };
         
         // Act
-        var selectedProvider = await selector.SelectBestProviderAsync(request);
+        var selectedProvider = await selector.SelectOCRProvider(request);
         
         // Assert
         selectedProvider.ProviderName.Should().Be("Azure Computer Vision"); // Cheapest cost
@@ -77,7 +77,7 @@ public class SmartOCRProviderSelectorTests
         };
         
         // Act
-        var selectedProvider = await selector.SelectBestProviderAsync(request);
+        var selectedProvider = await selector.SelectOCRProvider(request);
         
         // Assert
         selectedProvider.ProviderName.Should().Be("Azure Computer Vision"); // Only one with both capabilities

@@ -319,7 +319,7 @@ namespace AMCode.Phase5B.Testing
             var validConfig = GetProductionOCRConfiguration();
             var invalidConfig = new OCRConfiguration
             {
-                DefaultProvider = "",
+                Provider = "",
                 Providers = new Dictionary<string, OCRProviderConfiguration>()
             };
             
@@ -580,7 +580,7 @@ namespace AMCode.Phase5B.Testing
 
         private bool ValidateOCRConfiguration(OCRConfiguration config)
         {
-            return !string.IsNullOrEmpty(config.DefaultProvider) && 
+            return !string.IsNullOrEmpty(config.Provider) && 
                    config.Providers != null && 
                    config.Providers.Count > 0;
         }
@@ -613,7 +613,7 @@ namespace AMCode.Phase5B.Testing
         {
             return new OCRConfiguration
             {
-                DefaultProvider = "Azure",
+                Provider = "Azure",
                 Providers = new Dictionary<string, OCRProviderConfiguration>
                 {
                     ["Azure"] = new OCRProviderConfiguration
@@ -630,7 +630,7 @@ namespace AMCode.Phase5B.Testing
         {
             return new AIConfiguration
             {
-                DefaultProvider = "OpenAI",
+                Provider = "OpenAI",
                 Providers = new Dictionary<string, AIProviderConfiguration>
                 {
                     ["OpenAI"] = new AIProviderConfiguration

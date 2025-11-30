@@ -498,7 +498,7 @@ namespace AMCode.Phase5B.Testing
         {
             return new OCRConfiguration
             {
-                DefaultProvider = "Azure",
+                Provider = "Azure",
                 Providers = new Dictionary<string, OCRProviderConfiguration>
                 {
                     ["Azure"] = new OCRProviderConfiguration
@@ -515,7 +515,7 @@ namespace AMCode.Phase5B.Testing
         {
             return new AIConfiguration
             {
-                DefaultProvider = "OpenAI",
+                Provider = "OpenAI",
                 Providers = new Dictionary<string, AIProviderConfiguration>
                 {
                     ["OpenAI"] = new AIProviderConfiguration

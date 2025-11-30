@@ -15,7 +15,7 @@ public class AzureOCRConfiguration
     /// <summary>
     /// The Azure Computer Vision subscription key
     /// </summary>
-    public string SubscriptionKey { get; set; } = string.Empty;
+    public string ApiKey { get; set; } = string.Empty;
 
     /// <summary>
     /// The Azure region

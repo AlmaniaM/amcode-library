@@ -48,5 +48,10 @@ public enum OCRProviderSelectionStrategy
     /// <summary>
     /// Select the provider based on custom criteria
     /// </summary>
-    Custom
+    Custom,
+    
+    /// <summary>
+    /// Select the provider based on manual configuration from appsettings.json
+    /// </summary>
+    Configuration
 }

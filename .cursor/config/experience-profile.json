@@ -1,0 +1,19 @@
+{
+  "overallLevel": "senior",
+  "yearsExperience": 8,
+  "technologies": {
+    "angular": { "years": 7, "level": "expert" },
+    "react": { "years": 3, "level": "proficient" },
+    "ionic": { "years": 1, "level": "competent" },
+    "dotnet": { "years": 8, "level": "expert" },
+    "nodejs": { "years": 3, "level": "proficient" },
+    "typescript": { "years": 7, "level": "expert" },
+    "testing": { "years": 8, "level": "advanced" }
+  },
+  "multipliers": {
+    "expert": 0.7,
+    "proficient": 1.0,
+    "competent": 1.3,
+    "learning": 1.8
+  }
+}
