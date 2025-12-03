@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using AMCode.OCR.Models;
 using AMCode.OCR.Configurations;
 using System.Text.Json;
+using System.Linq;
 
 namespace AMCode.OCR.Providers;
 
@@ -109,7 +110,30 @@ public class AzureComputerVisionOCRService : IOCRProvider
             
             // Use the ReadInStreamAsync method
             using var memoryStream = new MemoryStream(imageBytes);
-            var readResult = await _client.ReadInStreamAsync(memoryStream, cancellationToken: cancellationToken);
+            
+            // Determine language hint from options or config
+            string? languageHint = options?.ExpectedLanguage;
+            if (string.IsNullOrWhiteSpace(languageHint))
+            {
+                languageHint = _config.DefaultLanguage;
+            }
+            if (string.IsNullOrWhiteSpace(languageHint) && _config.SupportedLanguages != null && _config.SupportedLanguages.Length > 0)
+            {
+                languageHint = _config.SupportedLanguages[0];
+            }
+            
+            // ReadInStreamAsync signature appears to be: 
+            // ReadInStreamAsync(Stream image, IList<string>? pages = null, string? language = null, CancellationToken cancellationToken = default)
+            // Pass null for pages, language hint if available
+            ReadInStreamHeaders readResult;
+            if (!string.IsNullOrWhiteSpace(languageHint))
+            {
+                readResult = await _client.ReadInStreamAsync(memoryStream, pages: null, language: languageHint, cancellationToken: cancellationToken);
+            }
+            else
+            {
+                readResult = await _client.ReadInStreamAsync(memoryStream, pages: null, language: null, cancellationToken: cancellationToken);
+            }
             
             // Get the operation ID from the operation location
             var operationId = readResult.OperationLocation.Split('/').Last();
@@ -342,23 +366,77 @@ public class AzureComputerVisionOCRService : IOCRProvider
     {
         var textBlocks = new List<TextBlock>();
         var fullText = new List<string>();
+        var detectedLanguages = new HashSet<string>();
+        var hasHandwriting = false;
+        var hasPrintedText = false;
 
         foreach (var page in readResult.AnalyzeResult.ReadResults)
         {
+            // Extract language from page if available
+            if (!string.IsNullOrWhiteSpace(page.Language))
+            {
+                detectedLanguages.Add(page.Language);
+            }
+
             foreach (var line in page.Lines)
             {
+                // Calculate confidence from words if available
+                double lineConfidence = 0.8; // Default fallback
+                if (line.Words != null && line.Words.Any())
+                {
+                    var wordConfidences = line.Words
+                        .Where(w => w.Confidence > 0) // Confidence is a double, filter out zero values
+                        .Select(w => w.Confidence)
+                        .ToList();
+                    
+                    if (wordConfidences.Any())
+                    {
+                        lineConfidence = wordConfidences.Average();
+                    }
+                }
+
+                // Detect handwriting from appearance if available
+                bool isHandwritten = false;
+                bool isPrinted = true;
+                if (line.Appearance != null && line.Appearance.Style != null)
+                {
+                    // Azure uses TextStyle enum for style detection
+                    // Check if style indicates handwriting (value is typically "handwriting" or similar)
+                    var styleName = line.Appearance.Style.ToString();
+                    isHandwritten = styleName != null && 
+                        (styleName.Contains("handwriting", StringComparison.OrdinalIgnoreCase) ||
+                         styleName.Contains("Handwriting", StringComparison.OrdinalIgnoreCase));
+                    isPrinted = !isHandwritten;
+                }
+
+                if (isHandwritten)
+                {
+                    hasHandwriting = true;
+                }
+                if (isPrinted)
+                {
+                    hasPrintedText = true;
+                }
+
+                // Use page language or fallback to "en"
+                var lineLanguage = page.Language ?? "en";
+                if (!string.IsNullOrWhiteSpace(lineLanguage))
+                {
+                    detectedLanguages.Add(lineLanguage);
+                }
+
                 var textBlock = new TextBlock
                 {
                     Text = line.Text,
-                    Confidence = 0.8, // Azure doesn't provide confidence per line
+                    Confidence = lineConfidence,
                     BoundingBox = BoundingBox.FromCoordinates(
                         line.BoundingBox[0] ?? 0, line.BoundingBox[1] ?? 0,
                         (line.BoundingBox[2] ?? 0) - (line.BoundingBox[0] ?? 0),
                         (line.BoundingBox[3] ?? 0) - (line.BoundingBox[1] ?? 0)
                     ),
-                    IsHandwritten = false, // Azure doesn't distinguish between handwritten and printed
-                    IsPrinted = true,
-                    Language = "en", // Azure doesn't provide language per line
+                    IsHandwritten = isHandwritten,
+                    IsPrinted = isPrinted,
+                    Language = lineLanguage,
                     ReadingOrder = textBlocks.Count
                 };
 
@@ -367,21 +445,25 @@ public class AzureComputerVisionOCRService : IOCRProvider
             }
         }
 
+        // Determine overall language (use first detected or fallback to "en")
+        var overallLanguage = detectedLanguages.Any() ? detectedLanguages.First() : "en";
+
         var result = new OCRResult
         {
             Text = string.Join(" ", fullText),
             TextBlocks = textBlocks,
             Confidence = textBlocks.Any() ? textBlocks.Average(tb => tb.Confidence) : 0.0,
-            Language = "en", // Azure doesn't provide language detection
+            Language = overallLanguage,
             ProcessingTime = processingTime,
-            ContainsHandwriting = false,
-            ContainsPrintedText = true,
+            ContainsHandwriting = hasHandwriting,
+            ContainsPrintedText = hasPrintedText,
             Metadata = new Dictionary<string, object>
             {
                 ["Provider"] = ProviderName,
                 ["ModelVersion"] = "latest",
                 ["TextBlockCount"] = textBlocks.Count,
-                ["LineCount"] = textBlocks.Count
+                ["LineCount"] = textBlocks.Count,
+                ["DetectedLanguages"] = detectedLanguages.ToArray()
             }
         };
 

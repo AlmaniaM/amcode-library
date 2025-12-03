@@ -36,12 +36,22 @@ public static class OCRServiceCollectionExtensions
         services.Configure<AWSBedrockOCRConfiguration>(configuration.GetSection("OCR:AWSBedrock"));
         services.Configure<GCPDocumentAIConfiguration>(configuration.GetSection("OCR:GCPDocumentAI"));
         services.Configure<PaddleOCRConfiguration>(configuration.GetSection("OCR:PaddleOCR"));
+        services.Configure<AnthropicOCRConfiguration>(configuration.GetSection("OCR:Anthropic"));
 
         // Register HTTP clients
         services.AddHttpClient<AzureComputerVisionOCRService>();
         services.AddHttpClient<AWSTextractOCRService>();
         services.AddHttpClient<GoogleCloudVisionOCRService>();
         services.AddHttpClient<PaddleOCRProvider>();
+        services.AddHttpClient<AnthropicOCRService>(client =>
+        {
+            var config = configuration.GetSection("OCR:Anthropic").Get<AnthropicOCRConfiguration>();
+            if (config != null && !string.IsNullOrEmpty(config.BaseUrl))
+            {
+                client.BaseAddress = new Uri(config.BaseUrl);
+                client.Timeout = config.Timeout;
+            }
+        });
 
         // Register Azure Computer Vision client
         services.AddSingleton<ComputerVisionClient>(provider =>
@@ -124,19 +134,10 @@ public static class OCRServiceCollectionExtensions
         services.AddSingleton<IOCRProvider, AWSTextractOCRService>();
         services.AddSingleton<IOCRProvider, GoogleCloudVisionOCRService>();
         services.AddSingleton<IOCRProvider, PaddleOCRProvider>();
+        services.AddSingleton<IOCRProvider, AnthropicOCRService>();
 
         // Register OCR provider factory
         services.AddSingleton<IOCRProviderFactory, OCRProviderFactory>();
-
-        // Register provider selector factory
-        services.AddSingleton<IOCRProviderSelectorFactory, OCRProviderSelectorFactory>();
-
-        // Register provider selector using factory
-        services.AddSingleton<IOCRProviderSelector>(provider =>
-        {
-            var factory = provider.GetRequiredService<IOCRProviderSelectorFactory>();
-            return factory.CreateSelector();
-        });
         services.AddSingleton<IOCRService, EnhancedHybridOCRService>();
 
         // Discover and register dynamic providers from configuration
@@ -219,7 +220,6 @@ public static class OCRServiceCollectionExtensions
         });
 
         services.AddSingleton<IOCRProvider, GoogleCloudVisionOCRService>();
-        services.AddSingleton<IOCRProviderSelector, SmartOCRProviderSelector>();
         services.AddSingleton<IOCRService, EnhancedHybridOCRService>();
 
         return services;
@@ -247,26 +247,20 @@ public static class OCRServiceCollectionExtensions
     public static IServiceCollection AddOCR(this IServiceCollection services, Action<OCRConfiguration> configureOptions)
     {
         services.Configure(configureOptions);
-        services.AddSingleton<IOCRProviderSelector, SmartOCRProviderSelector>();
         services.AddSingleton<IOCRService, EnhancedHybridOCRService>();
         return services;
     }
 
     /// <summary>
     /// Adds OCR services with custom provider selection strategy
+    /// Note: Strategy selection is now handled via factory configuration (OCR:Provider and OCR:FallbackProvider)
     /// </summary>
     /// <param name="services">The service collection</param>
-    /// <param name="strategy">The provider selection strategy</param>
+    /// <param name="strategy">The provider selection strategy (deprecated - use factory configuration instead)</param>
     /// <returns>The service collection</returns>
+    [Obsolete("Provider selection is now handled via factory configuration. Use OCR:Provider and OCR:FallbackProvider in appsettings.json")]
     public static IServiceCollection AddOCRWithStrategy(this IServiceCollection services, OCRProviderSelectionStrategy strategy)
     {
-        services.AddSingleton<IOCRProviderSelector>(provider =>
-        {
-            var providers = provider.GetServices<IOCRProvider>();
-            var logger = provider.GetRequiredService<ILogger<SmartOCRProviderSelector>>();
-            return new SmartOCRProviderSelector(providers, logger, strategy);
-        });
-
         services.AddSingleton<IOCRService, EnhancedHybridOCRService>();
         return services;
     }
@@ -396,7 +390,8 @@ public static class OCRServiceCollectionExtensions
                     (providerType == typeof(PaddleOCRProvider) ||
                      providerType == typeof(AzureComputerVisionOCRService) ||
                      providerType == typeof(AWSTextractOCRService) ||
-                     providerType == typeof(GoogleCloudVisionOCRService)))
+                     providerType == typeof(GoogleCloudVisionOCRService) ||
+                     providerType == typeof(AnthropicOCRService)))
                 {
                     var genericHttpClientMethod = httpClientMethod.MakeGenericMethod(providerType);
                     genericHttpClientMethod.Invoke(null, new object[] { services });
@@ -432,7 +427,8 @@ public static class OCRServiceCollectionExtensions
             "GCPVision",
             "AWSBedrock",
             "GCPDocumentAI",
-            "PaddleOCR"
+            "PaddleOCR",
+            "Anthropic"
         };
 
         return staticSections.Contains(sectionName);
@@ -449,7 +445,8 @@ public static class OCRServiceCollectionExtensions
             { typeof(PaddleOCRProvider), typeof(PaddleOCRConfiguration) },
             { typeof(AzureComputerVisionOCRService), typeof(AzureOCRConfiguration) },
             { typeof(AWSTextractOCRService), typeof(AWSTextractConfiguration) },
-            { typeof(GoogleCloudVisionOCRService), typeof(GoogleVisionConfiguration) }
+            { typeof(GoogleCloudVisionOCRService), typeof(GoogleVisionConfiguration) },
+            { typeof(AnthropicOCRService), typeof(AnthropicOCRConfiguration) }
         };
 
         if (providerConfigMap.TryGetValue(providerType, out var configType))
@@ -661,6 +658,19 @@ public static class OCRServiceCollectionExtensions
                 }
                 // PaddleOCRProvider: ILogger<T>, IHttpClientFactory, IOptions<TConfig>
                 else if (providerType == typeof(PaddleOCRProvider) &&
+                         parameters.Length == 3 &&
+                         IsLoggerType(parameters[0].ParameterType) &&
+                         parameters[1].ParameterType == typeof(IHttpClientFactory) &&
+                         parameters[2].ParameterType.IsGenericType &&
+                         parameters[2].ParameterType.GetGenericTypeDefinition() == typeof(IOptions<>))
+                {
+                    var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+                    selectedConstructor = constructor;
+                    constructorParams = new object[] { loggerInstance, httpClientFactory, optionsWrapper };
+                    break;
+                }
+                // AnthropicOCRService: ILogger<T>, IHttpClientFactory, IOptions<TConfig>
+                else if (providerType == typeof(AnthropicOCRService) &&
                          parameters.Length == 3 &&
                          IsLoggerType(parameters[0].ParameterType) &&
                          parameters[1].ParameterType == typeof(IHttpClientFactory) &&

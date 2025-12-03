@@ -34,7 +34,7 @@ public static class AIServiceCollectionExtensions
         services.Configure<OllamaConfiguration>(configuration.GetSection("AI:Ollama"));
         services.Configure<LMStudioConfiguration>(configuration.GetSection("AI:LMStudio"));
         services.Configure<HuggingFaceConfiguration>(configuration.GetSection("AI:HuggingFace"));
-        services.Configure<AzureOpenAIConfiguration>(configuration.GetSection("AI:AzureOpenAIGPT5Nano"));
+        services.Configure<AzureOpenAIConfiguration>("AzureOpenAIGPT5Nano", configuration.GetSection("AI:AzureOpenAIGPT5Nano"));
         services.Configure<PerplexityConfiguration>(configuration.GetSection("AI:Perplexity"));
 
         // Register HTTP clients
@@ -46,6 +46,7 @@ public static class AIServiceCollectionExtensions
         services.AddHttpClient<LMStudioAIProvider>();
         services.AddHttpClient<HuggingFaceAIProvider>();
         services.AddHttpClient<AzureOpenAIProvider>();
+        services.AddHttpClient<AzureOpenAISdkProvider>();
         services.AddHttpClient<PerplexityProvider>();
 
         // Register providers
@@ -78,6 +79,17 @@ public static class AIServiceCollectionExtensions
             return new AzureComputerVisionProvider(logger, httpClientFactory, Options.Create(config), promptBuilder);
         });
 
+        // Register AzureOpenAISdkProvider with AzureOpenAIGPT5Nano configuration (named options)
+        services.AddSingleton<IAIProvider>(provider =>
+        {
+            var logger = provider.GetRequiredService<ILogger<AzureOpenAISdkProvider>>();
+            var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+            var configMonitor = provider.GetRequiredService<IOptionsMonitor<AzureOpenAIConfiguration>>();
+            var config = configMonitor.Get("AzureOpenAIGPT5Nano");
+            var promptBuilder = provider.GetRequiredService<PromptBuilderService>();
+            return new AzureOpenAISdkProvider(logger, httpClientFactory, Options.Create(config), promptBuilder);
+        });
+
         services.AddSingleton<IAIProvider, AnthropicClaudeProvider>();
         services.AddSingleton<IAIProvider, GrokProvider>();
         services.AddSingleton<IAIProvider, AWSBedrockProvider>();
@@ -93,23 +105,13 @@ public static class AIServiceCollectionExtensions
         services.AddSingleton<ICostAnalyzer, CostAnalyzer>();
         services.AddSingleton<IRecipeParserService, EnhancedHybridAIService>();
         services.AddSingleton<IRecipeValidationService, RecipeValidationService>();
-        
+
         // Register AI provider factory
         services.AddSingleton<IAIProviderFactory>(provider =>
         {
             var serviceProvider = provider.GetRequiredService<IServiceProvider>();
             var logger = provider.GetRequiredService<ILogger<AIProviderFactory>>();
             return new AIProviderFactory(serviceProvider, logger);
-        });
-
-        // Register provider selector factory
-        services.AddSingleton<IAIProviderSelectorFactory, AIProviderSelectorFactory>();
-
-        // Register provider selector using factory
-        services.AddSingleton<IAIProviderSelector>(provider =>
-        {
-            var factory = provider.GetRequiredService<IAIProviderSelectorFactory>();
-            return factory.CreateSelector();
         });
 
         // Discover and register dynamic providers from configuration
@@ -285,7 +287,7 @@ public static class AIServiceCollectionExtensions
                 // Register configuration with named options
                 var configureMethod = typeof(OptionsConfigurationServiceCollectionExtensions)
                     .GetMethods()
-                    .FirstOrDefault(m => m.Name == "Configure" && 
+                    .FirstOrDefault(m => m.Name == "Configure" &&
                                         m.GetParameters().Length == 3 &&
                                         m.GetParameters()[1].ParameterType == typeof(string) &&
                                         m.GetParameters()[2].ParameterType == typeof(IConfiguration));
@@ -299,7 +301,7 @@ public static class AIServiceCollectionExtensions
                 // Ensure HTTP client is registered for this provider type (if not already)
                 var httpClientMethod = typeof(HttpClientFactoryServiceCollectionExtensions)
                     .GetMethods()
-                    .FirstOrDefault(m => m.Name == "AddHttpClient" && 
+                    .FirstOrDefault(m => m.Name == "AddHttpClient" &&
                                         m.GetParameters().Length == 1 &&
                                         m.IsGenericMethod);
 
@@ -424,7 +426,7 @@ public static class AIServiceCollectionExtensions
             var optionsMonitor = serviceProvider.GetRequiredService(optionsMonitorType);
             var getMethod = optionsMonitorType.GetMethod("Get", new[] { typeof(string) });
             var configInstance = getMethod?.Invoke(optionsMonitor, new object[] { sectionName });
-            
+
             // Create IOptions<T> wrapper
             var optionsType = typeof(IOptions<>).MakeGenericType(configType);
             var optionsCreateMethod = typeof(Options).GetMethod("Create", BindingFlags.Public | BindingFlags.Static);
@@ -439,7 +441,7 @@ public static class AIServiceCollectionExtensions
             foreach (var constructor in constructors)
             {
                 var parameters = constructor.GetParameters();
-                
+
                 // Look for constructor with: ILogger<T>, IHttpClientFactory, IOptions<TConfig>, PromptBuilderService
                 if (parameters.Length >= 4 &&
                     IsLoggerType(parameters[0].ParameterType) &&

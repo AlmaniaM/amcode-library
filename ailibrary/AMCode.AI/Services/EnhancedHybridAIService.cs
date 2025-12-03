@@ -1,31 +1,32 @@
 using AMCode.AI.Models;
 using AMCode.AI.Enums;
 using AMCode.AI.Configurations;
+using AMCode.AI.Factories;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 
 namespace AMCode.AI.Services;
 
 /// <summary>
-/// Enhanced hybrid AI service with fallback mechanisms and smart provider selection
+/// Enhanced hybrid AI service with fallback mechanisms using provider factory
 /// </summary>
 public class EnhancedHybridAIService : IRecipeParserService
 {
     private readonly IEnumerable<IAIProvider> _providers;
-    private readonly IAIProviderSelector _providerSelector;
+    private readonly IAIProviderFactory _providerFactory;
     private readonly ILogger<EnhancedHybridAIService> _logger;
     private readonly ICostAnalyzer _costAnalyzer;
     private readonly AIConfiguration _config;
     
     public EnhancedHybridAIService(
         IEnumerable<IAIProvider> providers,
-        IAIProviderSelector providerSelector,
+        IAIProviderFactory providerFactory,
         ILogger<EnhancedHybridAIService> logger,
         ICostAnalyzer costAnalyzer,
         IOptions<AIConfiguration> config)
     {
         _providers = providers ?? throw new ArgumentNullException(nameof(providers));
-        _providerSelector = providerSelector ?? throw new ArgumentNullException(nameof(providerSelector));
+        _providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _costAnalyzer = costAnalyzer ?? throw new ArgumentNullException(nameof(costAnalyzer));
         _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
@@ -56,61 +57,61 @@ public class EnhancedHybridAIService : IRecipeParserService
             // Try primary provider first
             try
             {
-                var primaryProvider = await _providerSelector.SelectOCRProvider(request);
-                var result = await ProcessWithProvider(primaryProvider, request, cancellationToken);
-                
-                if (result.Confidence >= _config.ConfidenceThreshold)
+                var primaryProvider = _providerFactory.CreateAIProvider();
+                if (primaryProvider != null)
                 {
-                    _logger.LogInformation("AI parsing successful with primary provider: {Provider}", primaryProvider.ProviderName);
-                    return Result<ParsedRecipeResult>.Success(result);
+                    var result = await ProcessWithProvider(primaryProvider, request, cancellationToken);
+                    
+                    if (result.Confidence >= _config.ConfidenceThreshold)
+                    {
+                        _logger.LogInformation("AI parsing successful with primary provider: {Provider}", primaryProvider.ProviderName);
+                        return Result<ParsedRecipeResult>.Success(result);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Primary provider {Provider} returned low confidence: {Confidence}", 
+                            primaryProvider.ProviderName, result.Confidence);
+                    }
                 }
                 else
                 {
-                    _logger.LogWarning("Primary provider {Provider} returned low confidence: {Confidence}", 
-                        primaryProvider.ProviderName, result.Confidence);
+                    _logger.LogWarning("Primary AI provider not configured or not found");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Primary provider failed, trying fallback providers");
+                _logger.LogWarning(ex, "Primary provider failed, trying fallback provider");
             }
             
-            // Try fallback providers if enabled
+            // Try fallback provider if enabled
             if (_config.EnableFallbackProviders)
             {
-                var fallbackProviders = await _providerSelector.GetAvailableProvidersAsync();
-                var fallbackAttempts = 0;
-                
-                foreach (var provider in fallbackProviders)
+                try
                 {
-                    if (fallbackAttempts >= _config.MaxFallbackAttempts)
+                    var fallbackProvider = _providerFactory.CreateFallbackAIProvider();
+                    if (fallbackProvider != null)
                     {
-                        _logger.LogWarning("Maximum fallback attempts reached: {MaxAttempts}", _config.MaxFallbackAttempts);
-                        break;
-                    }
-                    
-                    try
-                    {
-                        var result = await ProcessWithProvider(provider, request, cancellationToken);
+                        var result = await ProcessWithProvider(fallbackProvider, request, cancellationToken);
                         
                         if (result.Confidence >= _config.ConfidenceThreshold)
                         {
-                            _logger.LogInformation("AI parsing successful with fallback provider: {Provider}", provider.ProviderName);
+                            _logger.LogInformation("AI parsing successful with fallback provider: {Provider}", fallbackProvider.ProviderName);
                             return Result<ParsedRecipeResult>.Success(result);
                         }
                         else
                         {
                             _logger.LogWarning("Fallback provider {Provider} returned low confidence: {Confidence}", 
-                                provider.ProviderName, result.Confidence);
+                                fallbackProvider.ProviderName, result.Confidence);
                         }
-                        
-                        fallbackAttempts++;
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        _logger.LogWarning(ex, "Fallback provider {Provider} failed", provider.ProviderName);
-                        fallbackAttempts++;
+                        _logger.LogDebug("Fallback AI provider not configured");
                     }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Fallback provider failed");
                 }
             }
             
@@ -128,8 +129,22 @@ public class EnhancedHybridAIService : IRecipeParserService
     {
         try
         {
-            var availableProviders = await _providerSelector.GetAvailableProvidersAsync();
-            return availableProviders.Any();
+            // Check if primary provider is available
+            var primaryProvider = _providerFactory.CreateAIProvider();
+            if (primaryProvider != null && primaryProvider.IsAvailable)
+            {
+                return true;
+            }
+            
+            // Check if fallback provider is available
+            var fallbackProvider = _providerFactory.CreateFallbackAIProvider();
+            if (fallbackProvider != null && fallbackProvider.IsAvailable)
+            {
+                return true;
+            }
+            
+            // Check if any registered provider is available
+            return _providers.Any(p => p.IsAvailable);
         }
         catch (Exception ex)
         {

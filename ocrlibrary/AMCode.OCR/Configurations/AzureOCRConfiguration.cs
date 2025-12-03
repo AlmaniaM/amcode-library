@@ -24,8 +24,17 @@ public class AzureOCRConfiguration
 
     /// <summary>
     /// The API version
+    /// Current version: 2023-02-01-preview
+    /// Note: Check Azure Computer Vision documentation for newer API versions (e.g., 2024-02-01-preview or later)
+    /// Newer versions may provide improved accuracy and additional features
     /// </summary>
     public string ApiVersion { get; set; } = "2023-02-01-preview";
+
+    /// <summary>
+    /// The default language to use as a hint for OCR (e.g., "en", "es", "fr")
+    /// Used when ExpectedLanguage is not provided in OCRRequest
+    /// </summary>
+    public string DefaultLanguage { get; set; } = "en";
 
     /// <summary>
     /// The model version

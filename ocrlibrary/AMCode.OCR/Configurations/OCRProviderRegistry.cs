@@ -16,6 +16,7 @@ public static class OCRProviderRegistry
         public const string AzureComputerVision = "Azure Computer Vision";
         public const string AWSTextract = "AWS Textract";
         public const string GoogleCloudVision = "Google Cloud Vision";
+        public const string AnthropicClaudeOCR = "Anthropic Claude OCR";
     }
 
     /// <summary>
@@ -27,7 +28,8 @@ public static class OCRProviderRegistry
             { "paddle-ocr", typeof(PaddleOCRProvider) },
             { "azure-cognitive-services", typeof(AzureComputerVisionOCRService) },
             { "aws-textract", typeof(AWSTextractOCRService) },
-            { "google-cloud-vision", typeof(GoogleCloudVisionOCRService) }
+            { "google-cloud-vision", typeof(GoogleCloudVisionOCRService) },
+            { "anthropic-ocr", typeof(AnthropicOCRService) }
         };
 
     /// <summary>
@@ -50,6 +52,10 @@ public static class OCRProviderRegistry
             { "google", new[] { Names.GoogleCloudVision } },
             { "gcpvision", new[] { Names.GoogleCloudVision } },
             { "gcp", new[] { Names.GoogleCloudVision } },
-            { "googlecloudvision", new[] { Names.GoogleCloudVision } }
+            { "googlecloudvision", new[] { Names.GoogleCloudVision } },
+            { "anthropic-ocr", new[] { Names.AnthropicClaudeOCR, "Anthropic", "Claude", "AnthropicOCR" } },
+            { "anthropic", new[] { Names.AnthropicClaudeOCR } },
+            { "claude", new[] { Names.AnthropicClaudeOCR } },
+            { "anthropicocr", new[] { Names.AnthropicClaudeOCR } }
         };
 }

@@ -3,16 +3,17 @@ using Microsoft.Extensions.Options;
 using AMCode.OCR.Models;
 using AMCode.OCR.Configurations;
 using AMCode.OCR.Enums;
+using AMCode.OCR.Factories;
 
 namespace AMCode.OCR.Services;
 
 /// <summary>
-/// Enhanced hybrid OCR service implementation
+/// Enhanced hybrid OCR service implementation using provider factory
 /// </summary>
 public class EnhancedHybridOCRService : IOCRService
 {
     private readonly IEnumerable<IOCRProvider> _providers;
-    private readonly IOCRProviderSelector _providerSelector;
+    private readonly IOCRProviderFactory _providerFactory;
     private readonly ILogger<EnhancedHybridOCRService> _logger;
     private readonly OCRConfiguration _config;
 
@@ -20,17 +21,17 @@ public class EnhancedHybridOCRService : IOCRService
     /// Initializes a new instance of the EnhancedHybridOCRService class
     /// </summary>
     /// <param name="providers">The available OCR providers</param>
-    /// <param name="providerSelector">The provider selector</param>
+    /// <param name="providerFactory">The provider factory</param>
     /// <param name="logger">The logger</param>
     /// <param name="config">The configuration</param>
     public EnhancedHybridOCRService(
         IEnumerable<IOCRProvider> providers,
-        IOCRProviderSelector providerSelector,
+        IOCRProviderFactory providerFactory,
         ILogger<EnhancedHybridOCRService> logger,
         IOptions<OCRConfiguration> config)
     {
         _providers = providers ?? throw new ArgumentNullException(nameof(providers));
-        _providerSelector = providerSelector ?? throw new ArgumentNullException(nameof(providerSelector));
+        _providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
     }
@@ -90,62 +91,66 @@ public class EnhancedHybridOCRService : IOCRService
             // Try primary provider first
             try
             {
-                var primaryProvider = await _providerSelector.SelectOCRProvider(requestOptions);
-                var result = await ProcessWithProvider(primaryProvider, requestOptions, cancellationToken);
-
-                if (result.Confidence >= requestOptions.ConfidenceThreshold)
+                var primaryProvider = _providerFactory.CreateProvider();
+                if (primaryProvider != null)
                 {
-                    _logger.LogInformation("OCR successful with primary provider: {Provider}", primaryProvider.ProviderName);
-                    return Result.Success(result);
+                    var result = await ProcessWithProvider(primaryProvider, requestOptions, cancellationToken);
+
+                    if (result.Confidence >= requestOptions.ConfidenceThreshold)
+                    {
+                        _logger.LogInformation("OCR successful with primary provider: {Provider}", primaryProvider.ProviderName);
+                        return Result.Success(result);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Primary provider {Provider} returned low confidence: {Confidence}", 
+                            primaryProvider.ProviderName, result.Confidence);
+                    }
                 }
                 else
                 {
-                    _logger.LogWarning("Primary provider {Provider} returned low confidence: {Confidence}", 
-                        primaryProvider.ProviderName, result.Confidence);
+                    _logger.LogWarning("Primary OCR provider not configured or not found");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Primary provider failed, trying fallback providers");
+                _logger.LogWarning(ex, "Primary provider failed, trying fallback provider");
             }
 
-            // Try fallback providers if enabled
+            // Try fallback provider if enabled
             if (_config.EnableFallbackProviders)
             {
-                var fallbackProviders = await _providerSelector.GetAvailableProvidersAsync();
-                var fallbackCount = 0;
-
-                foreach (var provider in fallbackProviders)
+                try
                 {
-                    if (fallbackCount >= _config.MaxFallbackProviders)
-                        break;
-
-                    try
+                    var fallbackProvider = _providerFactory.CreateFallbackProvider();
+                    if (fallbackProvider != null)
                     {
-                        var result = await ProcessWithProvider(provider, requestOptions, cancellationToken);
+                        var result = await ProcessWithProvider(fallbackProvider, requestOptions, cancellationToken);
 
                         if (result.Confidence >= requestOptions.ConfidenceThreshold)
                         {
-                            _logger.LogInformation("OCR successful with fallback provider: {Provider}", provider.ProviderName);
+                            _logger.LogInformation("OCR successful with fallback provider: {Provider}", fallbackProvider.ProviderName);
                             return Result.Success(result);
                         }
                         else
                         {
                             _logger.LogWarning("Fallback provider {Provider} returned low confidence: {Confidence}", 
-                                provider.ProviderName, result.Confidence);
+                                fallbackProvider.ProviderName, result.Confidence);
                         }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        _logger.LogWarning(ex, "Fallback provider {Provider} failed", provider.ProviderName);
+                        _logger.LogDebug("Fallback OCR provider not configured");
                     }
-
-                    fallbackCount++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Fallback provider failed");
                 }
             }
 
             // Get list of available providers for better error message
-            var availableProviders = await _providerSelector.GetAvailableProvidersAsync();
+            var availableProviders = _providers.Where(p => p.IsAvailable).ToList();
             var providerNames = availableProviders.Select(p => p.ProviderName).ToList();
             
             if (!availableProviders.Any())
@@ -207,8 +212,22 @@ public class EnhancedHybridOCRService : IOCRService
     {
         try
         {
-            var availableProviders = await _providerSelector.GetAvailableProvidersAsync();
-            return availableProviders.Any();
+            // Check if primary provider is available
+            var primaryProvider = _providerFactory.CreateProvider();
+            if (primaryProvider != null && primaryProvider.IsAvailable)
+            {
+                return true;
+            }
+            
+            // Check if fallback provider is available
+            var fallbackProvider = _providerFactory.CreateFallbackProvider();
+            if (fallbackProvider != null && fallbackProvider.IsAvailable)
+            {
+                return true;
+            }
+            
+            // Check if any registered provider is available
+            return _providers.Any(p => p.IsAvailable);
         }
         catch (Exception ex)
         {
@@ -225,7 +244,7 @@ public class EnhancedHybridOCRService : IOCRService
     {
         try
         {
-            var availableProviders = await _providerSelector.GetAvailableProvidersAsync();
+            var availableProviders = _providers.Where(p => p.IsAvailable).ToList();
             var providerHealths = new List<OCRProviderHealth>();
 
             foreach (var provider in availableProviders)
@@ -332,8 +351,15 @@ public class EnhancedHybridOCRService : IOCRService
     {
         try
         {
-            var requestOptions = options ?? new OCRRequest();
-            return await _providerSelector.GetCostEstimateAsync(requestOptions);
+            // Get cost estimate from primary provider
+            var primaryProvider = _providerFactory.CreateProvider();
+            if (primaryProvider != null)
+            {
+                var requestOptions = options ?? new OCRRequest();
+                return await primaryProvider.GetCostEstimateAsync(imageSizeBytes, requestOptions);
+            }
+            
+            return 0;
         }
         catch (Exception ex)
         {

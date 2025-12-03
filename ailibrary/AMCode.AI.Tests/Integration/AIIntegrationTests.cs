@@ -48,7 +48,6 @@ public class AIIntegrationTests
     {
         // Act & Assert
         _serviceProvider.GetService<IRecipeParserService>().Should().NotBeNull();
-        _serviceProvider.GetService<IAIProviderSelector>().Should().NotBeNull();
         _serviceProvider.GetService<ICostAnalyzer>().Should().NotBeNull();
         _serviceProvider.GetService<IRecipeValidationService>().Should().NotBeNull();
         _serviceProvider.GetService<IAIProviderFactory>().Should().NotBeNull();

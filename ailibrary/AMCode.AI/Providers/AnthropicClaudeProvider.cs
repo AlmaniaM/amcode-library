@@ -311,6 +311,162 @@ public class AnthropicClaudeProvider : GenericAIProvider
     }
 
     #endregion
+
+    #region Vision/Image Analysis
+
+    /// <summary>
+    /// Analyze images using Anthropic Claude's vision capabilities.
+    /// Supports base64-encoded images and system prompts for structured output.
+    /// </summary>
+    public override async Task<AIVisionResult> AnalyzeImageAsync(AIVisionRequest request, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            if (_httpClient == null)
+            {
+                return AIVisionResult.Fail("Anthropic client not initialized - check API key configuration", ProviderName);
+            }
+
+            if (request.ImageBase64 == null || !request.ImageBase64.Any())
+            {
+                return AIVisionResult.Fail("No base64 images provided in request", ProviderName);
+            }
+
+            _logger.LogInformation("Analyzing image with Anthropic Claude vision API");
+
+            // Use first image (Anthropic supports multiple images, but we'll use the first for now)
+            var base64Image = request.ImageBase64[0];
+            
+            // Detect image format from base64 data
+            var imageBytes = Convert.FromBase64String(base64Image);
+            var imageFormat = DetectImageFormat(imageBytes);
+
+            // Build messages with image and text prompt
+            var messages = new List<object>
+            {
+                new
+                {
+                    role = "user",
+                    content = new object[]
+                    {
+                        new
+                        {
+                            type = "image",
+                            source = new
+                            {
+                                type = "base64",
+                                media_type = imageFormat,
+                                data = base64Image
+                            }
+                        },
+                        new
+                        {
+                            type = "text",
+                            text = request.Prompt
+                        }
+                    }
+                }
+            };
+
+            // Build request body
+            var requestBody = new Dictionary<string, object>
+            {
+                { "model", _config.Model },
+                { "max_tokens", request.MaxTokens ?? _config.MaxTokens },
+                { "temperature", _config.Temperature },
+                { "messages", messages }
+            };
+
+            // Note: AIVisionRequest doesn't have SystemMessage property yet
+            // For now, system instructions can be included in the prompt itself
+            // Future enhancement: Add SystemMessage property to AIVisionRequest
+
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{_config.BaseUrl}/v1/messages")
+            {
+                Content = new StringContent(JsonSerializer.Serialize(requestBody, _jsonOptions), Encoding.UTF8, "application/json")
+            };
+            
+            requestMessage.Headers.Add("x-api-key", _config.ApiKey);
+            requestMessage.Headers.Add("anthropic-version", "2023-06-01");
+
+            var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+            stopwatch.Stop();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return AIVisionResult.Fail($"API request failed: {response.StatusCode} - {errorContent}", ProviderName);
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var anthropicResponse = JsonSerializer.Deserialize<AnthropicResponse>(content, _jsonOptions);
+
+            if (anthropicResponse?.Content == null || !anthropicResponse.Content.Any())
+            {
+                return AIVisionResult.Fail("Invalid response from Anthropic", ProviderName);
+            }
+
+            var responseText = anthropicResponse.Content[0].Text;
+            var usage = anthropicResponse.Usage;
+
+            var cost = CalculateCost(new ProviderUsage
+            {
+                InputTokens = usage.InputTokens,
+                OutputTokens = usage.OutputTokens
+            });
+
+            var usageStats = CreateUsageStats(usage.InputTokens, usage.OutputTokens, _config.CostPerInputToken, _config.CostPerOutputToken);
+
+            _logger.LogInformation("Anthropic Claude vision analysis completed successfully. Cost: ${Cost:F6}, Tokens: {Tokens}", 
+                cost, usage.InputTokens + usage.OutputTokens);
+
+            var result = AIVisionResult.Ok(responseText, ProviderName, usageStats);
+            result.Duration = stopwatch.Elapsed;
+            result.FinishReason = "end_turn";
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Anthropic Claude vision analysis failed");
+            return AIVisionResult.Fail($"Vision analysis failed: {ex.Message}", ProviderName);
+        }
+    }
+
+    /// <summary>
+    /// Detect image format from byte array using magic bytes
+    /// </summary>
+    private string DetectImageFormat(byte[] imageBytes)
+    {
+        if (imageBytes.Length < 4)
+        {
+            return "image/png"; // Default fallback
+        }
+
+        // Check magic bytes for common image formats
+        if (imageBytes[0] == 0xFF && imageBytes[1] == 0xD8 && imageBytes[2] == 0xFF)
+        {
+            return "image/jpeg";
+        }
+        else if (imageBytes[0] == 0x89 && imageBytes[1] == 0x50 && imageBytes[2] == 0x4E && imageBytes[3] == 0x47)
+        {
+            return "image/png";
+        }
+        else if (imageBytes[0] == 0x47 && imageBytes[1] == 0x49 && imageBytes[2] == 0x46 && imageBytes[3] == 0x38)
+        {
+            return "image/gif";
+        }
+        else if (imageBytes[0] == 0x52 && imageBytes[1] == 0x49 && imageBytes[2] == 0x46 && imageBytes[3] == 0x46)
+        {
+            // RIFF header - could be WebP
+            return "image/webp";
+        }
+
+        // Default to PNG if format cannot be determined
+        return "image/png";
+    }
+
+    #endregion
     
     protected override bool CheckAvailability()
     {

@@ -17,11 +17,11 @@ public class OpenAIGPTProvider : GenericAIProvider
     private readonly OpenAIConfiguration _config;
     private readonly PromptBuilderService _promptBuilder;
     private readonly string _providerName;
-    
+
     public override string ProviderName => _providerName;
     public override bool RequiresInternet => true;
     public override bool IsAvailable => _httpClient != null;
-    
+
     public override AIProviderCapabilities Capabilities => new AIProviderCapabilities
     {
         SupportsStreaming = true,
@@ -41,7 +41,7 @@ public class OpenAIGPTProvider : GenericAIProvider
         MaxRequestsPerMinute = 500,
         MaxRequestsPerDay = 10000
     };
-    
+
     public OpenAIGPTProvider(
         ILogger<OpenAIGPTProvider> logger,
         IHttpClientFactory httpClientFactory,
@@ -53,7 +53,7 @@ public class OpenAIGPTProvider : GenericAIProvider
         _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
         _promptBuilder = promptBuilder ?? throw new ArgumentNullException(nameof(promptBuilder));
         _providerName = providerName ?? "OpenAI GPT";
-        
+
         if (string.IsNullOrEmpty(_config.ApiKey))
         {
             _logger.LogWarning("OpenAI API key not configured");
@@ -64,12 +64,12 @@ public class OpenAIGPTProvider : GenericAIProvider
             _httpClient = httpClientFactory.CreateClient(_providerName);
         }
     }
-    
+
     public override async Task<ParsedRecipeResult> ParseTextAsync(string text, CancellationToken cancellationToken = default)
     {
         return await ParseTextAsync(text, new RecipeParsingOptions(), cancellationToken);
     }
-    
+
     public override async Task<ParsedRecipeResult> ParseTextAsync(string text, RecipeParsingOptions options, CancellationToken cancellationToken = default)
     {
         try
@@ -78,26 +78,26 @@ public class OpenAIGPTProvider : GenericAIProvider
             {
                 throw new InvalidOperationException("OpenAI client not initialized - check API key configuration");
             }
-            
+
             _logger.LogInformation("Parsing recipe text with OpenAI GPT");
-            
+
             var prompt = _promptBuilder.BuildRecipeParsingPrompt(text, options);
             var request = CreateOpenAIRequest(prompt, options);
-            
+
             var requestMessage = await CreateRequestAsync(text, options, cancellationToken);
             var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
                 throw new AIException($"OpenAI API request failed: {response.StatusCode} - {errorContent}");
             }
-            
+
             var result = await ProcessResponseAsync(response, cancellationToken);
-            
-            _logger.LogInformation("OpenAI GPT parsing completed successfully. Cost: ${Cost:F6}, Tokens: {Tokens}", 
+
+            _logger.LogInformation("OpenAI GPT parsing completed successfully. Cost: ${Cost:F6}, Tokens: {Tokens}",
                 result.Cost, result.TokensUsed);
-            
+
             return result;
         }
         catch (Exception ex)
@@ -106,7 +106,7 @@ public class OpenAIGPTProvider : GenericAIProvider
             throw new AIException($"OpenAI GPT parsing failed: {ex.Message}", ex);
         }
     }
-    
+
     public override async Task<AIProviderHealth> CheckHealthAsync()
     {
         try
@@ -121,21 +121,21 @@ public class OpenAIGPTProvider : GenericAIProvider
                     ErrorMessage = "OpenAI client not initialized - check API key configuration"
                 };
             }
-            
+
             var startTime = DateTime.UtcNow;
-            
+
             // Simple health check with a minimal request
             var request = CreateOpenAIRequest("Hello", new RecipeParsingOptions());
             var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{_config.BaseUrl}/chat/completions")
             {
                 Content = new StringContent(JsonSerializer.Serialize(request, _jsonOptions), Encoding.UTF8, "application/json")
             };
-            
+
             requestMessage.Headers.Add("Authorization", $"Bearer {_config.ApiKey}");
-            
+
             var response = await _httpClient.SendAsync(requestMessage, CancellationToken.None);
             var responseTime = DateTime.UtcNow - startTime;
-            
+
             return new AIProviderHealth
             {
                 IsHealthy = response.IsSuccessStatusCode,
@@ -159,7 +159,7 @@ public class OpenAIGPTProvider : GenericAIProvider
             };
         }
     }
-    
+
     public override async Task<decimal> GetCostEstimateAsync(string text, RecipeParsingOptions options)
     {
         try
@@ -167,7 +167,7 @@ public class OpenAIGPTProvider : GenericAIProvider
             var estimatedTokens = EstimateTokenCount(text) + (options.MaxTokens ?? _config.MaxTokens);
             var inputTokens = EstimateTokenCount(text);
             var outputTokens = estimatedTokens - inputTokens;
-            
+
             return CalculateCost(new ProviderUsage
             {
                 InputTokens = inputTokens,
@@ -200,7 +200,7 @@ public class OpenAIGPTProvider : GenericAIProvider
 
             // Get messages including system instruction
             var allMessages = request.GetMessagesWithSystemInstruction();
-            
+
             // Build messages array for OpenAI API
             var messages = allMessages.Select(m => new
             {
@@ -214,13 +214,30 @@ public class OpenAIGPTProvider : GenericAIProvider
                 content = m.Content
             }).ToArray();
 
-            var requestBody = new
+            var maxTokens = request.MaxTokens ?? _config.MaxTokens;
+            var requestBodyDict = new Dictionary<string, object>
             {
-                model = _config.Model,
-                messages = messages,
-                max_tokens = request.MaxTokens ?? _config.MaxTokens,
-                temperature = request.Temperature ?? _config.Temperature
+                { "model", _config.Model },
+                { "messages", messages }
             };
+
+            // Only include temperature if the model supports custom values
+            if (!RequiresDefaultTemperature(_config.Model))
+            {
+                requestBodyDict["temperature"] = request.Temperature ?? _config.Temperature;
+            }
+
+            // Use max_completion_tokens for models that require it (e.g., gpt-5-nano)
+            if (RequiresMaxCompletionTokens(_config.Model))
+            {
+                requestBodyDict["max_completion_tokens"] = maxTokens;
+            }
+            else
+            {
+                requestBodyDict["max_tokens"] = maxTokens;
+            }
+
+            var requestBody = requestBodyDict;
 
             var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{_config.BaseUrl}/chat/completions")
             {
@@ -273,78 +290,160 @@ public class OpenAIGPTProvider : GenericAIProvider
     }
 
     #endregion
-    
+
     protected override bool CheckAvailability()
     {
         return _httpClient != null && !string.IsNullOrEmpty(_config.ApiKey);
     }
-    
+
     protected override async Task<HttpRequestMessage> CreateRequestAsync(string text, RecipeParsingOptions options, CancellationToken cancellationToken)
     {
         var prompt = _promptBuilder.BuildRecipeParsingPrompt(text, options);
         var request = CreateOpenAIRequest(prompt, options);
-        
+
         var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{_config.BaseUrl}/chat/completions")
         {
             Content = new StringContent(JsonSerializer.Serialize(request, _jsonOptions), Encoding.UTF8, "application/json")
         };
-        
+
         requestMessage.Headers.Add("Authorization", $"Bearer {_config.ApiKey}");
-        
+
         return requestMessage;
     }
-    
+
     protected override async Task<ParsedRecipeResult> ProcessResponseAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         var content = await response.Content.ReadAsStringAsync();
         var openAIResponse = JsonSerializer.Deserialize<OpenAIResponse>(content, _jsonOptions);
-        
+
         if (openAIResponse?.Choices == null || !openAIResponse.Choices.Any())
         {
             throw new AIException("Invalid response from OpenAI");
         }
-        
+
         var responseText = openAIResponse.Choices[0].Message.Content;
         var usage = openAIResponse.Usage;
-        
+
         var cost = CalculateCost(new ProviderUsage
         {
             InputTokens = usage.PromptTokens,
             OutputTokens = usage.CompletionTokens
         });
-        
+
         return ParseJsonResponse(responseText, ProviderName, cost, usage.TotalTokens);
     }
-    
+
     protected override decimal CalculateCost(ProviderUsage usage)
     {
         var inputCost = usage.InputTokens * _config.CostPerInputToken;
         var outputCost = usage.OutputTokens * _config.CostPerOutputToken;
         return inputCost + outputCost;
     }
-    
+
     private object CreateOpenAIRequest(string prompt, RecipeParsingOptions options)
     {
-        return new
+            var maxTokens = options.MaxTokens ?? _config.MaxTokens;
+        var requestBody = new Dictionary<string, object>
         {
-            model = _config.Model,
-            messages = new[]
-            {
-                new
+            { "model", _config.Model },
+            { "messages", new[]
                 {
-                    role = "system",
-                    content = "You are an expert recipe parser. Extract structured recipe information from text."
-                },
-                new
-                {
-                    role = "user",
-                    content = prompt
+                    new
+                    {
+                        role = "system",
+                        content = "You are an expert recipe parser. Extract structured recipe information from text."
+                    },
+                    new
+                    {
+                        role = "user",
+                        content = prompt
+                    }
                 }
             },
-            max_tokens = options.MaxTokens ?? _config.MaxTokens,
-            temperature = options.Temperature ?? _config.Temperature,
-            response_format = new { type = "json_object" }
+            { "response_format", new { type = "json_object" } }
         };
+
+        // Only include temperature if the model supports custom values
+        if (!RequiresDefaultTemperature(_config.Model))
+        {
+            requestBody["temperature"] = options.Temperature ?? _config.Temperature;
+        }
+
+        // Use max_completion_tokens for models that require it (e.g., gpt-5-nano)
+        if (RequiresMaxCompletionTokens(_config.Model))
+        {
+            requestBody["max_completion_tokens"] = maxTokens;
+        }
+        else
+        {
+            requestBody["max_tokens"] = maxTokens;
+        }
+
+        return requestBody;
+    }
+
+    /// <summary>
+    /// Checks if the model requires max_completion_tokens instead of max_tokens
+    ///
+    /// Models requiring max_completion_tokens:
+    /// - GPT-5 series (gpt-5, gpt-5-nano, gpt-5-mini): Use max_completion_tokens
+    /// - O1 series (o1, o1-preview, o1-mini): Use max_completion_tokens
+    ///
+    /// Reference: https://platform.openai.com/docs/guides/gpt-5
+    /// </summary>
+    private static bool RequiresMaxCompletionTokens(string model)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+            return false;
+
+        // Models that require max_completion_tokens (typically newer models)
+        var modelsRequiringMaxCompletionTokens = new[]
+        {
+            "gpt-5-nano",
+            "gpt-5-mini",
+            "gpt-5",
+            "o1",
+            "o1-preview",
+            "o1-mini"
+        };
+
+        return modelsRequiringMaxCompletionTokens.Any(m =>
+            model.Contains(m, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Checks if the model doesn't support custom temperature values
+    ///
+    /// For these models, the temperature parameter must be omitted entirely from the request:
+    /// - Reasoning models (o1, o3 series): Only support default temperature (1), cannot be customized
+    /// - GPT-5 series (gpt-5, gpt-5-nano, gpt-5-mini): Don't support temperature parameter at all
+    ///
+    /// Note: GPT-5.1 with reasoning_effort=none DOES support temperature, but other GPT-5 models do not.
+    ///
+    /// Reference: https://platform.openai.com/docs/guides/gpt-5
+    /// </summary>
+    private static bool RequiresDefaultTemperature(string model)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+            return false;
+
+        // Models that don't support custom temperature (temperature parameter must be omitted)
+        var modelsRequiringDefaultTemperature = new[]
+        {
+            // Reasoning models - only support default temperature (1)
+            "o1",
+            "o1-preview",
+            "o1-mini",
+            "o3",
+            "o3-mini",
+            // GPT-5 series - don't support temperature parameter at all
+            "gpt-5-nano",
+            "gpt-5-mini",
+            "gpt-5"
+        };
+
+        return modelsRequiringDefaultTemperature.Any(m =>
+            model.Contains(m, StringComparison.OrdinalIgnoreCase));
     }
 }
 
