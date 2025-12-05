@@ -9,12 +9,12 @@ namespace AMCode.AI.Services;
 public class PromptBuilderService
 {
     private readonly ILogger<PromptBuilderService> _logger;
-    
+
     public PromptBuilderService(ILogger<PromptBuilderService> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
-    
+
     /// <summary>
     /// Build a recipe parsing prompt with options
     /// </summary>
@@ -26,9 +26,9 @@ public class PromptBuilderService
         try
         {
             _logger.LogDebug("Building recipe parsing prompt for text length: {Length}", text.Length);
-            
+
             var optionsText = options != null ? BuildOptionsText(options) : string.Empty;
-            
+
             var prompt = $@"
 You are a recipe parser. Parse the following recipe text and return ONLY valid JSON. Do not include any explanations, code, or other text. Return ONLY the JSON object.
 
@@ -43,6 +43,8 @@ Required JSON format:
       ""amount"": ""amount"",
       ""unit"": ""unit"",
       ""text"": ""full original ingredient line exactly as written"",
+      ""preparation"": ""preparation from ingredient text (e.g., diced, chopped)"",
+      ""instructions"": ""preparation from directions (e.g., chopped from 'chop the onions' in directions)"",
       ""notes"": ""optional notes""
     }}
   ],
@@ -79,6 +81,8 @@ Rules:
 - **CRITICAL**: The ""text"" field for each ingredient MUST be the complete original line from the recipe text
 - Extract ingredients as structured objects with name, amount, unit, and full text (preserve original)
 - Extract instructions as step-by-step strings - preserve the original instruction text
+- For each ingredient, extract ""preparation"" from ingredient text itself (e.g., ""diced"" from ""2 cups onions, diced"")
+- For each ingredient, extract ""instructions"" from recipe directions by analyzing how ingredients are mentioned (e.g., ""chopped"" from ""chop the onions"" in directions)
 - Convert times to minutes (e.g., ""30 minutes"" becomes 30)
 - Estimate confidence based on text clarity (0.0 to 1.0)
 - If information is missing, use null or empty string
@@ -91,7 +95,7 @@ Recipe text:
 {text}
 
 Return ONLY the JSON object:";
-            
+
             return prompt.Trim();
         }
         catch (Exception ex)
@@ -100,7 +104,7 @@ Return ONLY the JSON object:";
             throw new InvalidOperationException("Failed to build recipe parsing prompt", ex);
         }
     }
-    
+
     /// <summary>
     /// Build a simple recipe parsing prompt without complex structure
     /// </summary>
@@ -112,14 +116,14 @@ Return ONLY the JSON object:";
         try
         {
             _logger.LogDebug("Building simple recipe parsing prompt for text length: {Length}", text.Length);
-            
+
             var prompt = $@"
 Parse this recipe and return JSON with title, ingredients (as array of strings), instructions (as array of strings), prepTimeMinutes, cookTimeMinutes, servings, and confidence (0.0-1.0):
 
 {text}
 
 JSON:";
-            
+
             return prompt.Trim();
         }
         catch (Exception ex)
@@ -128,7 +132,7 @@ JSON:";
             throw new InvalidOperationException("Failed to build simple recipe parsing prompt", ex);
         }
     }
-    
+
     /// <summary>
     /// Build a function calling prompt for structured output
     /// </summary>
@@ -140,7 +144,7 @@ JSON:";
         try
         {
             _logger.LogDebug("Building function calling prompt for text length: {Length}", text.Length);
-            
+
             var prompt = $@"
 Parse the following recipe text and extract structured information. Use the provided function to return the parsed data.
 
@@ -159,7 +163,7 @@ Please extract:
 - Any additional notes
 
 Use the function call to return this information in a structured format.";
-            
+
             return prompt.Trim();
         }
         catch (Exception ex)
@@ -168,11 +172,11 @@ Use the function call to return this information in a structured format.";
             throw new InvalidOperationException("Failed to build function calling prompt", ex);
         }
     }
-    
+
     private string BuildOptionsText(RecipeParsingOptions options)
     {
         var optionsList = new List<string>();
-        
+
         if (options.RequiresFunctionCalling)
             optionsList.Add("- Use function calling if available for structured output");
         if (options.RequiresVision)
@@ -193,7 +197,7 @@ Use the function call to return this information in a structured format.";
             optionsList.Add($"- Extract up to {options.MaxRecipes} recipes if multiple are present");
         if (!string.IsNullOrEmpty(options.CustomInstructions))
             optionsList.Add($"- Additional instructions: {options.CustomInstructions}");
-        
+
         return optionsList.Any() ? "\n\nAdditional Requirements:\n" + string.Join("\n", optionsList) : string.Empty;
     }
 }
