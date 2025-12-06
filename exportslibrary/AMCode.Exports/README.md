@@ -1,88 +1,336 @@
 # AMCode.Exports
 
-A comprehensive .NET library for exporting data to various formats, with a focus on Excel and CSV exports. This library provides a flexible and extensible framework for creating data exports with support for custom column configurations, styling, and multiple output formats.
+**Version:** 1.2.2
+**Target Framework:** .NET 9.0
+**Last Updated:** 2025-01-27
+**Purpose:** Comprehensive export library for creating Excel and CSV files with support for custom column configurations, styling, recipe exports, and ZIP archives
+
+---
+
+## Overview
+
+AMCode.Exports is a flexible and extensible .NET library for exporting data to various formats, primarily Excel (XLSX) and CSV. The library provides a clean architecture with support for custom column configurations, styling, multiple data sources, and specialized export functionality for recipes and shopping lists. It's designed to handle large datasets efficiently with support for splitting exports across multiple files.
+
+## Architecture
+
+The library follows a builder pattern with clear separation of concerns:
+
+- **Export Builders**: High-level builders for creating exports (Excel, CSV, Recipe-specific)
+- **Book Builders**: Lower-level builders for constructing workbook structures
+- **Books**: Represents the actual export files (ExcelBook, CsvBook)
+- **Data Columns**: Column definitions with metadata and styling
+- **Results**: Export results with stream management
+- **Data Sources**: Factory pattern for different data source types
+- **ZIP Support**: Archive creation for multiple file exports
+
+### Key Components
+
+- **SimpleExcelExportBuilder**: Simplified Excel export builder using AMCode.Xlsx
+- **RecipeExportBuilder**: Specialized builder for recipe and shopping list exports
+- **ExcelBook/CsvBook**: Book implementations for different formats
+- **Book Builders**: Advanced builders with styling and configuration
+- **Export Results**: Result types for managing export streams
+- **ZIP Archives**: Support for creating ZIP files from multiple exports
 
 ## Features
 
-- **Excel Export**: Full Excel file generation with support for custom column configurations
-- **Recipe Export**: Specialized export functionality for recipe data and shopping lists
-- **Custom Column Configuration**: Flexible column mapping and formatting options
+- **Excel Export**: Full Excel (XLSX) file generation with styling support
+- **CSV Export**: Comma-separated value file generation
+- **Recipe Export**: Specialized export functionality for recipe data
+- **Shopping List Export**: Extract and export ingredients as shopping lists
+- **Custom Column Configuration**: Flexible column mapping and formatting
+- **Styling Support**: Column styles, widths, and formatting options
+- **Large Dataset Support**: Automatic splitting across multiple files
+- **ZIP Archive Support**: Package multiple exports into ZIP files
+- **Stream-Based**: Memory-efficient stream-based operations
+- **Async/Await**: Full asynchronous support for all operations
 - **Type Safety**: Strongly typed interfaces and comprehensive error handling
-- **Extensible Architecture**: Easy to extend for new export formats and data types
+- **Extensible Architecture**: Easy to extend for new export formats
 
-## Installation
+## Dependencies
 
-The library is available as a NuGet package. Add the following to your project file:
+### Internal Dependencies
 
-```xml
-<PackageReference Include="AMCode.Exports" Version="1.0.0" />
+- **AMCode.Common** - Common utilities and result types
+- **AMCode.Columns** - Column management and data transformation
+- **AMCode.Storage** - Storage abstractions for file operations
+- **AMCode.Xlsx** - Excel file generation and manipulation
+
+### External Dependencies
+
+- **Microsoft.Extensions.Logging** (9.0.0) - Logging framework
+- **Microsoft.Extensions.Logging.Abstractions** (9.0.0) - Logging abstractions
+- **NUnit** (3.13.2) - Testing framework (test dependencies)
+- **Moq** (4.20.69) - Mocking framework (test dependencies)
+
+## Project Structure
+
+```
+AMCode.Exports/
+├── Components/
+│   ├── Adapters/                      # Format adapters
+│   │   └── XlsxAdapter.cs
+│   ├── Book/                          # Book implementations
+│   │   ├── Excel/                     # Excel book implementation
+│   │   │   ├── ExcelBook.cs
+│   │   │   ├── ExcelBookFactory.cs
+│   │   │   └── Models/                # Excel-specific models
+│   │   ├── Csv/                       # CSV book implementation
+│   │   │   ├── CsvBook.cs
+│   │   │   ├── CsvBookFactory.cs
+│   │   │   └── Models/                # CSV-specific models
+│   │   ├── Models/                     # Common book interfaces
+│   │   └── Exceptions/                # Book-related exceptions
+│   ├── BookBuilder/                   # Advanced book builders
+│   │   ├── Excel/                      # Excel book builder
+│   │   ├── Csv/                        # CSV book builder
+│   │   ├── Actions/                    # Builder actions (styling, etc.)
+│   │   ├── Models/                     # Builder models
+│   │   ├── BookCompiler.cs
+│   │   └── BookBuilderCommon.cs
+│   ├── Common/                         # Common utilities
+│   │   ├── ExportsCommon.cs
+│   │   ├── Exceptions/                 # Common exceptions
+│   │   └── Models/                     # Common models
+│   ├── DataSources/                    # Data source factories
+│   │   ├── FileStreamDataSourceFactory.cs
+│   │   ├── MemoryStreamDataSourceFactory.cs
+│   │   └── IExportStreamDataSourceFactory.cs
+│   ├── ExportBuilder/                  # High-level export builders
+│   │   ├── SimpleExcelExportBuilder.cs
+│   │   ├── ExcelExportBuilder.cs
+│   │   ├── CsvExportBuilder.cs
+│   │   └── BookBuilderFactory.cs
+│   ├── Extensions/                     # Extension methods
+│   │   ├── ExportResultExtensions.cs
+│   │   └── FileTypeExtensions.cs
+│   ├── Results/                        # Export result types
+│   │   ├── InMemoryExportResult.cs
+│   │   ├── DataSourceExportResult.cs
+│   │   ├── DataSourceExportResultFactory.cs
+│   │   └── Models/                     # Result interfaces
+│   └── Zip/                            # ZIP archive support
+│       ├── ZipArchiveFactory.cs
+│       └── IZipArchiveFactory.cs
+├── Recipes/                            # Recipe-specific exports
+│   ├── RecipeExportBuilder.cs          # Main recipe export builder
+│   ├── Interfaces/
+│   │   └── IRecipeExportBuilder.cs
+│   ├── Models/                         # Recipe models
+│   │   ├── Recipe.cs
+│   │   ├── RecipeExportOptions.cs
+│   │   ├── RecipeColumnConfiguration.cs
+│   │   └── ShoppingListItem.cs
+│   ├── Extensions/                     # DI extensions
+│   │   └── RecipeExportServiceCollectionExtensions.cs
+│   └── Tests/                          # Recipe export tests
+└── Scripts/                            # Build scripts
 ```
 
-## Quick Start
+## Key Interfaces
+
+### IBook<TColumn>
+
+**Location:** `Components/Book/Models/IBook.cs`
+
+**Purpose:** Interface representing a row/cell book/file that can hold data and be saved to a stream.
+
+**Key Methods:**
+
+- `AddData(IList<ExpandoObject>, IEnumerable<IBookDataColumn>, CancellationToken)` - Add data to the book
+- `SetColumns(IEnumerable<string>)` - Set column names
+- `Save()` - Save book as stream
+- `SaveAs(Stream)` - Save book to provided stream
+
+**See Also:** [Book Components](Components/Book/README.md)
+
+### IExportBuilder<TColumn>
+
+**Location:** `Components/Common/Models/IExportBuilder.cs`
+
+**Purpose:** Interface for building different types of exports with support for large datasets.
+
+**Key Methods:**
+
+- `CalculateNumberOfBooks(int totalRowCount)` - Calculate number of books needed
+- `CreateExportAsync(string fileName, int totalRowCount, IEnumerable<TColumn> columns, CancellationToken)` - Create export file
+
+**See Also:** [Export Builder Components](Components/ExportBuilder/README.md)
+
+### IRecipeExportBuilder
+
+**Location:** `Recipes/Interfaces/IRecipeExportBuilder.cs`
+
+**Purpose:** Interface for recipe-specific export operations.
+
+**Key Methods:**
+
+- `ExportRecipesAsync(IEnumerable<Recipe>, RecipeExportOptions)` - Export recipes
+- `ExportRecipesAsync(IEnumerable<Recipe>, RecipeExportOptions, RecipeColumnConfiguration)` - Export with custom columns
+- `ExportShoppingListAsync(IEnumerable<Recipe>, RecipeExportOptions)` - Export shopping list
+
+**See Also:** [Recipe Export Documentation](#recipe-exports)
+
+### IExportResult
+
+**Location:** `Components/Results/Models/IExportResult.cs`
+
+**Purpose:** Interface representing an export file result with stream management.
+
+**Key Properties:**
+
+- `Count` - Number of book entries
+- `Name` - Export name
+- `FileType` - Type of file (Excel, CSV, ZIP)
+
+**Key Methods:**
+
+- `GetDataAsync()` - Get export data stream
+- `SetDataAsync(Stream)` - Set export data stream
+
+**See Also:** [Results Components](Components/Results/README.md)
+
+## Key Classes
+
+### SimpleExcelExportBuilder
+
+**Location:** `Components/ExportBuilder/SimpleExcelExportBuilder.cs`
+
+**Purpose:** Simplified Excel export builder that directly uses AMCode.Xlsx for creating Excel files.
+
+**Key Responsibilities:**
+
+- Create Excel exports with configurable row limits
+- Support for large datasets (splits across multiple files)
+- Direct integration with AMCode.Xlsx library
+
+**Usage:**
+
+```csharp
+var builder = new SimpleExcelExportBuilder(maxRowsPerFile: 1000000);
+var result = await builder.CreateExportAsync("export.xlsx", totalRows, columns, cancellationToken);
+```
+
+### RecipeExportBuilder
+
+**Location:** `Recipes/RecipeExportBuilder.cs`
+
+**Purpose:** Specialized builder for exporting recipes and shopping lists to Excel format.
+
+**Key Responsibilities:**
+
+- Export recipe collections to Excel
+- Export shopping lists from recipes
+- Support custom column configurations
+- Handle recipe-specific data transformations
+
+**Usage:**
+
+```csharp
+var builder = new RecipeExportBuilder(logger);
+var result = await builder.ExportRecipesAsync(recipes, options);
+```
+
+### ExcelBook
+
+**Location:** `Components/Book/Excel/ExcelBook.cs`
+
+**Purpose:** Implementation of IBook for Excel files with styling and formatting support.
+
+**Key Responsibilities:**
+
+- Manage Excel workbook structure
+- Add data rows with column mapping
+- Apply column styles and formatting
+- Save to stream
+
+**See Also:** [Book Components](Components/Book/README.md)
+
+### CsvBook
+
+**Location:** `Components/Book/Csv/CsvBook.cs`
+
+**Purpose:** Implementation of IBook for CSV files.
+
+**Key Responsibilities:**
+
+- Manage CSV file structure
+- Add data rows
+- Handle CSV formatting and escaping
+- Save to stream
+
+**See Also:** [Book Components](Components/Book/README.md)
+
+## Usage Examples
 
 ### Basic Excel Export
+
+```csharp
+using AMCode.Exports.ExportBuilder;
+using AMCode.Exports.Book;
+
+var builder = new SimpleExcelExportBuilder();
+var columns = new List<IExcelDataColumn>
+{
+    new ExcelDataColumn { WorksheetHeaderName = "Name", DataType = typeof(string) },
+    new ExcelDataColumn { WorksheetHeaderName = "Age", DataType = typeof(int) }
+};
+
+var result = await builder.CreateExportAsync("users.xlsx", 1000, columns, cancellationToken);
+var stream = await result.GetDataAsync();
+
+// Save to file
+using var fileStream = File.Create("users.xlsx");
+await stream.CopyToAsync(fileStream);
+```
+
+### Recipe Export
 
 ```csharp
 using AMCode.Exports.Recipes;
 using AMCode.Exports.Recipes.Models;
 using Microsoft.Extensions.Logging;
 
-// Create a logger (using your preferred logging framework)
-var logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<RecipeExportBuilder>();
+var logger = LoggerFactory.Create(builder => builder.AddConsole())
+    .CreateLogger<RecipeExportBuilder>();
 
-// Create the export builder
-var exportBuilder = new RecipeExportBuilder(logger);
+var builder = new RecipeExportBuilder(logger);
 
-// Create sample recipes
 var recipes = new List<Recipe>
 {
     new Recipe
     {
         Title = "Spaghetti Carbonara",
-        Category = "Pasta",
+        Category = "Dinner",
         PrepTimeMinutes = 15,
         CookTimeMinutes = 20,
         Servings = 4,
-        Difficulty = "Medium",
-        Cuisine = "Italian",
         Ingredients = new List<Ingredient>
         {
             new Ingredient { Name = "Spaghetti", Amount = "200", Unit = "g" },
-            new Ingredient { Name = "Eggs", Amount = "2", Unit = "large" },
-            new Ingredient { Name = "Pancetta", Amount = "100", Unit = "g" }
-        },
-        Instructions = "Cook pasta. Fry pancetta. Mix eggs and cheese. Combine all.",
-        Tags = new List<string> { "dinner", "quick" },
-        CreatedAt = DateTime.Now
+            new Ingredient { Name = "Eggs", Amount = "2", Unit = "large" }
+        }
     }
 };
 
-// Export to Excel
 var options = new RecipeExportOptions
 {
     Format = "excel",
     Title = "My Recipe Collection"
 };
 
-var result = await exportBuilder.ExportRecipesAsync(recipes, options);
+var result = await builder.ExportRecipesAsync(recipes, options);
 
 if (result.IsSuccess)
 {
-    // Save the Excel file
     using var fileStream = File.Create("recipes.xlsx");
     await result.Value.CopyToAsync(fileStream);
-    Console.WriteLine("Excel file created successfully!");
-}
-else
-{
-    Console.WriteLine($"Export failed: {result.Error}");
 }
 ```
 
 ### Custom Column Configuration
 
 ```csharp
-// Create custom column configuration
 var columnConfig = new RecipeColumnConfiguration
 {
     IncludeTitle = true,
@@ -90,390 +338,193 @@ var columnConfig = new RecipeColumnConfiguration
     IncludeTiming = true,
     IncludeServings = true,
     IncludeIngredients = true,
-    IncludeInstructions = false, // Exclude instructions for a summary view
+    IncludeInstructions = false, // Exclude instructions
     IncludeTags = true,
     IncludeMetadata = true
 };
 
-// Export with custom columns
-var customResult = await exportBuilder.ExportRecipesAsync(recipes, options, columnConfig);
+var result = await builder.ExportRecipesAsync(recipes, options, columnConfig);
 ```
 
 ### Shopping List Export
 
 ```csharp
-// Export ingredients as a shopping list
 var shoppingListOptions = new RecipeExportOptions
 {
     Format = "excel",
     Title = "Shopping List"
 };
 
-var shoppingListResult = await exportBuilder.ExportShoppingListAsync(recipes, shoppingListOptions);
+var result = await builder.ExportShoppingListAsync(recipes, shoppingListOptions);
 ```
 
-## API Reference
-
-### RecipeExportBuilder
-
-The main class for creating recipe exports.
-
-#### Constructor
+### Advanced Book Builder (with Styling)
 
 ```csharp
-public RecipeExportBuilder(ILogger<RecipeExportBuilder> logger)
-```
+using AMCode.Exports.BookBuilder;
 
-#### Methods
-
-##### ExportRecipesAsync
-
-Exports a collection of recipes to the specified format.
-
-```csharp
-public async Task<Result<Stream>> ExportRecipesAsync(
-    IEnumerable<Recipe> recipes, 
-    RecipeExportOptions options)
-```
-
-**Parameters:**
-- `recipes`: Collection of recipes to export
-- `options`: Export configuration options
-
-**Returns:** `Result<Stream>` containing the export data or error information
-
-##### ExportRecipesAsync (with custom columns)
-
-Exports recipes with custom column configuration.
-
-```csharp
-public async Task<Result<Stream>> ExportRecipesAsync(
-    IEnumerable<Recipe> recipes, 
-    RecipeExportOptions options,
-    RecipeColumnConfiguration columnConfig)
-```
-
-**Parameters:**
-- `recipes`: Collection of recipes to export
-- `options`: Export configuration options
-- `columnConfig`: Custom column configuration
-
-**Returns:** `Result<Stream>` containing the export data or error information
-
-##### ExportShoppingListAsync
-
-Exports recipe ingredients as a shopping list.
-
-```csharp
-public async Task<Result<Stream>> ExportShoppingListAsync(
-    IEnumerable<Recipe> recipes, 
-    RecipeExportOptions options)
-```
-
-**Parameters:**
-- `recipes`: Collection of recipes to extract ingredients from
-- `options`: Export configuration options
-
-**Returns:** `Result<Stream>` containing the shopping list export data or error information
-
-### Models
-
-#### Recipe
-
-Represents a recipe with all its properties.
-
-```csharp
-public class Recipe
+var config = new ExcelBookBuilderConfig
 {
-    public string Title { get; set; }
-    public string Category { get; set; }
-    public int PrepTimeMinutes { get; set; }
-    public int CookTimeMinutes { get; set; }
-    public int Servings { get; set; }
-    public string Difficulty { get; set; }
-    public string Cuisine { get; set; }
-    public List<Ingredient> Ingredients { get; set; }
-    public string Instructions { get; set; }
-    public List<string> Tags { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime ModifiedAt { get; set; }
-    public string Notes { get; set; }
-}
+    MaxRowsPerFile = 1000000,
+    ApplyBoldHeaders = true,
+    ColumnWidths = new Dictionary<string, int>
+    {
+        { "Name", 20 },
+        { "Age", 10 }
+    }
+};
+
+var builder = new ExcelBookBuilder(config);
+// Use builder to create styled Excel exports
 ```
 
-#### Ingredient
+## Configuration
 
-Represents an ingredient in a recipe.
+### Recipe Export Options
 
 ```csharp
-public class Ingredient
+var options = new RecipeExportOptions
 {
-    public string Name { get; set; }
-    public string Amount { get; set; }
-    public string Unit { get; set; }
-    public string Notes { get; set; }
-    public bool IsOptional { get; set; }
-}
+    Format = "excel",                    // Export format
+    Title = "Recipe Collection",          // Export title
+    IncludeImages = false,               // Include images (future)
+    IncludeMetadata = true,              // Include creation dates
+    SortBy = "Title",                    // Sort field
+    SortAscending = true,                // Sort direction
+    GroupBy = "Category",                // Group by field
+    ConsolidateIngredients = true        // Consolidate duplicate ingredients
+};
 ```
 
-#### RecipeExportOptions
-
-Configuration options for recipe exports.
-
-```csharp
-public class RecipeExportOptions
-{
-    public string Format { get; set; }           // "excel" or "csv"
-    public string Title { get; set; }            // Export title
-    public bool IncludeImages { get; set; }      // Include images (future feature)
-    public bool IncludeMetadata { get; set; }    // Include creation/modification dates
-    public string SortBy { get; set; }           // Sort field
-    public bool SortAscending { get; set; }      // Sort direction
-    public bool IncludeNutritionInfo { get; set; } // Include nutrition data (future feature)
-    public bool IncludeCookingTips { get; set; }  // Include cooking tips (future feature)
-    public string GroupBy { get; set; }          // Group by field
-    public bool ConsolidateIngredients { get; set; } // Consolidate duplicate ingredients
-}
-```
-
-#### RecipeColumnConfiguration
-
-Configuration for customizing which columns to include in exports.
-
-```csharp
-public class RecipeColumnConfiguration
-{
-    public bool IncludeTitle { get; set; }
-    public bool IncludeCategory { get; set; }
-    public bool IncludeTiming { get; set; }      // Prep and cook time
-    public bool IncludeServings { get; set; }
-    public bool IncludeIngredients { get; set; }
-    public bool IncludeInstructions { get; set; }
-    public bool IncludeTags { get; set; }
-    public bool IncludeMetadata { get; set; }    // Created/modified dates
-    public bool IncludeDifficulty { get; set; }
-    public bool IncludeCuisine { get; set; }
-    public bool IncludeRating { get; set; }      // Future feature
-    public bool IncludeNotes { get; set; }
-}
-```
-
-## Excel Export Features
-
-### Default Columns
-
-When using the default configuration, Excel exports include the following columns:
-
-- **Recipe Title**: The name of the recipe
-- **Category**: Recipe category (e.g., "Dinner", "Dessert")
-- **Prep Time (min)**: Preparation time in minutes
-- **Cook Time (min)**: Cooking time in minutes
-- **Servings**: Number of servings
-- **Difficulty**: Difficulty level (Easy, Medium, Hard)
-- **Cuisine**: Cuisine type (Italian, Mexican, etc.)
-- **Ingredients**: List of ingredients
-- **Instructions**: Cooking instructions
-- **Tags**: Recipe tags
-- **Created Date**: When the recipe was created
-
-### Custom Column Configuration
-
-You can customize which columns appear in your Excel export by using the `RecipeColumnConfiguration` class:
+### Column Configuration
 
 ```csharp
 var columnConfig = new RecipeColumnConfiguration
 {
     IncludeTitle = true,
     IncludeCategory = true,
-    IncludeTiming = true,        // Includes both prep and cook time
+    IncludeTiming = true,               // Prep and cook time
     IncludeServings = true,
     IncludeIngredients = true,
-    IncludeInstructions = false, // Exclude instructions for a summary view
+    IncludeInstructions = true,
     IncludeTags = true,
-    IncludeMetadata = true,      // Includes creation date
+    IncludeMetadata = true,             // Created/modified dates
     IncludeDifficulty = true,
     IncludeCuisine = true,
     IncludeNotes = true
 };
 ```
 
+### Dependency Injection
+
+```csharp
+using AMCode.Exports.Recipes.Extensions;
+using Microsoft.Extensions.DependencyInjection;
+
+services.AddRecipeExportServices();
+services.AddLogging();
+```
+
+## Testing
+
+### Test Projects
+
+- **AMCode.Exports.UnitTests**: Unit tests for export components
+- **AMCode.Exports.IntegrationTests**: Integration tests for export workflows
+- **AMCode.Exports.SharedTestLibrary**: Shared test utilities
+
+### Running Tests
+
+```bash
+# Run all tests
+dotnet test AMCode.Exports.UnitTests
+dotnet test AMCode.Exports.IntegrationTests
+
+# Run specific test project
+dotnet test exportslibrary/AMCode.Exports.UnitTests/AMCode.Exports.UnitTests.csproj
+```
+
+## Subfolder Documentation
+
+For detailed documentation on specific components:
+
+- [Book Components](Components/Book/README.md) - Book implementations and factories
+- [Book Builder Components](Components/BookBuilder/README.md) - Advanced book builders with styling
+- [Export Builder Components](Components/ExportBuilder/README.md) - High-level export builders
+- [Results Components](Components/Results/README.md) - Export result types and management
+
+## Recipe Exports
+
+### Default Columns
+
+Excel exports include the following columns by default:
+
+- **Recipe Title**: Name of the recipe
+- **Category**: Recipe category
+- **Prep Time (min)**: Preparation time
+- **Cook Time (min)**: Cooking time
+- **Servings**: Number of servings
+- **Difficulty**: Difficulty level
+- **Cuisine**: Cuisine type
+- **Ingredients**: List of ingredients
+- **Instructions**: Cooking instructions
+- **Tags**: Recipe tags
+- **Created Date**: Creation timestamp
+
 ### Shopping List Columns
 
-When exporting shopping lists, the following columns are included:
+Shopping list exports include:
 
 - **Ingredient**: Ingredient name
 - **Amount**: Required amount
 - **Unit**: Unit of measurement
-- **Optional**: Whether the ingredient is optional
-- **Notes**: Additional notes about the ingredient
+- **Optional**: Whether ingredient is optional
+- **Notes**: Additional notes
 
-## Error Handling
+## Related Libraries
 
-The library uses the `Result<T>` pattern for robust error handling:
+- [AMCode.Common](../commonlibrary/AMCode.Common/README.md) - Common utilities and result types
+- [AMCode.Columns](../columnslibrary/AMCode.Columns/README.md) - Column management
+- [AMCode.Storage](../storagelibrary/AMCode.Storage/README.md) - Storage abstractions
+- [AMCode.Xlsx](../xlsxlibrary/AMCode.Xlsx/README.md) - Excel file generation
 
-```csharp
-var result = await exportBuilder.ExportRecipesAsync(recipes, options);
+## Migration Notes
 
-if (result.IsSuccess)
-{
-    // Use the exported data
-    using var stream = result.Value;
-    // Process the stream...
-}
-else
-{
-    // Handle the error
-    Console.WriteLine($"Export failed: {result.Error}");
-    // Log the error, show user message, etc.
-}
-```
+### From Previous Versions
 
-## Dependencies
+When migrating to version 1.2.2:
 
-- **AMCode.Xlsx**: Excel file generation and manipulation
-- **AMCode.Common**: Common utilities and result types
-- **Microsoft.Extensions.Logging**: Logging framework
+1. **Recipe Export Features**: New recipe-specific export functionality added
+2. **SimpleExcelExportBuilder**: New simplified Excel builder using AMCode.Xlsx
+3. **Dependency Updates**: Updated to .NET 9.0 and latest package versions
+4. **Result Pattern**: Uses `Result<T>` pattern for error handling
 
-## Examples
+### Breaking Changes
 
-### Complete Example: Recipe Collection Export
+- Some internal components may have been refactored
+- Check test projects for migration examples
 
-```csharp
-using AMCode.Exports.Recipes;
-using AMCode.Exports.Recipes.Models;
-using Microsoft.Extensions.Logging;
+## Known Issues
 
-class Program
-{
-    static async Task Main(string[] args)
-    {
-        // Setup logging
-        var loggerFactory = LoggerFactory.Create(builder => 
-            builder.AddConsole().SetMinimumLevel(LogLevel.Information));
-        var logger = loggerFactory.CreateLogger<RecipeExportBuilder>();
+- Some components depend on AMCode.Storage.Local/Memory which may not be available
+- Large file exports may require significant memory
+- CSV escaping for complex data may need attention
 
-        // Create export builder
-        var exportBuilder = new RecipeExportBuilder(logger);
+## Future Considerations
 
-        // Create sample recipes
-        var recipes = CreateSampleRecipes();
+- Additional export formats (PDF, JSON, XML)
+- Enhanced styling options
+- Template-based exports
+- Image embedding support
+- Performance optimizations for very large datasets
+- Streaming exports for memory efficiency
 
-        // Export all recipes to Excel
-        var allRecipesOptions = new RecipeExportOptions
-        {
-            Format = "excel",
-            Title = "Complete Recipe Collection",
-            IncludeMetadata = true
-        };
+---
 
-        var allRecipesResult = await exportBuilder.ExportRecipesAsync(recipes, allRecipesOptions);
-        await SaveResult(allRecipesResult, "all_recipes.xlsx");
+**See Also:**
 
-        // Export only dinner recipes with custom columns
-        var dinnerRecipes = recipes.Where(r => r.Category == "Dinner").ToList();
-        var dinnerColumnConfig = new RecipeColumnConfiguration
-        {
-            IncludeTitle = true,
-            IncludeCategory = true,
-            IncludeTiming = true,
-            IncludeServings = true,
-            IncludeIngredients = true,
-            IncludeInstructions = false, // Summary view
-            IncludeTags = true
-        };
+- [Root README](../../README.md) - Project overview
+- [Documentation Plan](../../DOCUMENTATION_PLAN.md) - Documentation strategy
 
-        var dinnerOptions = new RecipeExportOptions
-        {
-            Format = "excel",
-            Title = "Dinner Recipes Summary"
-        };
-
-        var dinnerResult = await exportBuilder.ExportRecipesAsync(
-            dinnerRecipes, dinnerOptions, dinnerColumnConfig);
-        await SaveResult(dinnerResult, "dinner_recipes.xlsx");
-
-        // Export shopping list
-        var shoppingListOptions = new RecipeExportOptions
-        {
-            Format = "excel",
-            Title = "Weekly Shopping List"
-        };
-
-        var shoppingListResult = await exportBuilder.ExportShoppingListAsync(recipes, shoppingListOptions);
-        await SaveResult(shoppingListResult, "shopping_list.xlsx");
-    }
-
-    static List<Recipe> CreateSampleRecipes()
-    {
-        return new List<Recipe>
-        {
-            new Recipe
-            {
-                Title = "Spaghetti Carbonara",
-                Category = "Dinner",
-                PrepTimeMinutes = 15,
-                CookTimeMinutes = 20,
-                Servings = 4,
-                Difficulty = "Medium",
-                Cuisine = "Italian",
-                Ingredients = new List<Ingredient>
-                {
-                    new Ingredient { Name = "Spaghetti", Amount = "200", Unit = "g" },
-                    new Ingredient { Name = "Eggs", Amount = "2", Unit = "large" },
-                    new Ingredient { Name = "Pancetta", Amount = "100", Unit = "g" },
-                    new Ingredient { Name = "Parmesan Cheese", Amount = "50", Unit = "g" }
-                },
-                Instructions = "Cook pasta according to package directions...",
-                Tags = new List<string> { "dinner", "quick", "pasta" },
-                CreatedAt = DateTime.Now.AddDays(-5)
-            },
-            new Recipe
-            {
-                Title = "Chocolate Chip Cookies",
-                Category = "Dessert",
-                PrepTimeMinutes = 20,
-                CookTimeMinutes = 12,
-                Servings = 24,
-                Difficulty = "Easy",
-                Cuisine = "American",
-                Ingredients = new List<Ingredient>
-                {
-                    new Ingredient { Name = "Flour", Amount = "2.5", Unit = "cups" },
-                    new Ingredient { Name = "Butter", Amount = "1", Unit = "cup" },
-                    new Ingredient { Name = "Chocolate Chips", Amount = "1", Unit = "cup" },
-                    new Ingredient { Name = "Brown Sugar", Amount = "0.75", Unit = "cup" }
-                },
-                Instructions = "Preheat oven to 375°F. Mix dry ingredients...",
-                Tags = new List<string> { "dessert", "baking", "cookies" },
-                CreatedAt = DateTime.Now.AddDays(-2)
-            }
-        };
-    }
-
-    static async Task SaveResult(Result<Stream> result, string fileName)
-    {
-        if (result.IsSuccess)
-        {
-            using var fileStream = File.Create(fileName);
-            await result.Value.CopyToAsync(fileStream);
-            Console.WriteLine($"Successfully created {fileName}");
-        }
-        else
-        {
-            Console.WriteLine($"Failed to create {fileName}: {result.Error}");
-        }
-    }
-}
-```
-
-## License
-
-This library is part of the AMCode suite and is licensed under the terms specified in the main AMCode license agreement.
-
-## Contributing
-
-Contributions are welcome! Please see the main AMCode repository for contribution guidelines.
-
-## Support
-
-For support and questions, please refer to the main AMCode documentation or create an issue in the repository.
+**Last Updated:** 2025-01-27
+**Maintained By:** Development Team

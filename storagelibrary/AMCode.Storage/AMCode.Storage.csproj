@@ -27,6 +27,7 @@
 
 	<ItemGroup>
 	  <PackageReference Include="Azure.Storage.Blobs" Version="12.10.0" />
+	  <PackageReference Include="AWSSDK.S3" Version="3.7.400.50" />
 	  <ProjectReference Include="../../commonlibrary/AMCode.Common/AMCode.Common.csproj" />
 	  <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
 	  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />

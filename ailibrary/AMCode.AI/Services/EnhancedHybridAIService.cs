@@ -215,9 +215,9 @@ public class EnhancedHybridAIService : IRecipeParserService
                     _logger.LogWarning("Recipe missing ingredients");
                 }
                 
-                if (!recipe.Instructions.Any())
+                if (!recipe.Directions.Any())
                 {
-                    _logger.LogWarning("Recipe missing instructions");
+                    _logger.LogWarning("Recipe missing directions");
                 }
                 
                 if (recipe.Confidence < 0.5)

@@ -183,20 +183,20 @@ public class RecipeValidationService : IRecipeValidationService
 
     private void ValidateInstructions(ParsedRecipe recipe, RecipeValidationResult result)
     {
-        if (recipe.Instructions == null || !recipe.Instructions.Any())
+        if (recipe.Directions == null || !recipe.Directions.Any())
         {
             result.Issues.Add(new ValidationIssue
             {
                 Type = "MissingInstructions",
                 Severity = ValidationSeverity.Critical,
-                Message = "Recipe must have at least one instruction",
-                Field = "Instructions",
-                SuggestedFix = "Add cooking instructions to the recipe"
+                Message = "Recipe must have at least one direction",
+                Field = "Directions",
+                SuggestedFix = "Add cooking directions to the recipe"
             });
         }
         else
         {
-            var validInstructions = recipe.Instructions.Where(i => !string.IsNullOrWhiteSpace(i)).ToList();
+            var validInstructions = recipe.Directions.Where(i => !string.IsNullOrWhiteSpace(i)).ToList();
             
             if (validInstructions.Count == 0)
             {

@@ -1,346 +1,357 @@
-# AMCode.OCR - Multi-Cloud OCR Service Library
+# AMCode.OCR
 
-## 🎯 Overview
+**Version:** 1.0.0  
+**Target Framework:** .NET 8.0  
+**Last Updated:** 2025-01-27  
+**Purpose:** Multi-cloud OCR service library with smart provider selection, fallback mechanisms, and cost optimization
 
-AMCode.OCR is a comprehensive, multi-cloud OCR (Optical Character Recognition) service library that provides intelligent text extraction from images using multiple cloud providers. The library features smart provider selection, automatic fallback mechanisms, and comprehensive error handling.
+---
 
-## ✨ Features
+## Overview
 
-- **Multi-Cloud Support**: Azure Computer Vision, AWS Textract, and Google Cloud Vision
-- **Smart Provider Selection**: Automatic selection of the best provider based on image characteristics
-- **Fallback Mechanisms**: Automatic failover when primary provider fails
-- **Confidence Scoring**: OCR result quality assessment
-- **Cost Optimization**: Smart cost analysis and provider selection
-- **Batch Processing**: Process multiple images efficiently
-- **Comprehensive Error Handling**: Robust error handling and recovery
-- **High Performance**: Optimized for speed and reliability
-- **Easy Integration**: Simple dependency injection setup
+AMCode.OCR is a comprehensive optical character recognition (OCR) library that provides a unified interface for multiple cloud OCR providers. It supports Google Cloud Vision, Azure Computer Vision, AWS Textract, PaddleOCR, and other providers with intelligent provider selection, automatic fallback, cost optimization, and health monitoring.
 
-## 🚀 Quick Start
+The library abstracts away provider-specific implementations, allowing applications to switch between providers seamlessly or use multiple providers with automatic failover. It includes smart selection strategies based on cost, performance, reliability, quality, or a balanced combination of factors.
 
-### Installation
+## Architecture
 
-```bash
-dotnet add package AMCode.OCR --version 1.0.0
+The library follows Clean Architecture principles with a multi-provider pattern:
+
+- **Provider Abstraction**: `IOCRProvider` interface defines the contract for all OCR providers
+- **Service Layer**: `IOCRService` provides high-level OCR operations with automatic provider selection
+- **Smart Selection**: Multiple selection strategies (cost, performance, reliability, quality, balanced)
+- **Fallback Mechanism**: Automatic fallback to alternative providers on failure
+- **Health Monitoring**: Provider health checking and availability tracking
+- **Cost Analysis**: Cost estimation and optimization across providers
+
+### Key Components
+
+- **Providers**: Cloud OCR provider implementations (Google, Azure, AWS, PaddleOCR, Anthropic, AWS Bedrock)
+- **Services**: OCR service implementations with smart provider selection
+- **Models**: OCR request/response models and data structures
+- **Configurations**: Provider configuration classes
+- **Factories**: Provider and selector factory implementations
+- **Enums**: Selection strategies and provider types
+
+## Features
+
+- **Multi-Provider Support**
+  - Google Cloud Vision API
+  - Azure Computer Vision
+  - AWS Textract
+  - PaddleOCR (Python service integration)
+  - Anthropic OCR (via Claude)
+  - AWS Bedrock OCR
+
+- **Smart Provider Selection**
+  - Cost-optimized selection
+  - Performance-optimized selection
+  - Reliability-optimized selection
+  - Quality-optimized selection
+  - Balanced selection (multiple factors)
+  - Load-balanced selection
+  - Geographic-optimized selection
+  - Configuration-based selection
+
+- **Advanced Features**
+  - Automatic provider fallback on failure
+  - Health monitoring and availability tracking
+  - Cost estimation and optimization
+  - Batch processing support
+  - Language detection
+  - Handwriting recognition
+  - Table and form detection
+  - Confidence scoring
+  - Text block extraction with bounding boxes
+
+- **Developer Experience**
+  - Simple, unified API across all providers
+  - Dependency injection support
+  - Comprehensive logging
+  - Result wrapper with error handling
+  - Configuration via appsettings.json
+
+## Dependencies
+
+### Internal Dependencies
+
+- None (standalone library)
+
+### External Dependencies
+
+- **Microsoft.Azure.CognitiveServices.Vision.ComputerVision** (7.0.0) - Azure Computer Vision OCR
+- **AWSSDK.Textract** (3.7.400.0) - AWS Textract OCR
+- **Google.Cloud.Vision.V1** (3.7.0) - Google Cloud Vision OCR
+- **Microsoft.Extensions.Logging.Abstractions** (8.0.0) - Logging infrastructure
+- **Microsoft.Extensions.Http** (8.0.0) - HTTP client factory
+- **Microsoft.Extensions.Configuration.Abstractions** (8.0.0) - Configuration support
+- **Microsoft.Extensions.Options** (8.0.0) - Options pattern
+- **System.Text.Json** (8.0.5) - JSON serialization
+
+## Project Structure
+
 ```
+AMCode.OCR/
+├── Configurations/              # Provider configuration classes
+│   ├── AzureOCRConfiguration.cs
+│   ├── AWSTextractConfiguration.cs
+│   ├── GoogleVisionConfiguration.cs
+│   ├── PaddleOCRConfiguration.cs
+│   ├── OCRConfiguration.cs
+│   └── OCRProviderRegistry.cs
+├── Providers/                    # OCR provider implementations
+│   ├── AzureComputerVisionOCRService.cs
+│   ├── AWSTextractOCRService.cs
+│   ├── GoogleCloudVisionOCRService.cs
+│   ├── PaddleOCRProvider.cs
+│   ├── AnthropicOCRService.cs
+│   ├── AWSBedrockOCRService.cs
+│   └── GenericOCRProvider.cs    # Base class for providers
+├── Services/                     # OCR service implementations
+│   ├── EnhancedHybridOCRService.cs
+│   ├── SmartOCRProviderSelector.cs
+│   ├── ConfigurationOCRProviderSelector.cs
+│   └── CostAnalyzer.cs
+├── Models/                       # OCR models and data structures
+│   ├── OCRResult.cs
+│   ├── OCRRequest.cs
+│   ├── TextBlock.cs
+│   ├── BoundingBox.cs
+│   ├── OCRProviderCapabilities.cs
+│   └── OCRProviderHealth.cs
+├── Factories/                    # Factory implementations
+│   ├── OCRProviderFactory.cs
+│   ├── IOCRProviderFactory.cs
+│   ├── OCRProviderSelectorFactory.cs
+│   └── IOCRProviderSelectorFactory.cs
+├── Enums/                        # Enumerations
+│   └── OCRProviderSelectionStrategy.cs
+├── Extensions/                   # Extension methods
+│   └── OCRServiceCollectionExtensions.cs
+├── Examples/                     # Usage examples
+│   ├── OCRExample.cs
+│   └── appsettings.example.json
+├── IOCRProvider.cs              # Provider interface
+├── IOCRService.cs                # Service interface
+├── INTEGRATION_GUIDE.md         # Integration documentation
+└── AMCode.OCR.csproj
+```
+
+## Key Interfaces
+
+### IOCRProvider
+
+**Location:** `IOCRProvider.cs`
+
+**Purpose:** Interface defining the contract for all OCR provider implementations.
+
+**Key Methods:**
+
+- `ProcessImageAsync(Stream, CancellationToken)` - Process image and extract text
+- `ProcessImageAsync(Stream, OCRRequest, CancellationToken)` - Process with custom options
+- `CheckHealthAsync()` - Check provider health status
+- `GetCostEstimateAsync(long, OCRRequest?)` - Get cost estimate
+- `ProcessBatchAsync(IEnumerable<Stream>, OCRRequest?, CancellationToken)` - Batch processing
+- `CanProcess(OCRRequest)` - Validate if provider can handle request
+- `GetEstimatedProcessingTime(long, OCRRequest?)` - Get processing time estimate
+- `GetReliabilityScore()` - Get reliability score (0.0-1.0)
+- `GetQualityScore()` - Get quality score (0.0-1.0)
+
+**Key Properties:**
+
+- `ProviderName` - Name of the provider
+- `RequiresInternet` - Whether provider needs internet connection
+- `IsAvailable` - Current availability status
+- `Capabilities` - Provider capabilities and features
+
+**See Also:** [Providers README](Providers/README.md)
+
+### IOCRService
+
+**Location:** `IOCRService.cs`
+
+**Purpose:** High-level interface for OCR operations with automatic provider selection.
+
+**Key Methods:**
+
+- `ExtractTextAsync(Stream, CancellationToken)` - Extract text from image stream
+- `ExtractTextAsync(string, CancellationToken)` - Extract text from image file
+- `ExtractTextAsync(Stream, OCRRequest, CancellationToken)` - Extract with custom options
+- `ExtractTextAsync(string, OCRRequest, CancellationToken)` - Extract from file with options
+- `IsAvailableAsync()` - Check service availability
+- `GetHealthAsync()` - Get health status
+- `GetCapabilities()` - Get service capabilities
+- `GetCostEstimateAsync(long, OCRRequest?)` - Get cost estimate
+- `ProcessBatchAsync(IEnumerable<Stream>, OCRRequest?, CancellationToken)` - Batch processing
+- `ProcessBatchAsync(IEnumerable<string>, OCRRequest?, CancellationToken)` - Batch from files
+
+**See Also:** [Services README](Services/README.md)
+
+## Key Classes
+
+### EnhancedHybridOCRService
+
+**Location:** `Services/EnhancedHybridOCRService.cs`
+
+**Purpose:** Main OCR service implementation with smart provider selection and automatic fallback.
+
+**Key Responsibilities:**
+
+- Automatic provider selection based on strategy
+- Fallback to alternative providers on failure
+- Health monitoring and provider availability tracking
+- Cost optimization across providers
+- Batch processing with error handling
+
+**Usage Example:**
+
+```csharp
+using AMCode.OCR;
+using AMCode.OCR.Models;
+
+var ocrService = serviceProvider.GetRequiredService<IOCRService>();
+
+// Extract text from image file
+var result = await ocrService.ExtractTextAsync("image.jpg");
+if (result.IsSuccess)
+{
+    Console.WriteLine($"Extracted text: {result.Value.Text}");
+    Console.WriteLine($"Confidence: {result.Value.Confidence}");
+    Console.WriteLine($"Provider: {result.Value.Provider}");
+}
+```
+
+### SmartOCRProviderSelector
+
+**Location:** `Services/SmartOCRProviderSelector.cs`
+
+**Purpose:** Intelligent provider selection based on multiple strategies.
+
+**Key Responsibilities:**
+
+- Select best provider based on strategy (cost, performance, reliability, quality, balanced)
+- Health checking and availability filtering
+- Cost estimation across providers
+- Provider capability matching
+
+**Selection Strategies:**
+
+- `CostOptimized` - Lowest cost provider
+- `PerformanceOptimized` - Fastest provider
+- `ReliabilityOptimized` - Most reliable provider
+- `QualityOptimized` - Highest quality provider
+- `Balanced` - Best balance of all factors
+- `LoadBalanced` - Distribute load across providers
+- `GeographicOptimized` - Geographic proximity
+- `Configuration` - Manual configuration
+
+### GenericOCRProvider
+
+**Location:** `Providers/GenericOCRProvider.cs`
+
+**Purpose:** Base abstract class for OCR provider implementations.
+
+**Key Responsibilities:**
+
+- Common provider functionality
+- HTTP client management
+- JSON serialization/deserialization
+- Language detection
+- Confidence calculation
+- Batch processing support
+
+**See Also:** [Providers README](Providers/README.md)
+
+### OCRResult
+
+**Location:** `Models/OCRResult.cs`
+
+**Purpose:** Result model containing extracted text and metadata.
+
+**Key Properties:**
+
+- `Text` - Extracted text content
+- `TextBlocks` - Individual text blocks with positions
+- `Confidence` - Overall confidence score (0.0-1.0)
+- `Language` - Detected language code
+- `Provider` - Provider that processed the image
+- `ProcessingTime` - Time taken to process
+- `Cost` - Cost of the operation
+- `ContainsHandwriting` - Whether handwriting was detected
+- `ContainsPrintedText` - Whether printed text was detected
+
+### OCRRequest
+
+**Location:** `Models/OCRRequest.cs`
+
+**Purpose:** Request model for OCR processing options.
+
+**Key Properties:**
+
+- `ImageStream` - Image stream to process
+- `ImagePath` - Path to image file
+- `RequiresLanguageDetection` - Enable language detection
+- `RequiresHandwritingSupport` - Enable handwriting recognition
+- `RequiresTableDetection` - Enable table detection
+- `RequiresFormDetection` - Enable form detection
+- `ConfidenceThreshold` - Minimum confidence threshold
+- `MaxRetries` - Maximum retry attempts
+- `Timeout` - Request timeout
+- `MaxImageSizeMB` - Maximum image size
+
+## Usage Examples
 
 ### Basic Usage
 
 ```csharp
 using AMCode.OCR;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using AMCode.OCR.Models;
 
 // Register services
-var services = new ServiceCollection();
 services.AddAMCodeOCR(configuration);
 
-var serviceProvider = services.BuildServiceProvider();
+// Use service
 var ocrService = serviceProvider.GetRequiredService<IOCRService>();
 
-// Extract text from image
-using var imageStream = File.OpenRead("image.jpg");
-var result = await ocrService.ExtractTextAsync(imageStream);
-
+// Extract text from image file
+var result = await ocrService.ExtractTextAsync("recipe-image.jpg");
 if (result.IsSuccess)
 {
-    Console.WriteLine($"Extracted text: {result.Value.Text}");
-    Console.WriteLine($"Confidence: {result.Value.Confidence}");
+    var ocrResult = result.Value;
+    Console.WriteLine($"Text: {ocrResult.Text}");
+    Console.WriteLine($"Confidence: {ocrResult.Confidence:P}");
+    Console.WriteLine($"Provider: {ocrResult.Provider}");
 }
 ```
 
-## 🔧 Configuration
-
-### appsettings.json
-
-```json
-{
-  "AMCode": {
-    "OCR": {
-      "DefaultProvider": "Azure",
-      "FallbackProviders": ["AWS", "Google"],
-      "ConfidenceThreshold": 0.7,
-      "MaxRetries": 3,
-      "EnableFallbackProviders": true,
-      "MaxFallbackProviders": 2,
-      "EnableBatchProcessing": true,
-      "MaxBatchSize": 10,
-      "Azure": {
-        "SubscriptionKey": "your-azure-key",
-        "Endpoint": "https://your-endpoint.cognitiveservices.azure.com/",
-        "Region": "eastus",
-        "CostPerRequest": 0.001
-      },
-      "AWS": {
-        "Region": "us-east-1",
-        "AccessKey": "your-access-key",
-        "SecretKey": "your-secret-key",
-        "CostPerRequest": 0.0015
-      },
-      "Google": {
-        "ProjectId": "your-project-id",
-        "CredentialsPath": "path/to/credentials.json",
-        "CostPerRequest": 0.0008
-      }
-    }
-  }
-}
-```
-
-### Programmatic Configuration
+### Advanced Usage with Options
 
 ```csharp
-services.Configure<OCRConfiguration>(options =>
+using AMCode.OCR;
+using AMCode.OCR.Models;
+
+var request = new OCRRequest
 {
-    options.DefaultProvider = "Azure";
-    options.FallbackProviders = new[] { "AWS", "Google" };
-    options.ConfidenceThreshold = 0.8;
-    options.MaxRetries = 3;
-    options.EnableFallbackProviders = true;
-});
-```
+    ImagePath = "recipe-image.jpg",
+    RequiresLanguageDetection = true,
+    RequiresHandwritingSupport = true,
+    ConfidenceThreshold = 0.8,
+    MaxRetries = 3,
+    ReturnDetailedTextBlocks = true,
+    ReturnBoundingBoxes = true
+};
 
-## 📚 API Reference
-
-### IOCRService
-
-The main interface for OCR operations.
-
-#### Methods
-
-- `ExtractTextAsync(Stream imageStream, CancellationToken cancellationToken = default)`
-- `ExtractTextAsync(string imagePath, CancellationToken cancellationToken = default)`
-- `ExtractTextAsync(Stream imageStream, OCRRequest options, CancellationToken cancellationToken = default)`
-- `ExtractTextAsync(string imagePath, OCRRequest options, CancellationToken cancellationToken = default)`
-- `ProcessBatchAsync(IEnumerable<Stream> imageStreams, OCRRequest? options = null, CancellationToken cancellationToken = default)`
-- `ProcessBatchAsync(IEnumerable<string> imagePaths, OCRRequest? options = null, CancellationToken cancellationToken = default)`
-- `IsAvailableAsync()`
-- `GetHealthAsync()`
-- `GetCapabilities()`
-- `GetCostEstimateAsync(long imageSizeBytes, OCRRequest? options = null)`
-
-### OCRRequest
-
-Configuration options for OCR processing.
-
-```csharp
-public class OCRRequest
+var result = await ocrService.ExtractTextAsync(request);
+if (result.IsSuccess)
 {
-    public string? ImagePath { get; set; }
-    public Stream? ImageStream { get; set; }
-    public double ConfidenceThreshold { get; set; } = 0.7;
-    public int MaxRetries { get; set; } = 3;
-    public bool RequiresLanguageDetection { get; set; } = false;
-    public bool RequiresBoundingBoxes { get; set; } = false;
-    public string[]? PreferredLanguages { get; set; }
-    public long MaxImageSizeMB { get; set; } = 10;
-    public bool EnablePreprocessing { get; set; } = true;
-}
-```
-
-### OCRResult
-
-The result of OCR processing.
-
-```csharp
-public class OCRResult
-{
-    public string Text { get; set; } = string.Empty;
-    public double Confidence { get; set; }
-    public string Language { get; set; } = "en";
-    public string Provider { get; set; } = string.Empty;
-    public decimal Cost { get; set; }
-    public TimeSpan ProcessingTime { get; set; }
-    public List<TextBlock> TextBlocks { get; set; } = new();
-    public Dictionary<string, object> Metadata { get; set; } = new();
-}
-```
-
-## 🔄 Provider Selection
-
-The library automatically selects the best OCR provider based on:
-
-1. **Image Characteristics**: Size, format, complexity
-2. **Provider Availability**: Health status and response times
-3. **Cost Optimization**: Cost per request and processing time
-4. **Capabilities**: Language support, feature requirements
-
-### Manual Provider Selection
-
-```csharp
-// Get available providers
-var availableProviders = await providerSelector.GetAvailableProvidersAsync();
-
-// Select specific provider
-var azureProvider = availableProviders.First(p => p.ProviderName == "Azure Computer Vision");
-var result = await azureProvider.ProcessImageAsync(imageStream);
-```
-
-## 🧪 Testing
-
-### Unit Tests
-
-The library includes comprehensive unit tests with 90%+ coverage:
-
-```bash
-dotnet test AMCode.OCR.Tests
-```
-
-### Integration Tests
-
-Test with actual cloud providers:
-
-```csharp
-[TestMethod]
-public async Task IntegrationTest_WithAzureProvider()
-{
-    // Configure with real Azure credentials
-    var config = new OCRConfiguration
-    {
-        Azure = new AzureOCRConfiguration
-        {
-            SubscriptionKey = "your-key",
-            Endpoint = "https://your-endpoint.cognitiveservices.azure.com/"
-        }
-    };
+    var ocrResult = result.Value;
     
-    var service = new EnhancedHybridOCRService(providers, selector, logger, Options.Create(config));
-    var result = await service.ExtractTextAsync(imageStream);
-    
-    Assert.IsTrue(result.IsSuccess);
-}
-```
-
-## 📊 Performance
-
-### Benchmarks
-
-- **Azure Computer Vision**: ~2-3 seconds per image
-- **AWS Textract**: ~3-4 seconds per image
-- **Google Cloud Vision**: ~2-3 seconds per image
-- **Batch Processing**: Up to 10 images per batch
-- **Memory Usage**: Optimized for minimal memory footprint
-
-### Optimization Tips
-
-1. **Image Preprocessing**: Enable automatic image optimization
-2. **Batch Processing**: Use batch methods for multiple images
-3. **Provider Selection**: Let the library choose the optimal provider
-4. **Caching**: Cache results for repeated images
-
-## 🔒 Security
-
-### API Key Management
-
-- Store API keys in secure configuration
-- Use environment variables for production
-- Rotate keys regularly
-- Monitor usage and costs
-
-### Data Privacy
-
-- Images are processed in memory only
-- No persistent storage of image data
-- Secure transmission to cloud providers
-- Compliance with data protection regulations
-
-## 🚨 Error Handling
-
-### Common Errors
-
-- **Provider Unavailable**: Automatic fallback to alternative providers
-- **Low Confidence**: Retry with different provider or preprocessing
-- **Rate Limiting**: Automatic retry with exponential backoff
-- **Invalid Image**: Clear error messages and validation
-
-### Error Recovery
-
-```csharp
-try
-{
-    var result = await ocrService.ExtractTextAsync(imageStream);
-    if (!result.IsSuccess)
+    // Access text blocks with positions
+    foreach (var block in ocrResult.TextBlocks)
     {
-        // Handle error
-        Console.WriteLine($"OCR failed: {result.Error}");
-    }
-}
-catch (OCRException ex)
-{
-    // Handle OCR-specific exceptions
-    Console.WriteLine($"OCR error: {ex.Message}");
-}
-```
-
-## 📈 Monitoring
-
-### Health Checks
-
-```csharp
-var health = await ocrService.GetHealthAsync();
-Console.WriteLine($"Service Status: {health.Status}");
-Console.WriteLine($"Success Rate: {health.SuccessRate}%");
-```
-
-### Metrics
-
-- Processing time per image
-- Success rate by provider
-- Cost per request
-- Error rates and types
-
-## 🔧 Advanced Usage
-
-### Custom Provider
-
-```csharp
-public class CustomOCRProvider : IOCRProvider
-{
-    public string ProviderName => "Custom Provider";
-    public bool RequiresInternet => true;
-    public bool IsAvailable => true;
-    public OCRProviderCapabilities Capabilities => new OCRProviderCapabilities { /* ... */ };
-
-    public async Task<OCRResult> ProcessImageAsync(Stream imageStream, CancellationToken cancellationToken = default)
-    {
-        // Custom OCR implementation
-    }
-}
-```
-
-### Custom Configuration
-
-```csharp
-services.Configure<OCRConfiguration>(config =>
-{
-    config.EnableCustomProviders = true;
-    config.CustomProviders = new[] { typeof(CustomOCRProvider) };
-});
-```
-
-## 📝 Examples
-
-### Recipe OCR Application
-
-```csharp
-public class RecipeOCRService
-{
-    private readonly IOCRService _ocrService;
-
-    public RecipeOCRService(IOCRService ocrService)
-    {
-        _ocrService = ocrService;
-    }
-
-    public async Task<Recipe> ExtractRecipeFromImageAsync(string imagePath)
-    {
-        var result = await _ocrService.ExtractTextAsync(imagePath);
-        
-        if (!result.IsSuccess)
-            throw new OCRException($"Failed to extract text: {result.Error}");
-
-        // Parse recipe from extracted text
-        return ParseRecipe(result.Value.Text);
+        Console.WriteLine($"Text: {block.Text}");
+        Console.WriteLine($"Position: {block.BoundingBox}");
+        Console.WriteLine($"Confidence: {block.Confidence}");
     }
 }
 ```
@@ -348,54 +359,147 @@ public class RecipeOCRService
 ### Batch Processing
 
 ```csharp
-public async Task<List<Document>> ProcessDocumentBatchAsync(List<string> imagePaths)
-{
-    var results = await _ocrService.ProcessBatchAsync(imagePaths);
-    
-    if (!results.IsSuccess)
-        throw new OCRException($"Batch processing failed: {results.Error}");
+var imagePaths = new[] { "image1.jpg", "image2.jpg", "image3.jpg" };
+var result = await ocrService.ProcessBatchAsync(imagePaths);
 
-    return results.Value.Select(r => new Document
+if (result.IsSuccess)
+{
+    foreach (var ocrResult in result.Value)
     {
-        Text = r.Text,
-        Confidence = r.Confidence,
-        ProcessingTime = r.ProcessingTime
-    }).ToList();
+        Console.WriteLine($"Provider: {ocrResult.Provider}");
+        Console.WriteLine($"Text: {ocrResult.Text}");
+        Console.WriteLine($"Cost: ${ocrResult.Cost}");
+    }
 }
 ```
 
-## 🤝 Contributing
+### Direct Provider Usage
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Submit a pull request
+```csharp
+using AMCode.OCR.Providers;
 
-## 📄 License
+var provider = serviceProvider.GetRequiredService<IOCRProvider>();
+var result = await provider.ProcessImageAsync(imageStream);
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Console.WriteLine($"Text: {result.Text}");
+Console.WriteLine($"Provider: {result.Provider}");
+```
 
-## 🆘 Support
+## Configuration
 
-For support and questions:
+### appsettings.json Example
 
-- Create an issue on GitHub
-- Check the documentation
-- Review the examples
-- Contact the development team
+```json
+{
+  "OCR": {
+    "DefaultProvider": "PaddleOCR",
+    "SelectionStrategy": "Balanced",
+    "DefaultConfidenceThreshold": 0.7,
+    "MaxRetries": 3,
+    "Providers": {
+      "Azure": {
+        "Endpoint": "https://your-resource.cognitiveservices.azure.com/",
+        "ApiKey": "your-api-key"
+      },
+      "Google": {
+        "ProjectId": "your-project-id",
+        "CredentialsPath": "path/to/credentials.json"
+      },
+      "AWS": {
+        "Region": "us-east-1",
+        "AccessKeyId": "your-access-key",
+        "SecretAccessKey": "your-secret-key"
+      },
+      "PaddleOCR": {
+        "ServiceUrl": "http://localhost:8000",
+        "Timeout": "00:05:00"
+      }
+    }
+  }
+}
+```
 
-## 🔄 Version History
+### Dependency Injection Setup
 
-### Version 1.0.0
-- Initial release
-- Multi-cloud OCR support
-- Smart provider selection
-- Comprehensive error handling
-- Batch processing
-- High test coverage
+```csharp
+using AMCode.OCR;
+using Microsoft.Extensions.DependencyInjection;
+
+public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+{
+    // Add AMCode.OCR services
+    services.AddAMCodeOCR(configuration);
+    
+    // Or configure manually
+    services.AddAMCodeOCR(options =>
+    {
+        options.DefaultProvider = "PaddleOCR";
+        options.SelectionStrategy = OCRProviderSelectionStrategy.Balanced;
+        options.DefaultConfidenceThreshold = 0.7;
+    });
+}
+```
+
+## Testing
+
+### Test Projects
+
+- **AMCode.OCR.Tests**: Unit and integration tests for OCR library
+  - Provider tests
+  - Service tests
+  - Selection strategy tests
+  - [Test Project README](../AMCode.OCR.Tests/README.md)
+
+### Running Tests
+
+```bash
+dotnet test ocrlibrary/AMCode.OCR.Tests
+```
+
+## Subfolder Documentation
+
+For detailed documentation on specific components:
+
+- [Providers](Providers/README.md) - OCR provider implementations
+- [Services](Services/README.md) - OCR service implementations and selectors
+- [Models](Models/README.md) - OCR models and data structures
+- [Configurations](Configurations/README.md) - Provider configuration classes
+- [Factories](Factories/README.md) - Factory implementations
+- [Enums](Enums/README.md) - Enumerations and selection strategies
+
+## Related Libraries
+
+- None (standalone library)
+
+## Migration Notes
+
+- **.NET 8.0**: This library targets .NET 8.0. Ensure compatibility with your application framework.
+- **Provider Configuration**: All providers require proper configuration in appsettings.json or via dependency injection.
+- **PaddleOCR**: Requires separate Python service to be running (see INTEGRATION_GUIDE.md).
+- **Result Pattern**: All service methods return `Result<T>` for error handling.
+
+## Known Issues
+
+- PaddleOCR requires external Python service
+- Some providers may have rate limits
+- Cost estimation is approximate and may vary
+- Health checks may impact performance if called frequently
+
+## Future Considerations
+
+- Additional OCR provider support
+- Enhanced image preprocessing
+- OCR result caching
+- Real-time OCR streaming
+- Custom provider plugin system
 
 ---
 
-**AMCode.OCR** - Making OCR simple, reliable, and cost-effective across multiple cloud providers.
+**See Also:**
+
+- [Root README](../../README.md) - Project overview
+- [Integration Guide](INTEGRATION_GUIDE.md) - Detailed integration instructions
+- [Documentation Plan](../../DOCUMENTATION_PLAN.md) - Documentation strategy
+
+**Last Updated:** 2025-01-27  
+**Maintained By:** Development Team

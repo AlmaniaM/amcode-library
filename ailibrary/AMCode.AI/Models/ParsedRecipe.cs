@@ -21,9 +21,9 @@ public class ParsedRecipe
     public List<RecipeIngredient> Ingredients { get; set; } = new();
 
     /// <summary>
-    /// List of cooking instructions
+    /// List of cooking directions
     /// </summary>
-    public List<string> Instructions { get; set; } = new();
+    public List<string> Directions { get; set; } = new();
 
     /// <summary>
     /// Preparation time in minutes
@@ -155,7 +155,7 @@ public class RecipeIngredient
     /// <summary>
     /// Preparation instructions extracted from recipe directions (e.g., "chopped" from "chop the onions" in directions)
     /// </summary>
-    public string Instructions { get; set; } = string.Empty;
+    public string Directions { get; set; } = string.Empty;
 
     /// <summary>
     /// Additional notes or preparation instructions
