@@ -9,7 +9,7 @@
 
 ## Overview
 
-AMCode.Common is a core utility library that provides essential components and helper classes used throughout the AMCode ecosystem. It includes file I/O operations (CSV, JSON, ZIP), email functionality, filtering capabilities, extension methods, dynamic object helpers, and common models. This library serves as the foundation for other AMCode libraries and applications.
+AMCode.Common is a core utility library that provides essential components and helper classes used throughout the AMCode ecosystem. It includes file I/O operations (CSV, JSON, ZIP), email functionality, filtering capabilities, extension methods, dynamic object helpers, common models, and domain base classes. This library serves as the foundation for other AMCode libraries and applications.
 
 ## Architecture
 
@@ -17,8 +17,9 @@ AMCode.Common follows a component-based architecture organized by functionality.
 
 - **Interface-Based Design**: Core functionality exposed through interfaces (ICSVReader, ICSVWriter, IEmailClient, IZipArchive, etc.)
 - **Extension Methods**: Rich set of extension methods for common types (String, Enumerable, Dictionary, Object, etc.)
-- **Result Pattern**: Type-safe result handling with `Result<T>` and `Result` classes
-- **Separation of Concerns**: Components organized by domain (IO, Email, Filter, Extensions, etc.)
+- **Result Pattern**: Enhanced type-safe result handling with `Result<T>` and `Result` classes, including functional methods (Map, Bind, OnSuccess, OnFailure)
+- **Domain Base Classes**: Entity base classes, domain exceptions, and domain events for domain-driven design
+- **Separation of Concerns**: Components organized by domain (IO, Email, Filter, Extensions, Domain, etc.)
 
 ### Key Components
 
@@ -38,7 +39,8 @@ AMCode.Common follows a component-based architecture organized by functionality.
 - **Filter Structures**: Flexible filtering system with filter names, items, and validation
 - **Extension Methods**: Comprehensive extension methods for common .NET types
 - **Dynamic Object Support**: Helpers for working with ExpandoObject and dynamic types
-- **Result Pattern**: Type-safe result handling for operations that can succeed or fail
+- **Result Pattern**: Enhanced type-safe result handling for operations that can succeed or fail, with functional programming support (Map, Bind, OnSuccess, OnFailure)
+- **Domain Base Classes**: Entity base classes with domain event support, domain exceptions, and DDD patterns
 - **Path Utilities**: File and directory path manipulation utilities
 - **Reflection Utilities**: Method info and type extension utilities
 
@@ -60,6 +62,11 @@ AMCode.Common/
 ├── Components/              # Core component implementations
 │   ├── Common/             # Common models and interfaces
 │   │   └── Models/         # Result<T>, ICloneable
+│   ├── Domain/              # Domain base classes
+│   │   ├── Entity.cs       # Entity base class with domain events
+│   │   └── DomainException.cs  # Domain exception base classes
+│   ├── Extensions/         # Extension methods
+│   │   └── ResultExtensions.cs  # Result pattern extensions
 │   ├── Dynamic/            # Dynamic object helpers
 │   ├── Email/              # Email functionality
 │   │   ├── IEmailClient.cs
@@ -186,17 +193,21 @@ The library is organized into functional components, each with comprehensive doc
 
 **Location:** `Components/Common/Models/Result.cs`
 
-**Purpose:** Type-safe result pattern implementation for operations that can succeed or fail
+**Purpose:** Enhanced type-safe result pattern implementation for operations that can succeed or fail, with functional programming support
 
 **Key Responsibilities:**
 
 - Represent operation success or failure
-- Provide value on success or error message on failure
+- Provide value on success or error message(s) on failure
 - Support both generic (Result<T>) and non-generic (Result) variants
+- Functional methods: Map, Bind, OnSuccess, OnFailure
+- Support for multiple error messages
+- Implicit conversions for convenience
 
 **Usage:**
 
 ```csharp
+// Basic usage
 var result = Result<string>.Success("Operation completed");
 if (result.IsSuccess)
 {
@@ -208,6 +219,22 @@ if (failure.IsFailure)
 {
     var error = failure.Error;
 }
+
+// Functional programming with Map
+var numberResult = Result<int>.Success(42);
+var stringResult = numberResult.Map(x => x.ToString()); // Result<string>.Success("42")
+
+// Functional programming with Bind
+var result1 = Result<int>.Success(10);
+var result2 = result1.Bind(x => Result<string>.Success(x.ToString())); // Chains results
+
+// Multiple errors
+var errors = new List<string> { "Error 1", "Error 2" };
+var multiErrorResult = Result<int>.Failure(errors);
+
+// Implicit conversions
+Result<int> success = 42; // Automatically creates Success(42)
+Result<int> failure = "Error message"; // Automatically creates Failure("Error message")
 ```
 
 **See Also:** [Common Component Documentation](Components/Common/README.md)
@@ -334,6 +361,7 @@ await emailClient.SendMessageAsync(message);
 
 ```csharp
 using AMCode.Common.Models;
+using AMCode.Common.Extensions;
 
 // Success case
 var result = Result<string>.Success("Data retrieved successfully");
@@ -355,6 +383,78 @@ if (operationResult.IsSuccess)
 {
     // Operation completed successfully
 }
+
+// Functional programming with Map
+var numberResult = Result<int>.Success(42);
+var stringResult = numberResult.Map(x => x.ToString()); // Result<string>.Success("42")
+
+// Functional programming with Bind (chaining results)
+var result1 = Result<int>.Success(10);
+var result2 = result1.Bind(x => 
+{
+    if (x > 5)
+        return Result<string>.Success("Greater than 5");
+    return Result<string>.Failure("Not greater than 5");
+});
+
+// OnSuccess and OnFailure callbacks
+result.OnSuccess(value => Console.WriteLine($"Success: {value}"));
+result.OnFailure(error => Console.WriteLine($"Error: {error}"));
+
+// Get value with default
+var value = result.GetValueOrDefault("Default value");
+var valueOrThrow = result.GetValueOrThrow(); // Throws if failure
+
+// Extension methods
+var results = new[] { Result<int>.Success(1), Result<int>.Success(2) };
+var combined = results.Combine(); // Result<IEnumerable<int>>.Success([1, 2])
+```
+
+### Basic Usage - Domain Base Classes
+
+```csharp
+using AMCode.Common.Domain;
+
+// Entity base class with strongly-typed ID
+public class User : Entity<Guid>
+{
+    public string Name { get; set; }
+    
+    public User(Guid id, string name) : base(id)
+    {
+        Name = name;
+    }
+    
+    public void ChangeName(string newName)
+    {
+        Name = newName;
+        AddDomainEvent(new UserNameChangedEvent { UserId = Id, NewName = newName });
+    }
+}
+
+// Entity with Guid ID (convenience class)
+public class Product : Entity
+{
+    public string Name { get; set; }
+    
+    public Product(Guid id, string name) : base(id)
+    {
+        Name = name;
+    }
+}
+
+// Domain events
+public class UserNameChangedEvent : DomainEvent
+{
+    public Guid UserId { get; set; }
+    public string NewName { get; set; }
+}
+
+// Domain exceptions
+throw new BusinessRuleViolationException("Cannot delete active user");
+throw new EntityNotFoundException($"User with ID {userId} not found");
+throw new InvalidEntityStateException("Cannot modify archived entity");
+throw new ValidationException("Email address is invalid");
 ```
 
 ### Extension Methods
@@ -439,9 +539,10 @@ dotnet test commonlibrary/AMCode.Common.UnitTests/AMCode.Common.UnitTests.csproj
 For detailed documentation on specific components:
 
 - [Components/Common](Components/Common/README.md) - Common models and interfaces (Result<T>, ICloneable)
+- [Components/Domain](Components/Domain/) - Domain base classes (Entity, DomainException, DomainEvent)
 - [Components/Dynamic](Components/Dynamic/README.md) - Dynamic object helpers
 - [Components/Email](Components/Email/README.md) - Email functionality
-- [Components/Extensions](Components/Extensions/README.md) - Extension methods
+- [Components/Extensions](Components/Extensions/README.md) - Extension methods (including ResultExtensions)
 - [Components/Filter](Components/Filter/README.md) - Filter structures
 - [Components/IO](Components/IO/README.md) - Input/Output operations (CSV, JSON, ZIP)
 
@@ -455,8 +556,12 @@ For detailed documentation on specific components:
 ## Migration Notes
 
 - **Version 1.0.0**: Initial release with core functionality
+- **Version 1.1.0**: Enhanced Result pattern with functional methods (Map, Bind, OnSuccess, OnFailure), multiple error support, and implicit conversions
+- **Version 1.1.0**: Added domain base classes (Entity, DomainException, DomainEvent) for domain-driven design
+- **Version 1.1.0**: Added Result extension methods for combining results and additional utilities
 - All components follow interface-based design for easy testing and mocking
 - Extension methods are organized by target type namespace
+- Result pattern is backward compatible - existing code using Result<T>.Success() and Result<T>.Failure() continues to work
 
 ## Known Issues
 
@@ -476,5 +581,5 @@ None currently documented.
 - [Root README](../../README.md) - Project overview
 - [Documentation Plan](../../DOCUMENTATION_PLAN.md) - Documentation strategy
 
-**Last Updated:** 2025-01-27  
+**Last Updated:** 2025-01-28  
 **Maintained By:** Development Team
