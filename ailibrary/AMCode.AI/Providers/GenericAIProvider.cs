@@ -31,7 +31,8 @@ public abstract class GenericAIProvider : IAIProvider
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = false,
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
+            Converters = { new RecipeIngredientJsonConverter() }
         };
     }
 

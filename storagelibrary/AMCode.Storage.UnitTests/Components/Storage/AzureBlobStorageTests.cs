@@ -1,4 +1,4 @@
-using AMCode.Common.Models;
+6using AMCode.Common.Models;
 using AMCode.Storage.Components.Storage;
 using AMCode.Storage.UnitTests.Logging;
 using Azure.Storage.Blobs;
@@ -239,7 +239,7 @@ namespace AMCode.Storage.UnitTests.Components.Storage
             var fileName1 = "test1.jpg";
             var fileName2 = "test2.jpg";
             var content = Encoding.UTF8.GetBytes("test content");
-            
+
             using var stream1 = new MemoryStream(content);
             using var stream2 = new MemoryStream(content);
             await _storage.StoreFileAsync(stream1, fileName1, directoryPath);
@@ -269,6 +269,111 @@ namespace AMCode.Storage.UnitTests.Components.Storage
             Assert.IsNotNull(result.Value);
             Assert.AreEqual(0, result.Value.Length);
         }
+
+        #region GenerateSignedBlobUrl Tests
+
+        [Test]
+        public void GenerateSignedBlobUrl_WithValidPath_ReturnsSignedUrl()
+        {
+            // Arrange
+            var connectionString = "DefaultEndpointsProtocol=https;AccountName=testaccount;AccountKey=dGVzdGtleWJhc2U2NA==;EndpointSuffix=core.windows.net";
+            var storage = new AzureBlobStorage(connectionString, ContainerName, _mockLogger);
+            var filePath = "images/test.jpg";
+            var expiryMinutes = 15;
+
+            // Act
+            var signedUrl = storage.GenerateSignedBlobUrl(filePath, expiryMinutes);
+
+            // Assert
+            Assert.IsNotEmpty(signedUrl);
+            Assert.That(signedUrl, Does.Contain("sv=")); // SAS version
+            Assert.That(signedUrl, Does.Contain("se=")); // Expiry
+            Assert.That(signedUrl, Does.Contain("sp=r")); // Read permission
+            Assert.That(signedUrl, Does.Contain("sig=")); // Signature
+        }
+
+        [Test]
+        public void GenerateSignedBlobUrl_WithDifferentExpirations_GeneratesDifferentUrls()
+        {
+            // Arrange
+            var connectionString = "DefaultEndpointsProtocol=https;AccountName=testaccount;AccountKey=dGVzdGtleWJhc2U2NA==;EndpointSuffix=core.windows.net";
+            var storage = new AzureBlobStorage(connectionString, ContainerName, _mockLogger);
+            var filePath = "images/test.jpg";
+
+            // Act
+            var url1 = storage.GenerateSignedBlobUrl(filePath, 15);
+            var url2 = storage.GenerateSignedBlobUrl(filePath, 30);
+
+            // Assert
+            Assert.IsNotEmpty(url1);
+            Assert.IsNotEmpty(url2);
+            Assert.AreNotEqual(url1, url2); // Different expiration = different token
+        }
+
+        [Test]
+        public void GenerateSignedBlobUrl_WithDevelopmentConnectionString_ReturnsEmptyString()
+        {
+            // Arrange - development storage doesn't have AccountKey
+            var filePath = "images/test.jpg";
+
+            // Act
+            var signedUrl = _storage.GenerateSignedBlobUrl(filePath);
+
+            // Assert - should return empty because dev storage lacks AccountKey
+            Assert.IsEmpty(signedUrl);
+        }
+
+        [Test]
+        public void GenerateSignedBlobUrl_ContainsCorrectBlobPath()
+        {
+            // Arrange
+            var connectionString = "DefaultEndpointsProtocol=https;AccountName=testaccount;AccountKey=dGVzdGtleWJhc2U2NA==;EndpointSuffix=core.windows.net";
+            var storage = new AzureBlobStorage(connectionString, ContainerName, _mockLogger);
+            var filePath = "images/subfolder/test.jpg";
+
+            // Act
+            var signedUrl = storage.GenerateSignedBlobUrl(filePath);
+
+            // Assert
+            Assert.IsNotEmpty(signedUrl);
+            Assert.That(signedUrl, Does.Contain("testaccount.blob.core.windows.net"));
+            Assert.That(signedUrl, Does.Contain(ContainerName));
+            Assert.That(signedUrl, Does.Contain("images/subfolder/test.jpg"));
+        }
+
+        [Test]
+        public void GenerateSignedBlobUrl_WithDefaultExpiry_UsesDefaultValue()
+        {
+            // Arrange
+            var connectionString = "DefaultEndpointsProtocol=https;AccountName=testaccount;AccountKey=dGVzdGtleWJhc2U2NA==;EndpointSuffix=core.windows.net";
+            var storage = new AzureBlobStorage(connectionString, ContainerName, _mockLogger);
+            var filePath = "images/test.jpg";
+
+            // Act - use default expiry (no parameter)
+            var signedUrl = storage.GenerateSignedBlobUrl(filePath);
+
+            // Assert
+            Assert.IsNotEmpty(signedUrl);
+            Assert.That(signedUrl, Does.Contain("sp=r")); // Read permission
+        }
+
+        [Test]
+        public void GenerateSignedBlobUrl_NormalizesPathWithBackslashes()
+        {
+            // Arrange
+            var connectionString = "DefaultEndpointsProtocol=https;AccountName=testaccount;AccountKey=dGVzdGtleWJhc2U2NA==;EndpointSuffix=core.windows.net";
+            var storage = new AzureBlobStorage(connectionString, ContainerName, _mockLogger);
+            var filePath = @"images\test.jpg"; // Windows-style path
+
+            // Act
+            var signedUrl = storage.GenerateSignedBlobUrl(filePath);
+
+            // Assert
+            Assert.IsNotEmpty(signedUrl);
+            Assert.That(signedUrl, Does.Contain("images/test.jpg")); // Should be normalized to forward slashes
+        }
+
+        #endregion
     }
 }
 

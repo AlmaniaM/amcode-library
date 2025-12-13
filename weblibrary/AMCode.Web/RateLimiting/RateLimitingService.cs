@@ -45,7 +45,7 @@ public class RateLimitingService : IRateLimitingService
                 // Calculate reset time
                 var resetTime = DateTimeOffset.UtcNow.Add(policy.Window);
                 result.ResetTime = resetTime.ToUnixTimeSeconds();
-                
+
                 // For acquired leases, we need to estimate remaining
                 // This is approximate since .NET rate limiters don't expose exact remaining count
                 result.Remaining = policy.PermitLimit - 1; // Approximate
@@ -105,6 +105,7 @@ public class RateLimitingService : IRateLimitingService
                     {
                         PermitLimit = policy.PermitLimit,
                         Window = policy.Window,
+                        SegmentsPerWindow = 2, // Required: Divide window into 2 segments for sliding window algorithm
                         QueueProcessingOrder = policy.QueueProcessingOrder,
                         QueueLimit = policy.QueueLimit,
                         AutoReplenishment = policy.AutoReplenishment

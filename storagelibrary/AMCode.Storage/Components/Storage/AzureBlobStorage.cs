@@ -1,8 +1,10 @@
 using AMCode.Common.Models;
 using AMCode.Storage.Interfaces;
 using Azure;
+using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -321,6 +323,80 @@ namespace AMCode.Storage.Components.Storage
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Extracts the account key from an Azure Storage connection string
+        /// </summary>
+        /// <param name="connectionString">The connection string</param>
+        /// <returns>The account key, or null if not found</returns>
+        private string ExtractAccountKey(string connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                return null;
+            }
+
+            // Pattern to match AccountKey=value
+            var match = Regex.Match(connectionString, @"AccountKey=([^;]+)", RegexOptions.IgnoreCase);
+            if (match.Success && match.Groups.Count > 1)
+            {
+                return match.Groups[1].Value.Trim();
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Generates a signed blob URL with SAS token for secure, time-limited access
+        /// </summary>
+        /// <param name="filePath">The file path in blob storage</param>
+        /// <param name="expiryMinutes">Expiration time in minutes (default: 15)</param>
+        /// <returns>Signed blob URL with SAS token, or empty string on failure</returns>
+        public string GenerateSignedBlobUrl(string filePath, int expiryMinutes = 15)
+        {
+            try
+            {
+                var accountName = ExtractAccountName(_connectionString);
+                var accountKey = ExtractAccountKey(_connectionString);
+
+                if (string.IsNullOrEmpty(accountName) || string.IsNullOrEmpty(accountKey))
+                {
+                    _logger.LogWarning("Could not extract account credentials from connection string");
+                    return string.Empty;
+                }
+
+                var blobContainerClient = CreateBlobContainerClient();
+                var normalizedPath = NormalizePath(filePath);
+                var blobClient = blobContainerClient.GetBlobClient(normalizedPath);
+
+                // Create SAS builder for blob-level access
+                var sasBuilder = new BlobSasBuilder
+                {
+                    BlobContainerName = _containerName,
+                    BlobName = normalizedPath,
+                    Resource = "b", // 'b' for blob
+                    ExpiresOn = DateTimeOffset.UtcNow.AddMinutes(expiryMinutes)
+                };
+
+                // Set permissions: read-only
+                sasBuilder.SetPermissions(BlobSasPermissions.Read);
+
+                // Generate SAS token using connection string credentials
+                var sasToken = sasBuilder.ToSasQueryParameters(
+                    new StorageSharedKeyCredential(accountName, accountKey)
+                ).ToString();
+
+                var signedUrl = $"{blobClient.Uri}?{sasToken}";
+
+                _logger.LogDebug("Generated signed blob URL for: {FilePath} (expires in {Minutes} minutes)", filePath, expiryMinutes);
+                return signedUrl;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to generate signed blob URL for: {FilePath}", filePath);
+                return string.Empty;
+            }
         }
     }
 }

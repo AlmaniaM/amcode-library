@@ -308,6 +308,39 @@ namespace AMCode.Storage.Components.Storage
         }
 
         /// <summary>
+        /// Generates a presigned URL for secure, time-limited access to an S3 object
+        /// </summary>
+        /// <param name="filePath">The file path in S3</param>
+        /// <param name="expiryMinutes">Expiration time in minutes (default: 15)</param>
+        /// <returns>Presigned URL, or empty string on failure</returns>
+        public string GeneratePresignedUrl(string filePath, int expiryMinutes = 15)
+        {
+            try
+            {
+                var normalizedPath = NormalizePath(filePath);
+
+                var request = new GetPreSignedUrlRequest
+                {
+                    BucketName = _bucketName,
+                    Key = normalizedPath,
+                    Verb = HttpVerb.GET,
+                    Expires = DateTime.UtcNow.AddMinutes(expiryMinutes)
+                };
+
+                // Generate presigned URL using access key credentials
+                var presignedUrl = _s3Client.GetPreSignedURL(request);
+                
+                _logger.LogDebug("Generated presigned S3 URL: {Url} (expires in {Minutes} minutes)", presignedUrl, expiryMinutes);
+                return presignedUrl;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to generate presigned S3 URL for: {FilePath}", filePath);
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
         /// Combines folder path and file name into an S3 key
         /// </summary>
         private string CombinePath(string folderPath, string fileName)

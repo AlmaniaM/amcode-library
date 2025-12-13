@@ -239,8 +239,11 @@ public class RecipeIngredient
 {
     public string Name { get; set; } = string.Empty;
     public string Amount { get; set; } = string.Empty;
-    public string? Unit { get; set; }
-    public string? Notes { get; set; }
+    public string Unit { get; set; } = string.Empty;
+    public string Text { get; set; } = string.Empty;
+    public string Preparation { get; set; } = string.Empty;
+    public string Directions { get; set; } = string.Empty;
+    public string Notes { get; set; } = string.Empty;
 }
 ```
 
@@ -253,6 +256,17 @@ var ingredient = new RecipeIngredient
     Unit = "cups"
 };
 ```
+
+**JSON Deserialization:**
+The `RecipeIngredient` class uses a custom JSON converter (`RecipeIngredientJsonConverter`) that handles both string and structured formats for `amount` and `unit` fields:
+
+- **String format**: `{ "amount": "1/2", "unit": "cup" }`
+- **Structured format**: `{ "amount": { "numeric": 0.5, "text": "1/2" }, "unit": { "unit": "cup", "text": "cup" } }`
+
+The converter automatically extracts the `text` field from structured objects and handles null values gracefully.
+
+**Related Components:**
+- [RecipeIngredientJsonConverter](#recipeingredientjsonconverter) - Custom JSON converter for flexible deserialization
 
 ---
 
@@ -601,6 +615,70 @@ public void ParsedRecipe_WithValidData_IsValid()
 }
 ```
 
+### JSON Converters
+
+#### RecipeIngredientJsonConverter
+
+**File:** `RecipeIngredientJsonConverter.cs`
+
+**Purpose:** Custom JSON converter for `RecipeIngredient` that handles flexible JSON formats from AI providers.
+
+**Key Features:**
+- Handles both string and structured formats for `amount` and `unit` fields
+- Extracts `text` field from structured objects (preferred)
+- Falls back to `unit` field for unit extraction
+- Gracefully handles null values without deserialization errors
+- Skips `numeric` field without attempting to deserialize (prevents null decimal errors)
+
+**Supported Formats:**
+
+1. **String Format** (simple):
+```json
+{
+  "name": "flour",
+  "amount": "2",
+  "unit": "cups"
+}
+```
+
+2. **Structured Format** (with nested objects):
+```json
+{
+  "name": "flour",
+  "amount": {
+    "numeric": 2,
+    "text": "2"
+  },
+  "unit": {
+    "unit": "cup",
+    "text": "cup"
+  }
+}
+```
+
+3. **Null Handling** (gracefully handled):
+```json
+{
+  "name": "honey",
+  "amount": {
+    "numeric": null,
+    "text": null
+  },
+  "unit": {
+    "unit": null,
+    "text": null
+  }
+}
+```
+
+**Registration:**
+The converter is automatically registered in `GenericAIProvider._jsonOptions.Converters` and is used for all `RecipeIngredient` deserialization operations.
+
+**Usage:**
+The converter is transparent - no code changes needed. It automatically handles both formats when deserializing JSON responses from AI providers.
+
+---
+
 ## Notes
 
 - All models are serialization-friendly
@@ -609,6 +687,7 @@ public void ParsedRecipe_WithValidData_IsValid()
 - Domain entities are rich models with nested value objects
 - Request/response models follow consistent patterns
 - Provider models support capability and health monitoring
+- Custom JSON converters handle flexible AI response formats
 
 ---
 
@@ -618,5 +697,5 @@ public void ParsedRecipe_WithValidData_IsValid()
 - [Services](../Services/README.md) - Use these models
 - [Root README](../../../README.md) - Project overview
 
-**Last Updated:** 2025-01-27  
+**Last Updated:** 2025-01-28  
 **Maintained By:** Development Team

@@ -25,6 +25,9 @@ The library follows Clean Architecture with a clear separation between interface
 ## Features
 
 - Multi-provider support (Azure Blob Storage, AWS S3, Local File System)
+- **Signed URL Generation**: Generate time-limited, read-only URLs for secure access
+  - Azure: SAS tokens with `BlobSasBuilder`
+  - S3: Presigned URLs with `GetPreSignedUrlRequest`
 - Recipe-specific storage service for images, documents, and exports
 - Comprehensive logging for all storage operations
 - Result-based error handling using AMCode.Common.Results
@@ -148,6 +151,22 @@ AMCode.Storage/
 - Path normalization for blob storage
 - Account name extraction from connection strings
 - Comprehensive error handling
+- Signed URL generation with SAS tokens
+
+**Signed URL Generation:**
+
+Generate SAS tokens for secure, time-limited access:
+
+```csharp
+var signedUrl = azureStorage.GenerateSignedBlobUrl("images/photo.jpg", expiryMinutes: 15);
+// Returns: https://account.blob.core.windows.net/container/images/photo.jpg?sv=...&sp=r&sig=...
+```
+
+**Security Properties**:
+- Read-only permission
+- Single blob scope
+- Configurable expiration
+- Account key credentials
 
 **See Also:** [Storage Providers README](Components/Storage/README.md)
 
@@ -162,6 +181,22 @@ AMCode.Storage/
 - Manage S3 buckets
 - Handle S3-specific operations
 - Manage S3 access permissions
+- Presigned URL generation
+
+**Presigned URL Generation:**
+
+Generate presigned URLs for secure, time-limited access:
+
+```csharp
+var presignedUrl = s3Storage.GeneratePresignedUrl("images/photo.jpg", expiryMinutes: 15);
+// Returns: https://bucket.s3.region.amazonaws.com/images/photo.jpg?X-Amz-Algorithm=...
+```
+
+**Security Properties**:
+- GET-only permission
+- Single object scope
+- Configurable expiration
+- Access key credentials
 
 **See Also:** [Storage Providers README](Components/Storage/README.md)
 
