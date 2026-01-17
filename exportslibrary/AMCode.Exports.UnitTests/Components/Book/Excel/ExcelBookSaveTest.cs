@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using AMCode.Exports.Book;
-using AMCode.Xlsx;
+using AMCode.Documents.Xlsx;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.Book.ExcelBookTests
+namespace AMCode.Exports.UnitTests.Book.ExcelBookTests
 {
     [TestFixture]
     public class ExcelBookSaveTest

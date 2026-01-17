@@ -4,9 +4,9 @@ using System.IO;
 using System.Linq;
 using DocumentFormat.OpenXml.Packaging;
 using AMCode.Documents.Common.Models;
-using AMCode.Xlsx.Infrastructure.Interfaces;
+using AMCode.Documents.Xlsx.Infrastructure.Interfaces;
 
-namespace AMCode.Xlsx.Infrastructure.Adapters
+namespace AMCode.Documents.Xlsx.Infrastructure.Adapters
 {
     /// <summary>
     /// OpenXml implementation of the workbook engine

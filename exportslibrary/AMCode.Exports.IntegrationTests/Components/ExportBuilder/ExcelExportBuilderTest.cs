@@ -12,11 +12,11 @@ using AMCode.Exports.BookBuilder.Actions;
 using AMCode.Exports.DataSource;
 using AMCode.Exports.ExportBuilder;
 using AMCode.Exports.Results;
-using AMCode.Xlsx;
-using AMCode.Xlsx.Drawing;
+using AMCode.Documents.Xlsx;
+using AMCode.Documents.Xlsx.Drawing;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.IntegrationTests.ExportBuilder.ExcelExportBuilderTests
+namespace AMCode.Exports.IntegrationTests.ExportBuilder.ExcelExportBuilderTests
 {
     [TestFixture]
     public class ExcelExportBuilderTest

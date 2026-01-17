@@ -15,7 +15,7 @@ using AMCode.Exports.Results;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.IntegrationTests.ExportBuilder.CsvExportBuilderTests
+namespace AMCode.Exports.IntegrationTests.ExportBuilder.CsvExportBuilderTests
 {
     [TestFixture]
     public class CsvExportBuilderTest

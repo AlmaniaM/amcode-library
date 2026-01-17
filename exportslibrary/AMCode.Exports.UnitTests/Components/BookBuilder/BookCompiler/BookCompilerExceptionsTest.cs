@@ -8,11 +8,11 @@ using AMCode.Exports;
 using AMCode.Exports.Book;
 using AMCode.Exports.BookBuilder;
 using AMCode.Exports.Common.Exceptions.Util;
-using DlExportsLibrary.UnitTests.BookBuilder.Mocks;
+using AMCode.Exports.UnitTests.BookBuilder.Mocks;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.BookBuilder.BookCompilerTests
+namespace AMCode.Exports.UnitTests.BookBuilder.BookCompilerTests
 {
     [TestFixture]
     public class BookCompilerExceptionsTest

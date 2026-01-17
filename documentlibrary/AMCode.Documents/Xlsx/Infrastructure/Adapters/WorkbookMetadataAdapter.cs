@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using AMCode.Documents.Common.Models;
 using AMCode.Documents.Xlsx.Domain.Interfaces;
-using AMCode.Xlsx;
+using AMCode.Documents.Xlsx;
 
 namespace AMCode.Documents.Xlsx.Infrastructure.Adapters
 {

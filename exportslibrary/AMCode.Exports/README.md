@@ -25,7 +25,7 @@ The library follows a builder pattern with clear separation of concerns:
 
 ### Key Components
 
-- **SimpleExcelExportBuilder**: Simplified Excel export builder using AMCode.Xlsx
+- **SimpleExcelExportBuilder**: Simplified Excel export builder using AMCode.Documents.Xlsx
 - **RecipeExportBuilder**: Specialized builder for recipe and shopping list exports
 - **ExcelBook/CsvBook**: Book implementations for different formats
 - **Book Builders**: Advanced builders with styling and configuration
@@ -54,7 +54,7 @@ The library follows a builder pattern with clear separation of concerns:
 - **AMCode.Common** - Common utilities and result types
 - **AMCode.Columns** - Column management and data transformation
 - **AMCode.Storage** - Storage abstractions for file operations
-- **AMCode.Xlsx** - Excel file generation and manipulation
+- **AMCode.Documents.Xlsx** - Excel file generation and manipulation
 
 ### External Dependencies
 
@@ -196,13 +196,13 @@ AMCode.Exports/
 
 **Location:** `Components/ExportBuilder/SimpleExcelExportBuilder.cs`
 
-**Purpose:** Simplified Excel export builder that directly uses AMCode.Xlsx for creating Excel files.
+**Purpose:** Simplified Excel export builder that directly uses AMCode.Documents.Xlsx for creating Excel files.
 
 **Key Responsibilities:**
 
 - Create Excel exports with configurable row limits
 - Support for large datasets (splits across multiple files)
-- Direct integration with AMCode.Xlsx library
+- Direct integration with AMCode.Documents.Xlsx library
 
 **Usage:**
 
@@ -486,7 +486,7 @@ Shopping list exports include:
 - [AMCode.Common](../commonlibrary/AMCode.Common/README.md) - Common utilities and result types
 - [AMCode.Columns](../columnslibrary/AMCode.Columns/README.md) - Column management
 - [AMCode.Storage](../storagelibrary/AMCode.Storage/README.md) - Storage abstractions
-- [AMCode.Xlsx](../xlsxlibrary/AMCode.Xlsx/README.md) - Excel file generation
+- [AMCode.Documents.Xlsx](../xlsxlibrary/AMCode.Documents.Xlsx/README.md) - Excel file generation
 
 ## Migration Notes
 
@@ -495,7 +495,7 @@ Shopping list exports include:
 When migrating to version 1.2.2:
 
 1. **Recipe Export Features**: New recipe-specific export functionality added
-2. **SimpleExcelExportBuilder**: New simplified Excel builder using AMCode.Xlsx
+2. **SimpleExcelExportBuilder**: New simplified Excel builder using AMCode.Documents.Xlsx
 3. **Dependency Updates**: Updated to .NET 9.0 and latest package versions
 4. **Result Pattern**: Uses `Result<T>` pattern for error handling
 

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DocumentFormat.OpenXml.Spreadsheet;
-using AMCode.Xlsx;
+using AMCode.Documents.Xlsx;
 
 namespace AMCode.Documents.Xlsx.Providers.OpenXml
 {
@@ -150,8 +150,8 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             get
             {
-                var cell = _worksheet.GetCell(StartCell);
-                return cell?.GetFirstChild<CellFormat>()?.Fill?.GetFirstChild<PatternFill>()?.BackgroundColor?.Rgb;
+                // TODO: Implement proper stylesheet-based color retrieval
+                return null;
             }
             set
             {
@@ -167,8 +167,8 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             get
             {
-                var cell = _worksheet.GetCell(StartCell);
-                return cell?.GetFirstChild<CellFormat>()?.Font?.GetFirstChild<FontName>()?.Val;
+                // TODO: Implement proper stylesheet-based font retrieval
+                return null;
             }
             set
             {
@@ -184,8 +184,8 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             get
             {
-                var cell = _worksheet.GetCell(StartCell);
-                return cell?.GetFirstChild<CellFormat>()?.Font?.GetFirstChild<FontSize>()?.Val ?? 11.0;
+                // TODO: Implement proper stylesheet-based font retrieval
+                return 11.0;
             }
             set
             {
@@ -201,8 +201,8 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             get
             {
-                var cell = _worksheet.GetCell(StartCell);
-                return cell?.GetFirstChild<CellFormat>()?.Font?.GetFirstChild<Bold>() != null;
+                // TODO: Implement proper stylesheet-based font retrieval
+                return false;
             }
             set
             {
@@ -218,8 +218,8 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             get
             {
-                var cell = _worksheet.GetCell(StartCell);
-                return cell?.GetFirstChild<CellFormat>()?.Font?.GetFirstChild<Italic>() != null;
+                // TODO: Implement proper stylesheet-based font retrieval
+                return false;
             }
             set
             {
@@ -235,8 +235,8 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             get
             {
-                var cell = _worksheet.GetCell(StartCell);
-                return cell?.GetFirstChild<CellFormat>()?.Font?.GetFirstChild<Underline>() != null;
+                // TODO: Implement proper stylesheet-based font retrieval
+                return false;
             }
             set
             {
@@ -252,8 +252,8 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             get
             {
-                var cell = _worksheet.GetCell(StartCell);
-                return cell?.GetFirstChild<CellFormat>()?.Font?.GetFirstChild<Color>()?.Rgb;
+                // TODO: Implement proper stylesheet-based font retrieval
+                return null;
             }
             set
             {
@@ -269,8 +269,8 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             get
             {
-                var cell = _worksheet.GetCell(StartCell);
-                return cell?.GetFirstChild<CellFormat>()?.Alignment?.Horizontal?.Value?.ToString();
+                // TODO: Implement proper stylesheet-based alignment retrieval
+                return null;
             }
             set
             {
@@ -286,8 +286,8 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             get
             {
-                var cell = _worksheet.GetCell(StartCell);
-                return cell?.GetFirstChild<CellFormat>()?.Alignment?.Vertical?.Value?.ToString();
+                // TODO: Implement proper stylesheet-based alignment retrieval
+                return null;
             }
             set
             {
@@ -303,8 +303,8 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             get
             {
-                var cell = _worksheet.GetCell(StartCell);
-                return cell?.GetFirstChild<CellFormat>()?.Border?.GetFirstChild<LeftBorder>()?.Style?.Value?.ToString();
+                // TODO: Implement proper stylesheet-based border retrieval
+                return null;
             }
             set
             {
@@ -320,8 +320,8 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             get
             {
-                var cell = _worksheet.GetCell(StartCell);
-                return cell?.GetFirstChild<CellFormat>()?.Border?.GetFirstChild<LeftBorder>()?.Color?.Rgb;
+                // TODO: Implement proper stylesheet-based border retrieval
+                return null;
             }
             set
             {
@@ -337,8 +337,8 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             get
             {
-                var cell = _worksheet.GetCell(StartCell);
-                return cell?.GetFirstChild<CellFormat>()?.NumberFormatId?.Value?.ToString();
+                // TODO: Implement proper stylesheet-based number format retrieval
+                return null;
             }
             set
             {

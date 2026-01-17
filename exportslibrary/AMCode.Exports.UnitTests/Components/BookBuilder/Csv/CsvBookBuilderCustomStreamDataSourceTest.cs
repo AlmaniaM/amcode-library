@@ -12,7 +12,7 @@ using AMCode.Storage;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.BookBuilder.CsvBookBuilderTests
+namespace AMCode.Exports.UnitTests.BookBuilder.CsvBookBuilderTests
 {
     [TestFixture]
     public class CsvBookBuilderCustomStreamDataSourceTest

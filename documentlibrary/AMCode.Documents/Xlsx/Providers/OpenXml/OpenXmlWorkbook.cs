@@ -5,7 +5,7 @@ using System.Linq;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using AMCode.Documents.Common.Models;
-using AMCode.Xlsx;
+using AMCode.Documents.Xlsx;
 
 namespace AMCode.Documents.Xlsx.Providers.OpenXml
 {
@@ -202,7 +202,11 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
 
             try
             {
-                _document.SaveAs(stream);
+                // OpenXML doesn't have SaveAs for streams, need to clone
+                using (var clone = _document.Clone(stream))
+                {
+                    clone.Save();
+                }
                 return Result.Success();
             }
             catch (Exception ex)
@@ -224,7 +228,14 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
 
             try
             {
-                _document.SaveAs(filePath);
+                // OpenXML doesn't have SaveAs, need to clone to a new file
+                using (var fileStream = File.Create(filePath))
+                {
+                    using (var clone = _document.Clone(fileStream))
+                    {
+                        clone.Save();
+                    }
+                }
                 return Result.Success();
             }
             catch (Exception ex)
@@ -357,7 +368,7 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             if (!_disposed)
             {
-                _document?.Close();
+                _document?.Dispose();
                 _disposed = true;
             }
         }

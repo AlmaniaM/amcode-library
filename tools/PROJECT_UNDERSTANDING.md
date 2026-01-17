@@ -53,7 +53,7 @@ The **AMCode Library** is a comprehensive .NET solution containing multiple reus
 7. **AMCode.Exports** (`exportslibrary/AMCode.Exports/`)
    - Target Framework: .NET 9.0
    - Purpose: Export functionality (Excel, CSV)
-   - Dependencies: AMCode.Common, AMCode.Columns, AMCode.Storage, AMCode.Xlsx
+   - Dependencies: AMCode.Common, AMCode.Columns, AMCode.Storage, AMCode.Documents.Xlsx
    - Test Projects: `AMCode.Exports.UnitTests`, `AMCode.Exports.IntegrationTests`, `AMCode.Exports.SharedTestLibrary`
 
 8. **AMCode.Documents** (`documentlibrary/AMCode.Documents/`)

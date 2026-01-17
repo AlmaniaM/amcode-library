@@ -128,12 +128,12 @@ AMCode.sln
 
 ### Development Dependencies
 
-**AMCode.Xlsx** (Development/Mock Library)
+**AMCode.Documents.Xlsx** (Development/Mock Library)
     - **Status**: Temporary mock library for local development
-    - **Location**: `exportslibrary/temp-packages/AMCode.Xlsx.csproj`
+    - **Location**: `exportslibrary/temp-packages/AMCode.Documents.Xlsx.csproj`
     - **Purpose**: Provides interface stubs for Excel functionality during development
     - **Target**: .NET 8.0
-    - **Note**: This is a mock/temporary library containing only interface definitions. It's used by AMCode.Exports for local development and testing. The actual AMCode.Xlsx library may be external or in development.
+    - **Note**: This is a mock/temporary library containing only interface definitions. It's used by AMCode.Exports for local development and testing. The actual AMCode.Documents.Xlsx library may be external or in development.
     - **Used By**: AMCode.Exports
 
 ## Quick Start

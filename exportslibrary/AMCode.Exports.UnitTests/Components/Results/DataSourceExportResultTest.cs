@@ -5,7 +5,7 @@ using AMCode.Storage;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.Components.Results.DataSourceExportResultTests
+namespace AMCode.Exports.UnitTests.Components.Results.DataSourceExportResultTests
 {
     [TestFixture]
     public class DataSourceExportResultTest

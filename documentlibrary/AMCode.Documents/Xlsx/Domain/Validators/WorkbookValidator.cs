@@ -5,8 +5,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using AMCode.Documents.Common.Models;
 using AMCode.Documents.Xlsx.Domain.Interfaces;
-using AMCode.Xlsx;
-using IRange = AMCode.Xlsx.IRange;
+using AMCode.Documents.Xlsx;
+using IRange = AMCode.Documents.Xlsx.IRange;
 
 namespace AMCode.Documents.Xlsx.Domain.Validators
 {
@@ -139,7 +139,7 @@ namespace AMCode.Documents.Xlsx.Domain.Validators
             }
 
             // Note: Content and Formatting properties are not available on the existing IWorksheet interface
-            // These validations are removed to work with the existing AMCode.Xlsx interfaces
+            // These validations are removed to work with the existing AMCode.Documents.Xlsx interfaces
 
             var isValid = results.All(r => r.IsValid);
             var message = isValid ? "Worksheet validation passed" : "Worksheet validation failed";

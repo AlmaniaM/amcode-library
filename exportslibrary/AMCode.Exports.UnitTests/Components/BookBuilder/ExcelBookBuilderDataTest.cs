@@ -8,11 +8,11 @@ using AMCode.Common.Extensions.Enumerables;
 using AMCode.Common.Extensions.ExpandoObjects;
 using AMCode.Exports.Book;
 using AMCode.Exports.BookBuilder;
-using DlExportsLibrary.UnitTests.BookBuilder.Mocks;
+using AMCode.Exports.UnitTests.BookBuilder.Mocks;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.BookBuilder.BookBuilderCommonTests
+namespace AMCode.Exports.UnitTests.BookBuilder.BookBuilderCommonTests
 {
     [TestFixture]
     public class BookBuilderCommonDataTest

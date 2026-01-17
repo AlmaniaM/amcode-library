@@ -5,11 +5,11 @@ using AMCode.Exports;
 using AMCode.Exports.DataSource;
 using AMCode.Exports.Results;
 using AMCode.Storage;
-using DlExportsLibrary.SharedTestLibrary.Extensions;
+using AMCode.Exports.SharedTestLibrary.Extensions;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.Results.DataSourceExportResultFactoryTests
+namespace AMCode.Exports.UnitTests.Results.DataSourceExportResultFactoryTests
 {
     [TestFixture]
     public class DataSourceExportResultFactoryTest

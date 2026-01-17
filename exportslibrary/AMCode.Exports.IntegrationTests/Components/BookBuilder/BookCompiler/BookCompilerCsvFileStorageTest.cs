@@ -14,11 +14,11 @@ using AMCode.Exports.BookBuilder;
 using AMCode.Exports.Extensions;
 using AMCode.Exports.Results;
 using AMCode.Storage;
-using DlExportsLibrary.SharedTestLibrary.Global;
+using AMCode.Exports.SharedTestLibrary.Global;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.IntegrationTests.BookBuilder.BookCompilerTests
+namespace AMCode.Exports.IntegrationTests.BookBuilder.BookCompilerTests
 {
     [TestFixture]
     public class BookCompilerCsvFileStorageTest

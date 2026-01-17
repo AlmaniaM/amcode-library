@@ -1,6 +1,6 @@
 using System;
 
-namespace AMCode.Xlsx
+namespace AMCode.Documents.Xlsx
 {
     /// <summary>
     /// Represents a cell in an Excel worksheet

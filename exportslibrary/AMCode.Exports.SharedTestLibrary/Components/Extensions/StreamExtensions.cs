@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace DlExportsLibrary.SharedTestLibrary.Extensions
+namespace AMCode.Exports.SharedTestLibrary.Extensions
 {
     /// <summary>
     /// Contains <see cref="Stream"/> method extensions.

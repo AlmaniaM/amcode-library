@@ -6,12 +6,12 @@ using AMCode.Common.Util;
 using AMCode.Exports.Book;
 using AMCode.Exports.BookBuilder;
 using AMCode.Exports.Common.Exceptions.Util;
-using AMCode.Xlsx;
-using AMCode.Xlsx.Drawing;
+using AMCode.Documents.Xlsx;
+using AMCode.Documents.Xlsx.Drawing;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.BookBuilder.SimpleColumnBasedStylerTests
+namespace AMCode.Exports.UnitTests.BookBuilder.SimpleColumnBasedStylerTests
 {
     [TestFixture]
     public class SimpleColumnBasedStylerTest

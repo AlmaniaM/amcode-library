@@ -202,14 +202,6 @@ namespace AMCode.Documents.Xlsx.Domain.Interfaces
         IWorksheetBuilder WithFormatting(string range, CellFormatting formatting);
 
         /// <summary>
-        /// Sets the formatting for a cell
-        /// </summary>
-        /// <param name="cellReference">The cell reference</param>
-        /// <param name="formatting">The formatting settings</param>
-        /// <returns>The worksheet builder for method chaining</returns>
-        IWorksheetBuilder WithFormatting(string cellReference, CellFormatting formatting);
-
-        /// <summary>
         /// Sets the column widths for the worksheet
         /// </summary>
         /// <param name="widths">The column widths dictionary (column index -> width)</param>

@@ -11,7 +11,7 @@ using AMCode.Exports.BookBuilder;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.IntegrationTests.BookBuilder.BookCompilerTests
+namespace AMCode.Exports.IntegrationTests.BookBuilder.BookCompilerTests
 {
     [TestFixture]
     public class BookCompilerCsvTest

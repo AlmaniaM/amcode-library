@@ -115,7 +115,7 @@ One-time setup fixture that initializes the testing environment, including licen
 - **AMCode.Columns** - Column management
 - **AMCode.Common** - Common utilities
 - **AMCode.Storage** - Storage abstractions
-- **AMCode.Xlsx** - Excel generation library
+- **AMCode.Documents.Xlsx** - Excel generation library
 
 ### External Dependencies
 

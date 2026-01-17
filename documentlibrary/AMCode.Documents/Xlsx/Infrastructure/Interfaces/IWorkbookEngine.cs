@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using AMCode.Documents.Common.Models;
 
-namespace AMCode.Xlsx.Infrastructure.Interfaces
+namespace AMCode.Documents.Xlsx.Infrastructure.Interfaces
 {
     /// <summary>
     /// Infrastructure interface for workbook engine operations

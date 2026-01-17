@@ -7,13 +7,13 @@ using AMCode.Exports.Book;
 using AMCode.Exports.BookBuilder;
 using AMCode.Exports.BookBuilder.Actions;
 using AMCode.Exports.Common.Exceptions.Util;
-using AMCode.Xlsx;
-using AMCode.Xlsx.Common;
-using AMCode.Xlsx.Drawing;
+using AMCode.Documents.Xlsx;
+using AMCode.Documents.Xlsx.Common;
+using AMCode.Documents.Xlsx.Drawing;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.BookBuilder.ActionTests
+namespace AMCode.Exports.UnitTests.BookBuilder.ActionTests
 {
     [TestFixture]
     public class ApplyColumnStylesActionTest

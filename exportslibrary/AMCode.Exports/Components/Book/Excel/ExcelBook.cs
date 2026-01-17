@@ -12,8 +12,8 @@ using AMCode.Exports.Adapters;
 using AMCode.Exports.Common;
 using AMCode.Exports.Common.Exceptions;
 using AMCode.Exports.Common.Exceptions.Util;
-using AMCode.Xlsx;
-using AMCode.Xlsx.Common;
+using AMCode.SyncfusionIo.Xlsx;
+using AMCode.SyncfusionIo.Xlsx.Common;
 
 namespace AMCode.Exports.Book
 {

@@ -17,7 +17,7 @@ namespace AMCode.Documents.Xlsx.Infrastructure.Adapters
         /// <summary>
         /// Create workbook logger with default configuration
         /// </summary>
-        public WorkbookLogger(string category = "AMCode.Xlsx.Workbook")
+        public WorkbookLogger(string category = "AMCode.Documents.Xlsx.Workbook")
         {
             var configuration = new DocumentLoggingConfiguration();
             var provider = new CompositeDocumentLoggerProvider(configuration);

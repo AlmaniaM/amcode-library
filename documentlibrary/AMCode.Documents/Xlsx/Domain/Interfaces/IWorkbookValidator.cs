@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using AMCode.Documents.Common.Models;
-using AMCode.Xlsx;
+using AMCode.Documents.Xlsx;
 
 namespace AMCode.Documents.Xlsx.Domain.Interfaces
 {
@@ -30,7 +30,7 @@ namespace AMCode.Documents.Xlsx.Domain.Interfaces
         /// </summary>
         /// <param name="range">The range to validate</param>
         /// <returns>Result containing validation results or error information</returns>
-        Result<ValidationResult> ValidateRange(AMCode.Xlsx.IRange range);
+        Result<ValidationResult> ValidateRange(AMCode.Documents.Xlsx.IRange range);
 
         /// <summary>
         /// Validates a cell reference string format

@@ -5,12 +5,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AMCode.Exports.Book;
-using AMCode.Xlsx;
+using AMCode.SyncfusionIo.Xlsx;
 
 namespace AMCode.Exports.ExportBuilder
 {
     /// <summary>
-    /// A simplified Excel export builder that directly uses AMCode.Xlsx
+    /// A simplified Excel export builder that directly uses AMCode.Documents.Xlsx
     /// </summary>
     public class SimpleExcelExportBuilder : IExportBuilder<IExcelDataColumn>
     {

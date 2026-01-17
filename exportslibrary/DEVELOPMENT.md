@@ -69,7 +69,7 @@ The project uses local package references for AMCode dependencies. Ensure you ha
 - AMCode.Common (2.1.0+)
 - AMCode.Columns (1.2.1+)
 - AMCode.Storage (1.1.2+)
-- AMCode.Xlsx (1.1.0+)
+- AMCode.Documents.Xlsx (1.1.0+)
 
 ## Architecture Overview
 

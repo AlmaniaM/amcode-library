@@ -5,7 +5,7 @@ using AMCode.Documents.Xlsx.Domain.Interfaces;
 using AMCode.Documents.Xlsx.Domain.Models;
 using AMCode.Documents.Xlsx.Infrastructure.Adapters;
 using AMCode.Documents.Xlsx.Infrastructure.Interfaces;
-using AMCode.Xlsx;
+using AMCode.Documents.Xlsx;
 
 namespace AMCode.Documents.Xlsx.Infrastructure.Factories
 {

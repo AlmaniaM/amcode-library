@@ -1,6 +1,6 @@
 using System;
 using DocumentFormat.OpenXml.Spreadsheet;
-using AMCode.Xlsx;
+using AMCode.Documents.Xlsx;
 
 namespace AMCode.Documents.Xlsx.Providers.OpenXml
 {
@@ -44,21 +44,26 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
                 if (string.IsNullOrEmpty(value))
                     return null;
 
-                switch (_cell.DataType?.Value)
+                if (_cell.DataType?.Value != null)
                 {
-                    case CellValues.Boolean:
+                    if (_cell.DataType.Value == CellValues.Boolean)
+                    {
                         return value == "1" || value.ToLower() == "true";
-                    case CellValues.Number:
+                    }
+                    else if (_cell.DataType.Value == CellValues.Number)
+                    {
                         if (double.TryParse(value, out var number))
                             return number;
                         return value;
-                    case CellValues.Date:
+                    }
+                    else if (_cell.DataType.Value == CellValues.Date)
+                    {
                         if (double.TryParse(value, out var oaDate))
                             return DateTime.FromOADate(oaDate);
                         return value;
-                    default:
-                        return value;
+                    }
                 }
+                return value;
             }
             set
             {
@@ -501,9 +506,11 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             try
             {
-                var target = _worksheet.GetCell(targetCell);
-                if (target == null)
+                var targetRawCell = _worksheet.GetCell(targetCell);
+                if (targetRawCell == null)
                     return false;
+
+                var target = new OpenXmlCell(targetRawCell, _worksheet);
 
                 target.Value = Value;
                 target.Formula = Formula;

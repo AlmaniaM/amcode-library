@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using AMCode.Documents.Common.Models;
 using AMCode.Documents.Xlsx.Domain.Interfaces;
+using AMCode.Documents.Xlsx.Domain.Objects;
 
 namespace AMCode.Documents.Xlsx.Domain.Interfaces
 {
@@ -429,41 +430,6 @@ namespace AMCode.Documents.Xlsx.Domain.Interfaces
         /// <param name="calculationSettings">The calculation settings</param>
         /// <returns>The workbook builder for method chaining</returns>
         IWorkbookBuilder WithCalculationSettings(WorkbookCalculationSettings calculationSettings);
-
-        /// <summary>
-        /// Sets the display options for the workbook
-        /// </summary>
-        /// <param name="displayOptions">The display options</param>
-        /// <returns>The workbook builder for method chaining</returns>
-        IWorkbookBuilder WithDisplayOptions(WorkbookDisplayOptions displayOptions);
-
-        /// <summary>
-        /// Sets the print settings for the workbook
-        /// </summary>
-        /// <param name="printSettings">The print settings</param>
-        /// <returns>The workbook builder for method chaining</returns>
-        IWorkbookBuilder WithPrintSettings(WorkbookPrintSettings printSettings);
-
-        /// <summary>
-        /// Sets the page setup for the workbook
-        /// </summary>
-        /// <param name="pageSetup">The page setup settings</param>
-        /// <returns>The workbook builder for method chaining</returns>
-        IWorkbookBuilder WithPageSetup(WorkbookPageSetup pageSetup);
-
-        /// <summary>
-        /// Sets the header and footer for the workbook
-        /// </summary>
-        /// <param name="headerFooter">The header and footer settings</param>
-        /// <returns>The workbook builder for method chaining</returns>
-        IWorkbookBuilder WithHeaderFooter(WorkbookHeaderFooter headerFooter);
-
-        /// <summary>
-        /// Sets the print options for the workbook
-        /// </summary>
-        /// <param name="printOptions">The print options</param>
-        /// <returns>The workbook builder for method chaining</returns>
-        IWorkbookBuilder WithPrintOptions(WorkbookPrintOptions printOptions);
 
         /// <summary>
         /// Sets the drawing objects for the workbook

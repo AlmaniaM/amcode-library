@@ -1,6 +1,6 @@
-﻿using AMCode.Xlsx;
+﻿using AMCode.Documents.Xlsx;
 
-namespace DlExportsLibrary.UnitTests.Global
+namespace AMCode.Exports.UnitTests.Global
 {
     public class ExcelTestResources
     {

@@ -1,6 +1,6 @@
 ﻿using AMCode.Exports.Book;
 
-namespace DlExportsLibrary.UnitTests.BookBuilder.Mocks
+namespace AMCode.Exports.UnitTests.BookBuilder.Mocks
 {
     public class TestDataColumn : IBookDataColumn
     {

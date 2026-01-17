@@ -4,7 +4,7 @@ using AMCode.Exports.DataSource;
 using AMCode.Storage.Local;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.DataSources.FileStreamDataSourceFactoryTests
+namespace AMCode.Exports.UnitTests.DataSources.FileStreamDataSourceFactoryTests
 {
     [TestFixture]
     public class FileStreamDataSourceFactoryTest

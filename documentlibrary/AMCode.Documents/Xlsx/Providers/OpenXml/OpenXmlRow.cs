@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Spreadsheet;
-using AMCode.Xlsx;
+using AMCode.Documents.Xlsx;
 
 namespace AMCode.Documents.Xlsx.Providers.OpenXml
 {
@@ -235,7 +236,7 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             try
             {
-                var targetRow = _worksheet.GetOrCreateRow(targetRowIndex);
+                var targetRow = _worksheet.GetOrCreateRow((uint)targetRowIndex);
                 if (targetRow == null)
                     return false;
 
@@ -415,6 +416,45 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
                 result = result * 26 + (c - 'A' + 1);
             }
             return result;
+        }
+
+        // Stub implementations for interface members
+        public string FontName { get; set; }
+        public double FontSize { get; set; }
+        public bool IsBold { get; set; }
+        public bool IsItalic { get; set; }
+        public bool IsUnderlined { get; set; }
+        public string FontColor { get; set; }
+        public string HorizontalAlignment { get; set; }
+        public string VerticalAlignment { get; set; }
+        public string BorderStyle { get; set; }
+        public string BorderColor { get; set; }
+        public string BackgroundColor { get; set; }
+        public bool IsLocked { get; set; }
+
+        public IRange GetRange(int startColumn, int endColumn)
+        {
+            throw new NotImplementedException("GetRange for row is not yet implemented");
+        }
+
+        public IRange GetRange(string startColumn, string endColumn)
+        {
+            throw new NotImplementedException("GetRange for row is not yet implemented");
+        }
+
+        public IRow InsertAbove()
+        {
+            throw new NotImplementedException("InsertAbove is not yet implemented");
+        }
+
+        public IRow InsertBelow()
+        {
+            throw new NotImplementedException("InsertBelow is not yet implemented");
+        }
+
+        public bool Delete()
+        {
+            throw new NotImplementedException("Delete row is not yet implemented");
         }
     }
 }

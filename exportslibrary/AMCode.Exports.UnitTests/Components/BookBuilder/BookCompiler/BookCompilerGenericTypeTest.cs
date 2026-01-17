@@ -12,11 +12,11 @@ using AMCode.Exports.BookBuilder;
 using AMCode.Exports.Results;
 using AMCode.Exports.Zip;
 using AMCode.Storage;
-using DlExportsLibrary.UnitTests.BookBuilder.Mocks;
+using AMCode.Exports.UnitTests.BookBuilder.Mocks;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.BookBuilder.BookCompilerTests
+namespace AMCode.Exports.UnitTests.BookBuilder.BookCompilerTests
 {
     [TestFixture]
     public class BookCompilerGenericTypeTest

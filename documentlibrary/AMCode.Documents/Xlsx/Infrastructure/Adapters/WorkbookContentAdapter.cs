@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using AMCode.Documents.Common.Models;
 using AMCode.Documents.Xlsx.Domain.Interfaces;
-using AMCode.Xlsx;
-using IWorksheet = AMCode.Xlsx.IWorksheet;
-using IWorkbook = AMCode.Xlsx.IWorkbook;
+using AMCode.Documents.Xlsx;
+using IWorksheet = AMCode.Documents.Xlsx.IWorksheet;
+using IWorkbook = AMCode.Documents.Xlsx.IWorkbook;
 
 namespace AMCode.Documents.Xlsx.Infrastructure.Adapters
 {

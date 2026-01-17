@@ -4,11 +4,11 @@ using AMCode.Exports.Book;
 using AMCode.Exports.BookBuilder;
 using AMCode.Exports.BookBuilder.Actions;
 using AMCode.Exports.Common.Exceptions.Util;
-using AMCode.Xlsx;
+using AMCode.Documents.Xlsx;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.BookBuilder.ActionTests
+namespace AMCode.Exports.UnitTests.BookBuilder.ActionTests
 {
     [TestFixture]
     public class ApplyBoldHeadersActionTest

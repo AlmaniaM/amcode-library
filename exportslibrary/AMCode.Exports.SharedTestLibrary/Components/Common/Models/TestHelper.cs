@@ -1,8 +1,8 @@
 ﻿using System.IO;
-using DlExportsLibrary.SharedTestLibrary.Global;
+using AMCode.Exports.SharedTestLibrary.Global;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.SharedTestLibrary.Common.Models
+namespace AMCode.Exports.SharedTestLibrary.Common.Models
 {
     public class TestHelper : TestHelperBase
     {

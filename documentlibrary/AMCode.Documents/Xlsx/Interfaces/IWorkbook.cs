@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using AMCode.Documents.Common.Models;
 
-namespace AMCode.Xlsx
+namespace AMCode.Documents.Xlsx
 {
     /// <summary>
     /// Represents an Excel workbook

@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Spreadsheet;
-using AMCode.Xlsx;
+using AMCode.Documents.Xlsx;
 
 namespace AMCode.Documents.Xlsx.Providers.OpenXml
 {
@@ -365,6 +366,40 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
                 result = result * 26 + (c - 'A' + 1);
             }
             return result;
+        }
+
+        // Stub implementations for interface members
+        public string FontName { get; set; }
+        public double FontSize { get; set; }
+        public bool IsBold { get; set; }
+        public bool IsItalic { get; set; }
+        public bool IsUnderlined { get; set; }
+        public string FontColor { get; set; }
+        public string HorizontalAlignment { get; set; }
+        public string VerticalAlignment { get; set; }
+        public string BorderStyle { get; set; }
+        public string BorderColor { get; set; }
+        public string BackgroundColor { get; set; }
+        public bool IsLocked { get; set; }
+
+        public IRange GetRange(int startRow, int endRow)
+        {
+            throw new NotImplementedException("GetRange for column is not yet implemented");
+        }
+
+        public IColumn InsertLeft()
+        {
+            throw new NotImplementedException("InsertLeft is not yet implemented");
+        }
+
+        public IColumn InsertRight()
+        {
+            throw new NotImplementedException("InsertRight is not yet implemented");
+        }
+
+        public bool Delete()
+        {
+            throw new NotImplementedException("Delete column is not yet implemented");
         }
     }
 }

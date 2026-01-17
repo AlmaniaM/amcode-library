@@ -1,8 +1,8 @@
 ﻿using System.IO;
-using DlExportsLibrary.SharedTestLibrary.Global;
+using AMCode.Exports.SharedTestLibrary.Global;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.IntegrationTests.BookBuilder.BookCompilerTests
+namespace AMCode.Exports.IntegrationTests.BookBuilder.BookCompilerTests
 {
     internal class TestHelper : TestHelperBase
     {

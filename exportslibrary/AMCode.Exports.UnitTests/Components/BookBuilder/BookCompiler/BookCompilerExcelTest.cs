@@ -13,7 +13,7 @@ using AMCode.Storage;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.BookBuilder.BookCompilerTests
+namespace AMCode.Exports.UnitTests.BookBuilder.BookCompilerTests
 {
     [TestFixture]
     public class BookCompilerExcelTest

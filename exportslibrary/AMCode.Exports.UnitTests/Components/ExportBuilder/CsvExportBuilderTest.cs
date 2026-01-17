@@ -8,7 +8,7 @@ using AMCode.Exports.ExportBuilder;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.ExportBuilder.CsvExportBuilderTests
+namespace AMCode.Exports.UnitTests.ExportBuilder.CsvExportBuilderTests
 {
     [TestFixture]
     public class CsvExportBuilderTest

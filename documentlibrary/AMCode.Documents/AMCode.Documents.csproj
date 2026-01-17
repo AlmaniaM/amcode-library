@@ -42,7 +42,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Remove="Xlsx/**/*" />
 		<Compile Remove="Xlsx/Tests.disabled/**/*" />
 		<Compile Remove="Xlsx.disabled/**/*" />
 	</ItemGroup>

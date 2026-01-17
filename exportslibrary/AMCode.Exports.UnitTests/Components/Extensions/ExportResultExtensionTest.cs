@@ -3,7 +3,7 @@ using AMCode.Exports;
 using AMCode.Exports.Extensions;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.Extensions.ExportResultExtensionTests
+namespace AMCode.Exports.UnitTests.Extensions.ExportResultExtensionTests
 {
     [TestFixture]
     public class ExportResultExtensionTest

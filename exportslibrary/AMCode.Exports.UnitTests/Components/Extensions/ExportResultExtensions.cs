@@ -2,7 +2,7 @@
 using AMCode.Exports.Extensions;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.Extensions.FileTypeExtensionTests
+namespace AMCode.Exports.UnitTests.Extensions.FileTypeExtensionTests
 {
     [TestFixture]
     public class FileTypeExtensionTest

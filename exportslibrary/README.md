@@ -225,7 +225,7 @@ This library is distributed as a NuGet package. Add it to your project:
 - AMCode.Common (2.1.0+)
 - AMCode.Columns (1.2.1+)
 - AMCode.Storage (1.1.2+)
-- AMCode.Xlsx (1.1.0+)
+- AMCode.Documents.Xlsx (1.1.0+)
 
 ## License
 

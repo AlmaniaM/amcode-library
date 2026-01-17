@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using AMCode.Exports.Common.Exceptions;
-using AMCode.Xlsx;
-using AMCode.Xlsx.Common;
+using AMCode.SyncfusionIo.Xlsx;
+using AMCode.SyncfusionIo.Xlsx.Common;
 
 namespace AMCode.Exports.Book
 {

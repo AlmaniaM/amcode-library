@@ -10,7 +10,7 @@ using AMCode.Exports.ExportBuilder;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.Components.ExportBuilder.BookBuilderFactoryTests
+namespace AMCode.Exports.UnitTests.Components.ExportBuilder.BookBuilderFactoryTests
 {
     [TestFixture]
     public class BookBuilderFactoryTest

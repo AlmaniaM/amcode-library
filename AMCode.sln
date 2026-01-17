@@ -25,9 +25,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AMCode.Storage", "storageli
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AMCode.Storage.UnitTests", "storagelibrary\AMCode.Storage.UnitTests\AMCode.Storage.UnitTests.csproj", "{86CB7D08-9B2C-CC44-E531-A6065B8A4056}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AMCode.Xlsx", "xlsxlibrary\AMCode.Xlsx\AMCode.Xlsx.csproj", "{6F471D91-F0CF-A719-283E-8BBCD152027E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AMCode.Documents", "documentlibrary\AMCode.Document\AMCode.Document.csproj", "{6F471D91-F0CF-A719-283E-8BBCD152027E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AMCode.Xlsx.UnitTests", "xlsxlibrary\AMCode.Xlsx.UnitTests\AMCode.Xlsx.UnitTests.csproj", "{455C862A-D8AA-FECE-66FB-5022F8DA6D88}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AMCode.Documents.UnitTests", "documentlibrary\AMCode.Document.UnitTests\AMCode.Document.UnitTests.csproj", "{455C862A-D8AA-FECE-66FB-5022F8DA6D88}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AMCode.Sql.Builder", "sqlbuilderlibrary\AMCode.Sql.Builder\AMCode.Sql.Builder.csproj", "{62612BD3-15F1-6C1A-D26A-824056502887}"
 EndProject

@@ -9,11 +9,11 @@ using AMCode.Exports.Book;
 using AMCode.Exports.BookBuilder;
 using AMCode.Exports.DataSource;
 using AMCode.Storage;
-using AMCode.Xlsx;
+using AMCode.Documents.Xlsx;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.BookBuilder.ExcelBookBuilderCustomDataSourceFactoryTests
+namespace AMCode.Exports.UnitTests.BookBuilder.ExcelBookBuilderCustomDataSourceFactoryTests
 {
     [TestFixture]
     public class ExcelBookBuilderCustomDataSourceFactoryTest

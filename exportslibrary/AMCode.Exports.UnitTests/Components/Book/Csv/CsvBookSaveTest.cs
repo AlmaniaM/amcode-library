@@ -3,7 +3,7 @@ using System.IO;
 using AMCode.Exports.Book;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.Book.CsvBookTests
+namespace AMCode.Exports.UnitTests.Book.CsvBookTests
 {
     [TestFixture]
     public class CsvBookSaveTest

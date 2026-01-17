@@ -10,7 +10,7 @@ using AMCode.Exports.DataSource;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.BookBuilder.ExcelBookBuilderTests
+namespace AMCode.Exports.UnitTests.BookBuilder.ExcelBookBuilderTests
 {
     [TestFixture]
     public class ExcelBookBuilderConstructorExceptionsTest

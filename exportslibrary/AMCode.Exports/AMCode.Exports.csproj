@@ -28,7 +28,7 @@
 		<ProjectReference Include="../../commonlibrary/AMCode.Common/AMCode.Common.csproj" />
 		<ProjectReference Include="../../columnslibrary/AMCode.Columns/AMCode.Columns.csproj" />
 		<ProjectReference Include="../../storagelibrary/AMCode.Storage/AMCode.Storage.csproj" />
-		<ProjectReference Include="../temp-packages/AMCode.Xlsx.csproj" />
+		<ProjectReference Include="../../documentlibrary/AMCode.Documents/AMCode.Documents.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -44,8 +44,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- Excel components are now available with AMCode.Xlsx reference -->
-		
 		<!-- Temporarily exclude DataSource and Results components that depend on missing AMCode.Storage.Local/Memory -->
 		<Compile Remove="Components/DataSources/FileStreamDataSourceFactory.cs" />
 		<Compile Remove="Components/DataSources/MemoryStreamDataSourceFactory.cs" />
@@ -53,7 +51,7 @@
 		<Compile Remove="Components/Results/DataSourceExportResult.cs" />
 		<Compile Remove="Components/Results/DataSourceExportResultFactory.cs" />
 		<Compile Remove="Components/Results/Models/IExportResultFactory.cs" />
-		
+
 		<!-- Exclude components that depend on DataSource/Results components -->
 		<Compile Remove="Components/ExportBuilder/ExcelExportBuilder.cs" />
 		<Compile Remove="Components/ExportBuilder/CsvExportBuilder.cs" />
@@ -65,9 +63,7 @@
 		<Compile Remove="Components/BookBuilder/Models/IBookBuilderFactory.cs" />
 		<Compile Remove="Components/BookBuilder/Models/IBookCompiler.cs" />
 		<Compile Remove="Components/BookBuilder/BookBuilderCommon.cs" />
-		
-		<!-- Recipe files are now enabled for Excel export functionality -->
-		
+
 		<!-- Temporarily exclude problematic files that reference missing components -->
 		<Compile Remove="Recipes/Extensions/RecipeExportServiceCollectionExtensions.cs" />
 		<Compile Remove="Recipes/Tests/RecipeExportBuilderTests.cs" />

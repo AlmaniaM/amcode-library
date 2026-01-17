@@ -7,11 +7,11 @@ using AMCode.Columns.Core;
 using AMCode.Common.Util;
 using AMCode.Exports.Book;
 using AMCode.Exports.BookBuilder;
-using AMCode.Xlsx;
+using AMCode.Documents.Xlsx;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.BookBuilder.ExcelBookBuilderTests
+namespace AMCode.Exports.UnitTests.BookBuilder.ExcelBookBuilderTests
 {
     [TestFixture]
     public class ExcelBookBuilderExceptionsTest

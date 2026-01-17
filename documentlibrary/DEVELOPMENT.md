@@ -179,7 +179,7 @@ Pdf/
 ### Naming Conventions
 
 - **Namespaces**: 
-  - Excel: `AMCode.Xlsx.ComponentName`
+  - Excel: `AMCode.Documents.Xlsx.ComponentName`
   - PDF: `AMCode.Pdf.ComponentName`
 - **Classes**: PascalCase (e.g., `ExcelApplication`, `PdfDocument`)
 - **Methods**: PascalCase (e.g., `SetText`, `AddText`)

@@ -300,7 +300,7 @@ Specialized tests for recipe export functionality:
 
 ### Library Dependencies (via AMCode.Exports)
 
-- **AMCode.Xlsx** - Excel file generation
+- **AMCode.Documents.Xlsx** - Excel file generation
 - **AMCode.Columns** - Column definitions
 - **AMCode.Common** - Common utilities
 - **AMCode.Storage** - Storage abstractions
@@ -341,10 +341,10 @@ dotnet test AMCode.Exports.UnitTests.csproj --collect:"XPlat Code Coverage"
 
 Tests are organized by namespace and component:
 
-- `DlExportsLibrary.UnitTests.Book.*` - Book implementation tests
-- `DlExportsLibrary.UnitTests.BookBuilder.*` - Book builder tests
-- `DlExportsLibrary.UnitTests.Extensions.*` - Extension tests
-- `DlExportsLibrary.UnitTests.Global.*` - Global test helpers
+- `AMCode.Exports.UnitTests.Book.*` - Book implementation tests
+- `AMCode.Exports.UnitTests.BookBuilder.*` - Book builder tests
+- `AMCode.Exports.UnitTests.Extensions.*` - Extension tests
+- `AMCode.Exports.UnitTests.Global.*` - Global test helpers
 
 ## Test Coverage
 

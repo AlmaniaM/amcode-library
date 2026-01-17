@@ -8,12 +8,12 @@ using AMCode.Exports;
 using AMCode.Exports.Book;
 using AMCode.Exports.BookBuilder;
 using AMCode.Exports.BookBuilder.Actions;
-using AMCode.Xlsx;
-using AMCode.Xlsx.Drawing;
+using AMCode.Documents.Xlsx;
+using AMCode.Documents.Xlsx.Drawing;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.IntegrationTests.BookBuilder.BookCompilerTests
+namespace AMCode.Exports.IntegrationTests.BookBuilder.BookCompilerTests
 {
     [TestFixture]
     public class BookCompilerExcelTest

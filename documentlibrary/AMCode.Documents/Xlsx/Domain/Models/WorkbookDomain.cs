@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using AMCode.Documents.Common.Models;
 using AMCode.Documents.Xlsx.Domain.Interfaces;
-using AMCode.Xlsx;
-using IWorksheet = AMCode.Xlsx.IWorksheet;
+using AMCode.Documents.Xlsx;
+using IWorksheet = AMCode.Documents.Xlsx.IWorksheet;
 
 namespace AMCode.Documents.Xlsx.Domain.Models
 {

@@ -3,11 +3,11 @@ using AMCode.Common.Util;
 using AMCode.Common.Xlsx;
 using AMCode.Exports.Book;
 using AMCode.Exports.Common.Exceptions.Util;
-using AMCode.Xlsx;
-using AMCode.Xlsx.Drawing;
+using AMCode.Documents.Xlsx;
+using AMCode.Documents.Xlsx.Drawing;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.Book.ExcelBookTests
+namespace AMCode.Exports.UnitTests.Book.ExcelBookTests
 {
     [TestFixture]
     public class ExcelBookRangeTest

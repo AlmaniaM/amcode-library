@@ -2,33 +2,31 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AMCode.Exports.Book;
-using AMCode.Xlsx;
+using AMCode.SyncfusionIo.Xlsx;
 
 namespace AMCode.Exports.Adapters
 {
     /// <summary>
-    /// Adapter class to bridge between AMCode.Exports and AMCode.Xlsx interfaces
+    /// Adapter class to bridge between AMCode.Exports and AMCode.SyncfusionIo.Xlsx interfaces
     /// </summary>
     public static class XlsxAdapter
     {
         /// <summary>
-        /// Convert AMCode.Exports IColumnStyleParam to AMCode.Xlsx IColumnStyleParam
-        /// Since AMCode.Exports IColumnStyleParam inherits from AMCode.Xlsx IStyleParam,
+        /// Convert AMCode.Exports IColumnStyleParam to AMCode.SyncfusionIo.Xlsx IStyleParam
+        /// Since AMCode.Exports IColumnStyleParam inherits from AMCode.SyncfusionIo.Xlsx IStyleParam,
         /// we can cast directly
         /// </summary>
         /// <param name="exportsStyleParam">The AMCode.Exports style parameter</param>
-        /// <returns>The AMCode.Xlsx style parameter</returns>
-        public static AMCode.Xlsx.IColumnStyleParam ConvertToXlsxStyleParam(AMCode.Exports.Book.IColumnStyleParam exportsStyleParam)
+        /// <returns>The AMCode.SyncfusionIo.Xlsx style parameter</returns>
+        public static AMCode.SyncfusionIo.Xlsx.IStyleParam ConvertToXlsxStyleParam(AMCode.Exports.Book.IColumnStyleParam exportsStyleParam)
         {
             if (exportsStyleParam == null)
                 return null;
 
-            // Since AMCode.Exports IColumnStyleParam inherits from AMCode.Xlsx IStyleParam,
-            // we can create a new ColumnStyleParam with the same values
-            return new AMCode.Xlsx.ColumnStyleParam
+            // Since AMCode.Exports IColumnStyleParam inherits from AMCode.SyncfusionIo.Xlsx IStyleParam,
+            // we can create a new StyleParam with the same values
+            return new AMCode.SyncfusionIo.Xlsx.StyleParam
             {
-                ColumnIndex = exportsStyleParam.ColumnIndex,
-                ColumnName = exportsStyleParam.ColumnName,
                 Bold = exportsStyleParam.Bold,
                 Italic = exportsStyleParam.Italic,
                 FontSize = exportsStyleParam.FontSize,
@@ -44,16 +42,16 @@ namespace AMCode.Exports.Adapters
         }
 
         /// <summary>
-        /// Convert AMCode.Exports IStyleParam to AMCode.Xlsx IStyleParam
+        /// Convert AMCode.Exports IStyleParam to AMCode.SyncfusionIo.Xlsx IStyleParam
         /// </summary>
         /// <param name="exportsStyleParam">The AMCode.Exports style parameter</param>
-        /// <returns>The AMCode.Xlsx style parameter</returns>
-        public static AMCode.Xlsx.IStyleParam ConvertToXlsxStyleParam(AMCode.Xlsx.IStyleParam exportsStyleParam)
+        /// <returns>The AMCode.SyncfusionIo.Xlsx style parameter</returns>
+        public static AMCode.SyncfusionIo.Xlsx.IStyleParam ConvertToXlsxStyleParam(AMCode.SyncfusionIo.Xlsx.IStyleParam exportsStyleParam)
         {
             if (exportsStyleParam == null)
                 return null;
 
-            return new AMCode.Xlsx.StyleParam
+            return new AMCode.SyncfusionIo.Xlsx.StyleParam
             {
                 Bold = exportsStyleParam.Bold,
                 Italic = exportsStyleParam.Italic,

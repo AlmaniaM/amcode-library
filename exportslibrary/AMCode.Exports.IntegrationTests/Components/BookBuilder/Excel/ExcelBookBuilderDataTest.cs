@@ -8,11 +8,11 @@ using AMCode.Common.Extensions.Enumerables;
 using AMCode.Common.Extensions.ExpandoObjects;
 using AMCode.Exports.Book;
 using AMCode.Exports.BookBuilder;
-using AMCode.Xlsx;
+using AMCode.Documents.Xlsx;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.IntegrationTests.BookBuilder.ExcelBookBuilderTests
+namespace AMCode.Exports.IntegrationTests.BookBuilder.ExcelBookBuilderTests
 {
     [TestFixture]
     public class ExcelBookBuilderDataTest

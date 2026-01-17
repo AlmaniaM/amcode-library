@@ -6,7 +6,7 @@ using AMCode.Exports.Book;
 using AMCode.Exports.BookBuilder;
 using AMCode.Storage;
 
-namespace DlExportsLibrary.UnitTests.BookBuilder.Mocks
+namespace AMCode.Exports.UnitTests.BookBuilder.Mocks
 {
     public class TestBookBuilder : IBookBuilder<TestDataColumn>
     {

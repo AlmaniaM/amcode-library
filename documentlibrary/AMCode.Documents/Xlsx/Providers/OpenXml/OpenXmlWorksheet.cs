@@ -4,7 +4,7 @@ using System.Linq;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using AMCode.Documents.Common.Models;
-using AMCode.Xlsx;
+using AMCode.Documents.Xlsx;
 
 namespace AMCode.Documents.Xlsx.Providers.OpenXml
 {
@@ -118,8 +118,8 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
                 if (!rows.Any())
                     return new OpenXmlRange("A1:A1", this);
 
-                var minRow = rows.Min(r => r.RowIndex?.Value ?? 1);
-                var maxRow = rows.Max(r => r.RowIndex?.Value ?? 1);
+                var minRow = (int)(rows.Min(r => r.RowIndex?.Value ?? 1));
+                var maxRow = (int)(rows.Max(r => r.RowIndex?.Value ?? 1));
                 var minColumn = 1;
                 var maxColumn = 1;
 
@@ -433,7 +433,7 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
 
             try
             {
-                var row = GetOrCreateRow(rowIndex);
+                var row = GetOrCreateRow((uint)rowIndex);
                 row.Height = height;
                 row.CustomHeight = true;
 
@@ -743,23 +743,6 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         }
 
         /// <summary>
-        /// Gets a cell by reference
-        /// </summary>
-        /// <param name="cellReference">The cell reference</param>
-        /// <returns>The cell or null if not found</returns>
-        private Cell GetCell(string cellReference)
-        {
-            var rowIndex = GetRowIndex(cellReference);
-            var columnIndex = GetColumnIndex(cellReference);
-            
-            var row = _sheetData.Elements<Row>().FirstOrDefault(r => r.RowIndex == rowIndex);
-            if (row == null)
-                return null;
-
-            return row.Elements<Cell>().FirstOrDefault(c => c.CellReference == cellReference);
-        }
-
-        /// <summary>
         /// Gets or creates a cell by reference
         /// </summary>
         /// <param name="cellReference">The cell reference</param>
@@ -768,7 +751,7 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
         {
             var rowIndex = GetRowIndex(cellReference);
             var row = GetOrCreateRow(rowIndex);
-            
+
             var cell = row.Elements<Cell>().FirstOrDefault(c => c.CellReference == cellReference);
             if (cell == null)
             {
@@ -777,22 +760,6 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
             }
 
             return cell;
-        }
-
-        /// <summary>
-        /// Gets or creates a row by index
-        /// </summary>
-        /// <param name="rowIndex">The row index</param>
-        /// <returns>The row</returns>
-        private Row GetOrCreateRow(uint rowIndex)
-        {
-            var row = _sheetData.Elements<Row>().FirstOrDefault(r => r.RowIndex == rowIndex);
-            if (row == null)
-            {
-                row = new Row { RowIndex = rowIndex };
-                _sheetData.Append(row);
-            }
-            return row;
         }
 
         /// <summary>
@@ -855,21 +822,26 @@ namespace AMCode.Documents.Xlsx.Providers.OpenXml
             if (string.IsNullOrEmpty(value))
                 return null;
 
-            switch (cell.DataType?.Value)
+            if (cell.DataType?.Value != null)
             {
-                case CellValues.Boolean:
+                if (cell.DataType.Value == CellValues.Boolean)
+                {
                     return value == "1" || value.ToLower() == "true";
-                case CellValues.Number:
+                }
+                else if (cell.DataType.Value == CellValues.Number)
+                {
                     if (double.TryParse(value, out var number))
                         return number;
                     return value;
-                case CellValues.Date:
+                }
+                else if (cell.DataType.Value == CellValues.Date)
+                {
                     if (double.TryParse(value, out var oaDate))
                         return DateTime.FromOADate(oaDate);
                     return value;
-                default:
-                    return value;
+                }
             }
+            return value;
         }
 
         /// <summary>

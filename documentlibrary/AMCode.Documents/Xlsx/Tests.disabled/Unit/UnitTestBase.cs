@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using AMCode.Documents.Common.Models;
 using AMCode.Documents.Xlsx.Domain.Interfaces;
 using AMCode.Documents.Xlsx.Infrastructure.Interfaces;
-using AMCode.Xlsx;
+using AMCode.Documents.Xlsx;
 using NUnit.Framework;
 
 namespace AMCode.Documents.Xlsx.Tests.Unit

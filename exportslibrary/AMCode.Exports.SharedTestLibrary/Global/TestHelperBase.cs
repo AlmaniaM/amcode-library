@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.SharedTestLibrary.Global
+namespace AMCode.Exports.SharedTestLibrary.Global
 {
     public abstract class TestHelperBase
     {

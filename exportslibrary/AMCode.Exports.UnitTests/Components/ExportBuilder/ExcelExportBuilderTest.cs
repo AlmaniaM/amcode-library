@@ -6,7 +6,7 @@ using AMCode.Exports.BookBuilder;
 using AMCode.Exports.ExportBuilder;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.ExportBuilder.ExcelExportBuilderTests
+namespace AMCode.Exports.UnitTests.ExportBuilder.ExcelExportBuilderTests
 {
     [TestFixture]
     public class ExcelExportBuilderTest

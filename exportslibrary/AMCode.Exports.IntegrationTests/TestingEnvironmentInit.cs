@@ -1,8 +1,8 @@
 ﻿using AMCode.Common.Util;
-using AMCode.Xlsx.Licensing;
+using AMCode.Documents.Xlsx.Licensing;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.IntegrationTests
+namespace AMCode.Exports.IntegrationTests
 {
     [SetUpFixture]
     public class TestingEnvironmentInit

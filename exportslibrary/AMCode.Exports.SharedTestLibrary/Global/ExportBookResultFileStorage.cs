@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using AMCode.Exports;
 using AMCode.Exports.Extensions;
 
-namespace DlExportsLibrary.SharedTestLibrary.Global
+namespace AMCode.Exports.SharedTestLibrary.Global
 {
     public class ExportBookResultFileStorage : IExportResult
     {

@@ -14,7 +14,7 @@ using AMCode.Exports.Common.Exceptions.Util;
 using Moq;
 using NUnit.Framework;
 
-namespace DlExportsLibrary.UnitTests.Book.CsvBookTests
+namespace AMCode.Exports.UnitTests.Book.CsvBookTests
 {
     [TestFixture]
     public class CsvBookAddDataTest

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace AMCode.Xlsx
+namespace AMCode.Documents.Xlsx
 {
     /// <summary>
     /// Represents a column in an Excel worksheet
