@@ -251,27 +251,44 @@ public class OllamaAIProvider : GenericAIProvider
             var jsonPreview = extractedJson.Length > 500 ? extractedJson.Substring(0, 500) + "..." : extractedJson;
             _logger.LogInformation("Extracted JSON preview: {Preview}", jsonPreview);
             
-            var recipe = JsonSerializer.Deserialize<ParsedRecipe>(extractedJson, _jsonOptions);
-            if (recipe == null)
+            ParsedRecipe[] recipes;
+            var trimmedJson = extractedJson.TrimStart();
+
+            // Try array deserialization first (for MaxRecipes > 1 responses)
+            if (trimmedJson.StartsWith("["))
             {
-                throw new InvalidOperationException("Failed to deserialize recipe from JSON response");
-            }
-            
-            // Log ingredient details for debugging (Information level so it shows up)
-            if (recipe.Ingredients != null && recipe.Ingredients.Count > 0)
-            {
-                _logger.LogInformation("Parsed {Count} ingredients from Ollama response", recipe.Ingredients.Count);
-                foreach (var ingredient in recipe.Ingredients.Take(3)) // Log first 3 for debugging
+                var parsedArray = JsonSerializer.Deserialize<ParsedRecipe[]>(extractedJson, _jsonOptions);
+                if (parsedArray == null || parsedArray.Length == 0)
                 {
-                    _logger.LogInformation("Ingredient - Name: '{Name}', Amount: '{Amount}', Unit: '{Unit}', Text: '{Text}'", 
+                    throw new InvalidOperationException("Failed to deserialize recipe array from JSON response");
+                }
+                recipes = parsedArray;
+            }
+            else
+            {
+                var recipe = JsonSerializer.Deserialize<ParsedRecipe>(extractedJson, _jsonOptions);
+                if (recipe == null)
+                {
+                    throw new InvalidOperationException("Failed to deserialize recipe from JSON response");
+                }
+                recipes = new[] { recipe };
+            }
+
+            // Log ingredient details for debugging (Information level so it shows up)
+            if (recipes[0].Ingredients != null && recipes[0].Ingredients.Count > 0)
+            {
+                _logger.LogInformation("Parsed {Count} ingredients from Ollama response", recipes[0].Ingredients.Count);
+                foreach (var ingredient in recipes[0].Ingredients.Take(3)) // Log first 3 for debugging
+                {
+                    _logger.LogInformation("Ingredient - Name: '{Name}', Amount: '{Amount}', Unit: '{Unit}', Text: '{Text}'",
                         ingredient.Name, ingredient.Amount, ingredient.Unit, ingredient.Text ?? "(empty)");
                 }
             }
-            
+
             return new ParsedRecipeResult
             {
-                Recipes = new[] { recipe },
-                Confidence = recipe.Confidence,
+                Recipes = recipes,
+                Confidence = recipes[0].Confidence,
                 Source = providerName,
                 ProcessingTime = DateTime.UtcNow,
                 Cost = cost,

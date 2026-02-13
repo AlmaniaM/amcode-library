@@ -28,13 +28,10 @@ public class PromptBuilderService
             _logger.LogDebug("Building recipe parsing prompt for text length: {Length}", text.Length);
 
             var optionsText = options != null ? BuildOptionsText(options) : string.Empty;
+            var maxRecipes = options?.MaxRecipes ?? 1;
+            var useArrayFormat = maxRecipes > 1;
 
-            var prompt = $@"
-You are a recipe parser. Parse the following recipe text and return ONLY valid JSON. Do not include any explanations, code, or other text. Return ONLY the JSON object.
-
-Required JSON format:
-
-{{
+            var recipeObjectExample = @"{{
   ""title"": ""Recipe Title"",
   ""description"": ""Optional description"",
   ""ingredients"": [
@@ -44,11 +41,11 @@ Required JSON format:
       ""unit"": ""unit"",
       ""text"": ""full original ingredient line exactly as written"",
       ""preparation"": ""preparation from ingredient text (e.g., diced, chopped)"",
-      ""instructions"": ""preparation from directions (e.g., chopped from 'chop the onions' in directions)"",
+      ""directions"": ""preparation from directions (e.g., chopped from 'chop the onions' in directions)"",
       ""notes"": ""optional notes""
     }}
   ],
-  ""instructions"": [""step 1"", ""step 2""],
+  ""directions"": [""step 1"", ""step 2""],
   ""prepTimeMinutes"": 15,
   ""cookTimeMinutes"": 30,
   ""totalTimeMinutes"": 45,
@@ -58,43 +55,49 @@ Required JSON format:
   ""difficulty"": 3,
   ""confidence"": 0.95,
   ""notes"": ""Additional notes or tips""
-}}
+}}";
 
-**CRITICAL INGREDIENT EXAMPLES** - The ""text"" field MUST preserve the EXACT original line:
+            var jsonFormat = useArrayFormat
+                ? $"[{recipeObjectExample}]"
+                : recipeObjectExample;
 
-If recipe text says: ""1 cup Sugar""
-Then ingredient should be: {{""name"": ""Sugar"", ""amount"": ""1"", ""unit"": ""cup"", ""text"": ""1 cup Sugar""}}
+            var multiRecipeInstruction = useArrayFormat
+                ? $@"
+- Extract ALL recipes found in the text (up to {maxRecipes})
+- Return a JSON array of recipe objects. If only one recipe is found, return an array with one element."
+                : "";
 
-If recipe text says: ""2 tablespoons olive oil""
-Then ingredient should be: {{""name"": ""olive oil"", ""amount"": ""2"", ""unit"": ""tablespoons"", ""text"": ""2 tablespoons olive oil""}}
+            var returnInstruction = useArrayFormat
+                ? "Return ONLY the JSON array:"
+                : "Return ONLY the JSON object:";
 
-If recipe text says: ""Salt, to taste""
-Then ingredient should be: {{""name"": ""Salt"", ""amount"": """", ""unit"": """", ""text"": ""Salt, to taste""}}
+            var prompt = $@"
+You are a recipe parser. Parse the following recipe text and return ONLY valid JSON. Do not include any explanations, code, or other text.
 
-If recipe text says: ""1/2 cup of flour""
-Then ingredient should be: {{""name"": ""flour"", ""amount"": ""1/2"", ""unit"": ""cup"", ""text"": ""1/2 cup of flour""}}
+Required JSON format:
 
-**The ""text"" field MUST contain the COMPLETE, ORIGINAL ingredient line exactly as written in the recipe.**
+{jsonFormat}
 
 Rules:
 - Return ONLY valid JSON - no code, no explanations, no markdown blocks
-- **CRITICAL**: The ""text"" field for each ingredient MUST be the complete original line from the recipe text
-- Extract ingredients as structured objects with name, amount, unit, and full text (preserve original)
-- Extract instructions as step-by-step strings - preserve the original instruction text
-- For each ingredient, extract ""preparation"" from ingredient text itself (e.g., ""diced"" from ""2 cups onions, diced"")
-- For each ingredient, extract ""instructions"" from recipe directions by analyzing how ingredients are mentioned (e.g., ""chopped"" from ""chop the onions"" in directions)
-- Convert times to minutes (e.g., ""30 minutes"" becomes 30)
+- Extract ingredients as structured objects with name, amount, unit, and full original text
+- Extract directions as step-by-step strings preserving original wording
+- When ingredients share measurements, create separate entries for each item
+- For each ingredient:
+  * Extract ""preparation"" from the ingredient text itself (e.g., ""diced"", ""chopped"")
+  * Extract ""directions"" field for preparation mentioned in recipe directions
+  * Keep the full ""text"" field with the complete original line as written
+- Convert time measurements to minutes when extracting prep/cook times
 - Estimate confidence based on text clarity (0.0 to 1.0)
-- If information is missing, use null or empty string
-- Be conservative with confidence scores
-- Extract category and tags when possible
-- Estimate difficulty on a 1-5 scale
+- Use empty string or null for missing information
+- Extract category and tags when available
+- Estimate difficulty on a 1-5 scale based on number of steps and complexity{multiRecipeInstruction}
 {optionsText}
 
 Recipe text:
 {text}
 
-Return ONLY the JSON object:";
+{returnInstruction}";
 
             return prompt.Trim();
         }
@@ -118,7 +121,7 @@ Return ONLY the JSON object:";
             _logger.LogDebug("Building simple recipe parsing prompt for text length: {Length}", text.Length);
 
             var prompt = $@"
-Parse this recipe and return JSON with title, ingredients (as array of strings), instructions (as array of strings), prepTimeMinutes, cookTimeMinutes, servings, and confidence (0.0-1.0):
+Parse this recipe and return JSON with title, ingredients (as array of strings), directions (as array of strings), prepTimeMinutes, cookTimeMinutes, servings, and confidence (0.0-1.0):
 
 {text}
 
@@ -155,7 +158,7 @@ Please extract:
 - Title
 - Description (if present)
 - Ingredients (with amounts, units, and names)
-- Instructions (step by step)
+- Directions (step by step)
 - Timing information (prep, cook, total time)
 - Servings
 - Category and tags
