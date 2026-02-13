@@ -1,3 +1,5 @@
+using AMCode.AI.Pipelines;
+
 namespace AMCode.AI.Configurations;
 
 /// <summary>
@@ -90,4 +92,10 @@ public class AIConfiguration
     /// Maximum number of fallback attempts
     /// </summary>
     public int MaxFallbackAttempts { get; set; } = 2;
+
+    /// <summary>
+    /// Per-pipeline configuration. Keys are pipeline names (e.g., "RecipeExtraction", "GroceryList").
+    /// Bound from AI:Pipelines section in appsettings.json.
+    /// </summary>
+    public Dictionary<string, PipelineConfiguration> Pipelines { get; set; } = new();
 }

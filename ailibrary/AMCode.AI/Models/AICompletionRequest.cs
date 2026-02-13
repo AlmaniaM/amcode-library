@@ -124,7 +124,18 @@ public class AIChatRequest
     /// Custom metadata
     /// </summary>
     public Dictionary<string, object>? Metadata { get; set; }
-    
+
+    /// <summary>
+    /// Tools/functions available for the AI to call during this conversation.
+    /// When set, the AI may respond with tool calls instead of (or in addition to) text.
+    /// </summary>
+    public List<AIToolDefinition>? Tools { get; set; }
+
+    /// <summary>
+    /// Controls how the AI uses tools: "auto" (default), "none", or a specific tool name.
+    /// </summary>
+    public string? ToolChoice { get; set; }
+
     /// <summary>
     /// Gets all messages including the system instruction as the first message (if set).
     /// Use this method to get the complete message list for providers.
@@ -186,21 +197,39 @@ public class AIChatMessage
     /// Optional name identifier for the message author
     /// </summary>
     public string? Name { get; set; }
-    
+
+    /// <summary>
+    /// Tool calls made by the assistant (present on assistant messages when the AI invokes tools)
+    /// </summary>
+    public List<AIToolCall>? ToolCalls { get; set; }
+
+    /// <summary>
+    /// The tool call ID this message is a response to (present on tool result messages)
+    /// </summary>
+    public string? ToolCallId { get; set; }
+
     /// <summary>
     /// Creates a system message
     /// </summary>
     public static AIChatMessage System(string content) => new() { Role = AIChatRole.System, Content = content };
-    
+
     /// <summary>
     /// Creates a user message
     /// </summary>
     public static AIChatMessage User(string content) => new() { Role = AIChatRole.User, Content = content };
-    
+
     /// <summary>
     /// Creates an assistant message
     /// </summary>
     public static AIChatMessage Assistant(string content) => new() { Role = AIChatRole.Assistant, Content = content };
+
+    /// <summary>
+    /// Creates a tool result message to return tool output to the AI
+    /// </summary>
+    /// <param name="toolCallId">The ID of the tool call this result corresponds to</param>
+    /// <param name="result">The tool's output as a string</param>
+    public static AIChatMessage ToolResult(string toolCallId, string result)
+        => new() { Role = AIChatRole.Tool, Content = result, ToolCallId = toolCallId };
 }
 
 /// <summary>

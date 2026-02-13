@@ -1,6 +1,7 @@
 using AMCode.AI.Configurations;
 using AMCode.AI.Enums;
 using AMCode.AI.Factories;
+using AMCode.AI.Pipelines;
 using AMCode.AI.Providers;
 using AMCode.AI.Services;
 using Microsoft.Extensions.Configuration;
@@ -36,6 +37,7 @@ public static class AIServiceCollectionExtensions
         services.Configure<HuggingFaceConfiguration>(configuration.GetSection("AI:HuggingFace"));
         services.Configure<AzureOpenAIConfiguration>("AzureOpenAIGPT5Nano", configuration.GetSection("AI:AzureOpenAIGPT5Nano"));
         services.Configure<PerplexityConfiguration>(configuration.GetSection("AI:Perplexity"));
+        services.Configure<GroqCloudConfiguration>(configuration.GetSection("AI:GroqCloud"));
 
         // Register HTTP clients
         services.AddHttpClient<OpenAIGPTProvider>();
@@ -48,6 +50,7 @@ public static class AIServiceCollectionExtensions
         services.AddHttpClient<AzureOpenAIProvider>();
         services.AddHttpClient<AzureOpenAISdkProvider>();
         services.AddHttpClient<PerplexityProvider>();
+        services.AddHttpClient<GroqCloudProvider>();
 
         // Register providers
         services.AddSingleton<IAIProvider>(provider =>
@@ -99,6 +102,7 @@ public static class AIServiceCollectionExtensions
         services.AddSingleton<IAIProvider, AzureOpenAIProvider>();
         services.AddSingleton<IAIProvider, PerplexityProvider>();
         services.AddSingleton<IAIProvider, AzureComputerVisionProvider>();
+        services.AddSingleton<IAIProvider, GroqCloudProvider>();
 
         // Register services
         services.AddSingleton<PromptBuilderService>();
@@ -134,6 +138,39 @@ public static class AIServiceCollectionExtensions
     {
         services.AddHttpClient<T>();
         services.AddSingleton<IAIProvider, T>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Register an AI pipeline with its configuration from appsettings.json.
+    /// Binds config from AI:Pipelines:{pipelineName} section.
+    /// </summary>
+    /// <typeparam name="TPipeline">The pipeline implementation type</typeparam>
+    /// <typeparam name="TInput">The pipeline input type</typeparam>
+    /// <typeparam name="TOutput">The pipeline output type</typeparam>
+    /// <param name="services">Service collection</param>
+    /// <param name="configuration">Configuration</param>
+    /// <param name="pipelineName">Pipeline name matching the config section key</param>
+    /// <returns>Service collection</returns>
+    public static IServiceCollection AddAIPipeline<TPipeline, TInput, TOutput>(
+        this IServiceCollection services, IConfiguration configuration, string pipelineName)
+        where TPipeline : class, IAIPipeline<TInput, TOutput>
+    {
+        var config = configuration.GetSection($"AI:Pipelines:{pipelineName}")
+            .Get<PipelineConfiguration>() ?? new PipelineConfiguration();
+
+        // Register the pipeline config as a named instance using a keyed approach
+        // Each pipeline gets its own PipelineConfiguration resolved by the pipeline itself
+        services.AddSingleton(serviceProvider =>
+        {
+            // Re-read from configuration at resolution time for hot-reload support
+            var currentConfig = serviceProvider.GetRequiredService<IConfiguration>();
+            return currentConfig.GetSection($"AI:Pipelines:{pipelineName}")
+                .Get<PipelineConfiguration>() ?? new PipelineConfiguration();
+        });
+
+        services.AddScoped<IAIPipeline<TInput, TOutput>, TPipeline>();
 
         return services;
     }
@@ -243,7 +280,8 @@ public static class AIServiceCollectionExtensions
             "SmartSelectionStrategy",
             "SelectedProvider",
             "EnableFallbackProviders",
-            "MaxFallbackAttempts"
+            "MaxFallbackAttempts",
+            "Pipelines"
         };
 
         // Use a simple logging approach - we can't get logger from service provider yet
@@ -344,7 +382,8 @@ public static class AIServiceCollectionExtensions
             "HuggingFace",
             "AzureOpenAIGPT5Nano",
             "Perplexity",
-            "AzureComputerVision"
+            "AzureComputerVision",
+            "GroqCloud"
         };
 
         return staticSections.Contains(sectionName);
@@ -368,7 +407,8 @@ public static class AIServiceCollectionExtensions
             { typeof(LMStudioAIProvider), typeof(LMStudioConfiguration) },
             { typeof(HuggingFaceAIProvider), typeof(HuggingFaceConfiguration) },
             { typeof(PerplexityProvider), typeof(PerplexityConfiguration) },
-            { typeof(AzureComputerVisionProvider), typeof(AzureComputerVisionConfiguration) }
+            { typeof(AzureComputerVisionProvider), typeof(AzureComputerVisionConfiguration) },
+            { typeof(GroqCloudProvider), typeof(GroqCloudConfiguration) }
         };
 
         if (providerConfigMap.TryGetValue(providerType, out var configType))

@@ -73,4 +73,13 @@ public interface IAIProviderFactory
     /// <param name="name">Provider name</param>
     /// <returns>True if registered</returns>
     bool IsProviderRegistered(string name);
+
+    /// <summary>
+    /// Create a provider by name with optional model override.
+    /// Used by pipelines to resolve providers from configuration.
+    /// </summary>
+    /// <param name="providerName">Provider name (e.g., "OpenAI", "Anthropic", "GroqCloud")</param>
+    /// <param name="modelOverride">Optional model to use instead of the provider's default</param>
+    /// <returns>Configured AI provider, or null if not found</returns>
+    IAIProvider? CreateProviderByName(string providerName, string? modelOverride = null);
 }

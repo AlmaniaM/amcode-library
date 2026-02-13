@@ -202,17 +202,39 @@ public class OpenAIGPTProvider : GenericAIProvider
             var allMessages = request.GetMessagesWithSystemInstruction();
 
             // Build messages array for OpenAI API
-            var messages = allMessages.Select(m => new
+            var messages = new List<object>();
+            foreach (var m in allMessages)
             {
-                role = m.Role switch
+                var role = m.Role switch
                 {
                     Models.AIChatRole.System => "system",
                     Models.AIChatRole.User => "user",
                     Models.AIChatRole.Assistant => "assistant",
+                    Models.AIChatRole.Tool => "tool",
                     _ => "user"
-                },
-                content = m.Content
-            }).ToArray();
+                };
+
+                if (m.Role == Models.AIChatRole.Tool && m.ToolCallId != null)
+                {
+                    // Tool result message
+                    messages.Add(new { role, content = m.Content, tool_call_id = m.ToolCallId });
+                }
+                else if (m.Role == Models.AIChatRole.Assistant && m.ToolCalls?.Count > 0)
+                {
+                    // Assistant message with tool calls
+                    var msgToolCalls = m.ToolCalls.Select(tc => new
+                    {
+                        id = tc.Id,
+                        type = "function",
+                        function = new { name = tc.ToolName, arguments = tc.ArgumentsJson }
+                    }).ToArray();
+                    messages.Add(new { role, content = m.Content, tool_calls = msgToolCalls });
+                }
+                else
+                {
+                    messages.Add(new { role, content = m.Content });
+                }
+            }
 
             var maxTokens = request.MaxTokens ?? _config.MaxTokens;
             var requestBodyDict = new Dictionary<string, object>
@@ -235,6 +257,27 @@ public class OpenAIGPTProvider : GenericAIProvider
             else
             {
                 requestBodyDict["max_tokens"] = maxTokens;
+            }
+
+            // Add tools if provided
+            if (request.Tools?.Count > 0)
+            {
+                var tools = request.Tools.Select(t => new
+                {
+                    type = "function",
+                    function = new
+                    {
+                        name = t.Name,
+                        description = t.Description,
+                        parameters = JsonSerializer.Deserialize<JsonElement>(t.ParametersJsonSchema, _jsonOptions)
+                    }
+                }).ToArray();
+                requestBodyDict["tools"] = tools;
+
+                if (!string.IsNullOrEmpty(request.ToolChoice))
+                {
+                    requestBodyDict["tool_choice"] = request.ToolChoice;
+                }
             }
 
             var requestBody = requestBodyDict;
@@ -262,7 +305,8 @@ public class OpenAIGPTProvider : GenericAIProvider
                 return Models.AIChatResult.Fail("Invalid response from OpenAI", ProviderName);
             }
 
-            var responseText = openAIResponse.Choices[0].Message.Content;
+            var responseMessage = openAIResponse.Choices[0].Message;
+            var responseText = responseMessage.Content ?? string.Empty;
             var usage = openAIResponse.Usage;
 
             var cost = CalculateCost(new ProviderUsage
@@ -271,12 +315,31 @@ public class OpenAIGPTProvider : GenericAIProvider
                 OutputTokens = usage.CompletionTokens
             });
 
+            // Map tool calls from OpenAI response
+            List<Models.AIToolCall>? toolCalls = null;
+            if (responseMessage.ToolCalls?.Length > 0)
+            {
+                toolCalls = responseMessage.ToolCalls.Select(tc => new Models.AIToolCall
+                {
+                    Id = tc.Id,
+                    ToolName = tc.Function.Name,
+                    ArgumentsJson = tc.Function.Arguments
+                }).ToList();
+            }
+
+            var resultMessage = Models.AIChatMessage.Assistant(responseText);
+            if (toolCalls != null)
+            {
+                resultMessage.ToolCalls = toolCalls;
+            }
+
             return new Models.AIChatResult
             {
-                Message = Models.AIChatMessage.Assistant(responseText),
+                Message = resultMessage,
                 Success = true,
                 Provider = ProviderName,
                 FinishReason = openAIResponse.Choices[0].FinishReason,
+                ToolCalls = toolCalls,
                 Usage = CreateUsageStats(usage.PromptTokens, usage.CompletionTokens, _config.CostPerInputToken, _config.CostPerOutputToken),
                 Duration = stopwatch.Elapsed,
                 Timestamp = DateTime.UtcNow
@@ -640,7 +703,27 @@ public class OpenAIChoice
 public class OpenAIMessage
 {
     public string Role { get; set; } = string.Empty;
-    public string Content { get; set; } = string.Empty;
+    public string? Content { get; set; }
+    public OpenAIToolCall[]? ToolCalls { get; set; }
+}
+
+/// <summary>
+/// OpenAI tool call in response
+/// </summary>
+public class OpenAIToolCall
+{
+    public string Id { get; set; } = string.Empty;
+    public string Type { get; set; } = "function";
+    public OpenAIFunctionCall Function { get; set; } = new();
+}
+
+/// <summary>
+/// OpenAI function call details
+/// </summary>
+public class OpenAIFunctionCall
+{
+    public string Name { get; set; } = string.Empty;
+    public string Arguments { get; set; } = "{}";
 }
 
 /// <summary>

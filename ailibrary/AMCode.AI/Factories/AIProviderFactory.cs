@@ -427,6 +427,32 @@ public class AIProviderFactory : IAIProviderFactory
         return _providers.ContainsKey(name);
     }
 
+    /// <summary>
+    /// Create a provider by name with optional model override.
+    /// Reuses the existing FindProviderByName lookup strategy.
+    /// </summary>
+    public IAIProvider? CreateProviderByName(string providerName, string? modelOverride = null)
+    {
+        if (string.IsNullOrWhiteSpace(providerName))
+        {
+            return null;
+        }
+
+        _logger.LogDebug("Creating provider by name '{ProviderName}' with model override '{ModelOverride}'",
+            providerName, modelOverride ?? "(none)");
+
+        // Use the existing multi-strategy lookup
+        var provider = FindProviderByName(providerName);
+
+        if (provider == null)
+        {
+            // Also try the AIProvider type mapping (e.g., "openai" → OpenAI GPT)
+            provider = FindProviderByAIProviderType(providerName, providerName);
+        }
+
+        return provider;
+    }
+
     private Type GetConfigurationType<T>() where T : GenericAIProvider
     {
         return GetConfigurationType(typeof(T));
