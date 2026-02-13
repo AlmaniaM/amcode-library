@@ -17,6 +17,7 @@ public static class OCRProviderRegistry
         public const string AWSTextract = "AWS Textract";
         public const string GoogleCloudVision = "Google Cloud Vision";
         public const string AnthropicClaudeOCR = "Anthropic Claude OCR";
+        public const string OpenAIGPT4oOCR = "OpenAI GPT-4o OCR";
     }
 
     /// <summary>
@@ -29,7 +30,8 @@ public static class OCRProviderRegistry
             { "azure-cognitive-services", typeof(AzureComputerVisionOCRService) },
             { "aws-textract", typeof(AWSTextractOCRService) },
             { "google-cloud-vision", typeof(GoogleCloudVisionOCRService) },
-            { "anthropic-ocr", typeof(AnthropicOCRService) }
+            { "anthropic-ocr", typeof(AnthropicOCRService) },
+            { "openai-ocr", typeof(OpenAIOCRService) }
         };
 
     /// <summary>
@@ -56,6 +58,12 @@ public static class OCRProviderRegistry
             { "anthropic-ocr", new[] { Names.AnthropicClaudeOCR, "Anthropic", "Claude", "AnthropicOCR" } },
             { "anthropic", new[] { Names.AnthropicClaudeOCR } },
             { "claude", new[] { Names.AnthropicClaudeOCR } },
-            { "anthropicocr", new[] { Names.AnthropicClaudeOCR } }
+            { "anthropicocr", new[] { Names.AnthropicClaudeOCR } },
+            { "openai-ocr", new[] { Names.OpenAIGPT4oOCR, "OpenAI", "GPT-4o", "GPT4o", "OpenAIOCR" } },
+            { "openai", new[] { Names.OpenAIGPT4oOCR } },
+            { "gpt-4o", new[] { Names.OpenAIGPT4oOCR } },
+            { "gpt4o", new[] { Names.OpenAIGPT4oOCR } },
+            { "openaivision", new[] { Names.OpenAIGPT4oOCR } },
+            { "openaigpt4oocr", new[] { Names.OpenAIGPT4oOCR } }
         };
 }

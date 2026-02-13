@@ -445,6 +445,170 @@ public class OpenAIGPTProvider : GenericAIProvider
         return modelsRequiringDefaultTemperature.Any(m =>
             model.Contains(m, StringComparison.OrdinalIgnoreCase));
     }
+
+    #region Vision/Image Analysis
+
+    /// <summary>
+    /// Analyze images using OpenAI's vision capabilities (GPT-4o, GPT-4o-mini).
+    /// Sends base64-encoded images via the Chat Completions API.
+    /// </summary>
+    public override async Task<AIVisionResult> AnalyzeImageAsync(AIVisionRequest request, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            if (_httpClient == null)
+            {
+                return AIVisionResult.Fail("OpenAI client not initialized - check API key configuration", ProviderName);
+            }
+
+            if ((request.ImageBase64 == null || !request.ImageBase64.Any()) &&
+                (request.ImageUrls == null || !request.ImageUrls.Any()))
+            {
+                return AIVisionResult.Fail("No images provided in request", ProviderName);
+            }
+
+            _logger.LogInformation("Analyzing image with OpenAI vision API (model: {Model})", _config.Model);
+
+            // Build content array with images and text prompt
+            var contentParts = new List<object>();
+
+            // Add base64 images
+            if (request.ImageBase64 != null)
+            {
+                foreach (var base64Image in request.ImageBase64)
+                {
+                    var imageBytes = Convert.FromBase64String(base64Image);
+                    var mediaType = DetectImageFormat(imageBytes);
+
+                    contentParts.Add(new
+                    {
+                        type = "image_url",
+                        image_url = new
+                        {
+                            url = $"data:{mediaType};base64,{base64Image}",
+                            detail = request.DetailLevel ?? "auto"
+                        }
+                    });
+                }
+            }
+
+            // Add URL images
+            if (request.ImageUrls != null)
+            {
+                foreach (var imageUrl in request.ImageUrls)
+                {
+                    contentParts.Add(new
+                    {
+                        type = "image_url",
+                        image_url = new
+                        {
+                            url = imageUrl,
+                            detail = request.DetailLevel ?? "auto"
+                        }
+                    });
+                }
+            }
+
+            // Add text prompt
+            contentParts.Add(new
+            {
+                type = "text",
+                text = request.Prompt
+            });
+
+            var messages = new List<object>
+            {
+                new { role = "user", content = contentParts }
+            };
+
+            var maxTokens = request.MaxTokens ?? _config.MaxTokens;
+            var requestBodyDict = new Dictionary<string, object>
+            {
+                { "model", _config.Model },
+                { "messages", messages }
+            };
+
+            if (!RequiresDefaultTemperature(_config.Model))
+            {
+                requestBodyDict["temperature"] = _config.Temperature;
+            }
+
+            if (RequiresMaxCompletionTokens(_config.Model))
+            {
+                requestBodyDict["max_completion_tokens"] = maxTokens;
+            }
+            else
+            {
+                requestBodyDict["max_tokens"] = maxTokens;
+            }
+
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{_config.BaseUrl}/chat/completions")
+            {
+                Content = new StringContent(JsonSerializer.Serialize(requestBodyDict, _jsonOptions), Encoding.UTF8, "application/json")
+            };
+            requestMessage.Headers.Add("Authorization", $"Bearer {_config.ApiKey}");
+
+            var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+            stopwatch.Stop();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return AIVisionResult.Fail($"API request failed: {response.StatusCode} - {errorContent}", ProviderName);
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var openAIResponse = JsonSerializer.Deserialize<OpenAIResponse>(content, _jsonOptions);
+
+            if (openAIResponse?.Choices == null || !openAIResponse.Choices.Any())
+            {
+                return AIVisionResult.Fail("Invalid response from OpenAI vision API", ProviderName);
+            }
+
+            var responseText = openAIResponse.Choices[0].Message.Content;
+            var usage = openAIResponse.Usage;
+
+            var usageStats = CreateUsageStats(usage.PromptTokens, usage.CompletionTokens, _config.CostPerInputToken, _config.CostPerOutputToken);
+
+            _logger.LogInformation("OpenAI vision analysis completed successfully. Tokens: {Tokens}", usage.TotalTokens);
+
+            var result = AIVisionResult.Ok(responseText, ProviderName, usageStats);
+            result.Duration = stopwatch.Elapsed;
+            result.FinishReason = openAIResponse.Choices[0].FinishReason;
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "OpenAI vision analysis failed");
+            return AIVisionResult.Fail($"Vision analysis failed: {ex.Message}", ProviderName);
+        }
+    }
+
+    /// <summary>
+    /// Detect image format from byte array using magic bytes
+    /// </summary>
+    private static string DetectImageFormat(byte[] imageBytes)
+    {
+        if (imageBytes.Length < 4)
+            return "image/png";
+
+        if (imageBytes[0] == 0xFF && imageBytes[1] == 0xD8 && imageBytes[2] == 0xFF)
+            return "image/jpeg";
+
+        if (imageBytes[0] == 0x89 && imageBytes[1] == 0x50 && imageBytes[2] == 0x4E && imageBytes[3] == 0x47)
+            return "image/png";
+
+        if (imageBytes[0] == 0x52 && imageBytes[1] == 0x49 && imageBytes[2] == 0x46 && imageBytes[3] == 0x46)
+            return "image/webp";
+
+        if (imageBytes[0] == 0x47 && imageBytes[1] == 0x49 && imageBytes[2] == 0x46)
+            return "image/gif";
+
+        return "image/png";
+    }
+
+    #endregion
 }
 
 /// <summary>

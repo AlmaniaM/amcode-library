@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace AMCode.AI.Models;
 
 /// <summary>
@@ -24,6 +26,23 @@ public class ParsedRecipe
     /// List of cooking directions
     /// </summary>
     public List<string> Directions { get; set; } = new();
+
+    /// <summary>
+    /// Alias for Directions to support AI providers that return "instructions" instead of "directions"
+    /// </summary>
+    [JsonPropertyName("instructions")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? Instructions
+    {
+        get => Directions.Count > 0 ? Directions : null;
+        set
+        {
+            if (value != null && value.Count > 0)
+            {
+                Directions = value;
+            }
+        }
+    }
 
     /// <summary>
     /// Preparation time in minutes

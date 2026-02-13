@@ -37,6 +37,7 @@ public static class OCRServiceCollectionExtensions
         services.Configure<GCPDocumentAIConfiguration>(configuration.GetSection("OCR:GCPDocumentAI"));
         services.Configure<PaddleOCRConfiguration>(configuration.GetSection("OCR:PaddleOCR"));
         services.Configure<AnthropicOCRConfiguration>(configuration.GetSection("OCR:Anthropic"));
+        services.Configure<OpenAIOCRConfiguration>(configuration.GetSection("OCR:OpenAI"));
 
         // Register HTTP clients
         services.AddHttpClient<AzureComputerVisionOCRService>();
@@ -46,6 +47,15 @@ public static class OCRServiceCollectionExtensions
         services.AddHttpClient<AnthropicOCRService>(client =>
         {
             var config = configuration.GetSection("OCR:Anthropic").Get<AnthropicOCRConfiguration>();
+            if (config != null && !string.IsNullOrEmpty(config.BaseUrl))
+            {
+                client.BaseAddress = new Uri(config.BaseUrl);
+                client.Timeout = config.Timeout;
+            }
+        });
+        services.AddHttpClient<OpenAIOCRService>(client =>
+        {
+            var config = configuration.GetSection("OCR:OpenAI").Get<OpenAIOCRConfiguration>();
             if (config != null && !string.IsNullOrEmpty(config.BaseUrl))
             {
                 client.BaseAddress = new Uri(config.BaseUrl);
@@ -135,6 +145,7 @@ public static class OCRServiceCollectionExtensions
         services.AddSingleton<IOCRProvider, GoogleCloudVisionOCRService>();
         services.AddSingleton<IOCRProvider, PaddleOCRProvider>();
         services.AddSingleton<IOCRProvider, AnthropicOCRService>();
+        services.AddSingleton<IOCRProvider, OpenAIOCRService>();
 
         // Register OCR provider factory
         services.AddSingleton<IOCRProviderFactory, OCRProviderFactory>();
@@ -386,12 +397,13 @@ public static class OCRServiceCollectionExtensions
                                         m.GetParameters().Length == 1 &&
                                         m.IsGenericMethod);
 
-                if (httpClientMethod != null && 
+                if (httpClientMethod != null &&
                     (providerType == typeof(PaddleOCRProvider) ||
                      providerType == typeof(AzureComputerVisionOCRService) ||
                      providerType == typeof(AWSTextractOCRService) ||
                      providerType == typeof(GoogleCloudVisionOCRService) ||
-                     providerType == typeof(AnthropicOCRService)))
+                     providerType == typeof(AnthropicOCRService) ||
+                     providerType == typeof(OpenAIOCRService)))
                 {
                     var genericHttpClientMethod = httpClientMethod.MakeGenericMethod(providerType);
                     genericHttpClientMethod.Invoke(null, new object[] { services });
@@ -428,7 +440,8 @@ public static class OCRServiceCollectionExtensions
             "AWSBedrock",
             "GCPDocumentAI",
             "PaddleOCR",
-            "Anthropic"
+            "Anthropic",
+            "OpenAI"
         };
 
         return staticSections.Contains(sectionName);
@@ -446,7 +459,8 @@ public static class OCRServiceCollectionExtensions
             { typeof(AzureComputerVisionOCRService), typeof(AzureOCRConfiguration) },
             { typeof(AWSTextractOCRService), typeof(AWSTextractConfiguration) },
             { typeof(GoogleCloudVisionOCRService), typeof(GoogleVisionConfiguration) },
-            { typeof(AnthropicOCRService), typeof(AnthropicOCRConfiguration) }
+            { typeof(AnthropicOCRService), typeof(AnthropicOCRConfiguration) },
+            { typeof(OpenAIOCRService), typeof(OpenAIOCRConfiguration) }
         };
 
         if (providerConfigMap.TryGetValue(providerType, out var configType))
@@ -671,6 +685,19 @@ public static class OCRServiceCollectionExtensions
                 }
                 // AnthropicOCRService: ILogger<T>, IHttpClientFactory, IOptions<TConfig>
                 else if (providerType == typeof(AnthropicOCRService) &&
+                         parameters.Length == 3 &&
+                         IsLoggerType(parameters[0].ParameterType) &&
+                         parameters[1].ParameterType == typeof(IHttpClientFactory) &&
+                         parameters[2].ParameterType.IsGenericType &&
+                         parameters[2].ParameterType.GetGenericTypeDefinition() == typeof(IOptions<>))
+                {
+                    var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+                    selectedConstructor = constructor;
+                    constructorParams = new object[] { loggerInstance, httpClientFactory, optionsWrapper };
+                    break;
+                }
+                // OpenAIOCRService: ILogger<T>, IHttpClientFactory, IOptions<TConfig>
+                else if (providerType == typeof(OpenAIOCRService) &&
                          parameters.Length == 3 &&
                          IsLoggerType(parameters[0].ParameterType) &&
                          parameters[1].ParameterType == typeof(IHttpClientFactory) &&

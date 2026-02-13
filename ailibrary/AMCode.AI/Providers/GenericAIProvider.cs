@@ -489,16 +489,34 @@ JSON response:";
         try
         {
             Debug.WriteLine($"Extracted LLM text for parsed recipe: {jsonResponse}");
-            var recipe = JsonSerializer.Deserialize<ParsedRecipe>(jsonResponse, _jsonOptions);
-            if (recipe == null)
+
+            ParsedRecipe[] recipes;
+            var trimmed = jsonResponse.TrimStart();
+
+            // Try array deserialization first (for MaxRecipes > 1 responses)
+            if (trimmed.StartsWith("["))
             {
-                throw new InvalidOperationException("Failed to deserialize recipe from JSON response");
+                var parsedArray = JsonSerializer.Deserialize<ParsedRecipe[]>(jsonResponse, _jsonOptions);
+                if (parsedArray == null || parsedArray.Length == 0)
+                {
+                    throw new InvalidOperationException("Failed to deserialize recipe array from JSON response");
+                }
+                recipes = parsedArray;
+            }
+            else
+            {
+                var recipe = JsonSerializer.Deserialize<ParsedRecipe>(jsonResponse, _jsonOptions);
+                if (recipe == null)
+                {
+                    throw new InvalidOperationException("Failed to deserialize recipe from JSON response");
+                }
+                recipes = new[] { recipe };
             }
 
             return new ParsedRecipeResult
             {
-                Recipes = new[] { recipe },
-                Confidence = recipe.Confidence,
+                Recipes = recipes,
+                Confidence = recipes[0].Confidence,
                 Source = providerName,
                 ProcessingTime = DateTime.UtcNow,
                 Cost = cost,
