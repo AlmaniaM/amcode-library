@@ -5,6 +5,7 @@ namespace AMCode.AI;
 /// <summary>
 /// Main recipe parser service interface for AI-powered recipe text parsing
 /// </summary>
+[Obsolete("Use IAIPipeline<TInput, TOutput> instead. Create a RecipeExtractionPipeline in your app layer.")]
 public interface IRecipeParserService
 {
     /// <summary>

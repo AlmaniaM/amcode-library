@@ -158,16 +158,17 @@ public interface IAIProvider
     
     #endregion
     
-    #region Recipe Parsing (Domain-Specific)
-    
+    #region Recipe Parsing (Domain-Specific — DEPRECATED)
+
     /// <summary>
     /// Parse recipe text using default options
     /// </summary>
     /// <param name="text">The text to parse</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Parsed recipe result</returns>
+    [Obsolete("Use IAIPipeline<TInput, TOutput> instead. Recipe parsing should be a pipeline in the app layer.")]
     Task<ParsedRecipeResult> ParseTextAsync(string text, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Parse text with custom options
     /// </summary>
@@ -175,15 +176,17 @@ public interface IAIProvider
     /// <param name="options">Parsing options and preferences</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Parsed recipe result</returns>
+    [Obsolete("Use IAIPipeline<TInput, TOutput> instead. Recipe parsing should be a pipeline in the app layer.")]
     Task<ParsedRecipeResult> ParseTextAsync(string text, RecipeParsingOptions options, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Get cost estimate for a recipe parsing request
     /// </summary>
     /// <param name="text">Text to be processed</param>
     /// <param name="options">Parsing options</param>
     /// <returns>Estimated cost</returns>
+    [Obsolete("Use PipelineConfiguration for cost tracking instead.")]
     Task<decimal> GetCostEstimateAsync(string text, RecipeParsingOptions options);
-    
+
     #endregion
 }

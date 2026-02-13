@@ -178,22 +178,32 @@ public class AIChatResult
     /// Finish reason
     /// </summary>
     public string? FinishReason { get; set; }
-    
+
+    /// <summary>
+    /// Tool calls requested by the AI (when the AI wants to invoke functions)
+    /// </summary>
+    public List<AIToolCall>? ToolCalls { get; set; }
+
+    /// <summary>
+    /// Whether the response contains tool calls that need to be executed
+    /// </summary>
+    public bool HasToolCalls => ToolCalls?.Count > 0;
+
     /// <summary>
     /// Usage statistics
     /// </summary>
     public AIUsageStats Usage { get; set; } = new();
-    
+
     /// <summary>
     /// Time taken
     /// </summary>
     public TimeSpan Duration { get; set; }
-    
+
     /// <summary>
     /// Timestamp
     /// </summary>
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-    
+
     /// <summary>
     /// Creates a successful result
     /// </summary>

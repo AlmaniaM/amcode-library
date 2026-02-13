@@ -23,6 +23,7 @@ public static class AIProviderRegistry
         public const string HuggingFace = "Hugging Face";
         public const string Perplexity = "Perplexity";
         public const string AzureComputerVision = "Azure Computer Vision";
+        public const string GroqCloud = "Groq Cloud";
     }
 
     /// <summary>
@@ -41,7 +42,9 @@ public static class AIProviderRegistry
             { "grok", typeof(GrokProvider) },
             { "huggingface", typeof(HuggingFaceAIProvider) },
             { "perplexity", typeof(PerplexityProvider) },
-            { "azure-computer-vision", typeof(AzureComputerVisionProvider) }
+            { "azure-computer-vision", typeof(AzureComputerVisionProvider) },
+            { "groqcloud", typeof(GroqCloudProvider) },
+            { "groq-cloud", typeof(GroqCloudProvider) }
         };
 
     /// <summary>
@@ -60,7 +63,9 @@ public static class AIProviderRegistry
             { "grok", new[] { Names.Grok, "X.AI Grok" } },
             { "huggingface", new[] { Names.HuggingFace, "HuggingFace" } },
             { "perplexity", new[] { Names.Perplexity, "Perplexity AI" } },
-            { "azure-computer-vision", new[] { Names.AzureComputerVision, "AzureComputerVision" } }
+            { "azure-computer-vision", new[] { Names.AzureComputerVision, "AzureComputerVision" } },
+            { "groqcloud", new[] { Names.GroqCloud, "GroqCloud", "Groq" } },
+            { "groq-cloud", new[] { Names.GroqCloud, "GroqCloud", "Groq" } }
         };
 }
 

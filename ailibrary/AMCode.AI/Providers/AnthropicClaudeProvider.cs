@@ -231,6 +231,38 @@ public class AnthropicClaudeProvider : GenericAIProvider
                         systemInstruction = msg.Content;
                     }
                 }
+                else if (msg.Role == Models.AIChatRole.Tool && msg.ToolCallId != null)
+                {
+                    // Anthropic expects tool results as user messages with tool_result content blocks
+                    messages.Add(new
+                    {
+                        role = "user",
+                        content = new object[]
+                        {
+                            new { type = "tool_result", tool_use_id = msg.ToolCallId, content = msg.Content }
+                        }
+                    });
+                }
+                else if (msg.Role == Models.AIChatRole.Assistant && msg.ToolCalls?.Count > 0)
+                {
+                    // Assistant message with tool use blocks
+                    var contentBlocks = new List<object>();
+                    if (!string.IsNullOrEmpty(msg.Content))
+                    {
+                        contentBlocks.Add(new { type = "text", text = msg.Content });
+                    }
+                    foreach (var tc in msg.ToolCalls)
+                    {
+                        contentBlocks.Add(new
+                        {
+                            type = "tool_use",
+                            id = tc.Id,
+                            name = tc.ToolName,
+                            input = JsonSerializer.Deserialize<JsonElement>(tc.ArgumentsJson, _jsonOptions)
+                        });
+                    }
+                    messages.Add(new { role = "assistant", content = contentBlocks });
+                }
                 else
                 {
                     messages.Add(new
@@ -259,6 +291,30 @@ public class AnthropicClaudeProvider : GenericAIProvider
                 requestBody["system"] = systemInstruction;
             }
 
+            // Add tools if provided
+            if (request.Tools?.Count > 0)
+            {
+                var tools = request.Tools.Select(t => new
+                {
+                    name = t.Name,
+                    description = t.Description,
+                    input_schema = JsonSerializer.Deserialize<JsonElement>(t.ParametersJsonSchema, _jsonOptions)
+                }).ToArray();
+                requestBody["tools"] = tools;
+
+                if (!string.IsNullOrEmpty(request.ToolChoice))
+                {
+                    // Map simple string choices to Anthropic format
+                    requestBody["tool_choice"] = request.ToolChoice switch
+                    {
+                        "auto" => new { type = "auto" } as object,
+                        "none" => new { type = "auto" } as object, // Anthropic doesn't have "none" - omit tools instead
+                        "any" => new { type = "any" } as object,
+                        _ => new { type = "tool", name = request.ToolChoice } as object
+                    };
+                }
+            }
+
             var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{_config.BaseUrl}/v1/messages")
             {
                 Content = new StringContent(JsonSerializer.Serialize(requestBody, _jsonOptions), Encoding.UTF8, "application/json")
@@ -283,7 +339,23 @@ public class AnthropicClaudeProvider : GenericAIProvider
                 return Models.AIChatResult.Fail("Invalid response from Anthropic", ProviderName);
             }
 
-            var responseText = anthropicResponse.Content[0].Text;
+            // Extract text from text blocks
+            var textBlocks = anthropicResponse.Content.Where(c => c.Type == "text").ToList();
+            var responseText = textBlocks.Count > 0 ? string.Join("", textBlocks.Select(t => t.Text)) : string.Empty;
+
+            // Extract tool use blocks
+            List<Models.AIToolCall>? toolCalls = null;
+            var toolUseBlocks = anthropicResponse.Content.Where(c => c.Type == "tool_use").ToList();
+            if (toolUseBlocks.Count > 0)
+            {
+                toolCalls = toolUseBlocks.Select(tc => new Models.AIToolCall
+                {
+                    Id = tc.Id ?? string.Empty,
+                    ToolName = tc.Name ?? string.Empty,
+                    ArgumentsJson = tc.Input?.GetRawText() ?? "{}"
+                }).ToList();
+            }
+
             var usage = anthropicResponse.Usage;
 
             var cost = CalculateCost(new ProviderUsage
@@ -292,12 +364,19 @@ public class AnthropicClaudeProvider : GenericAIProvider
                 OutputTokens = usage.OutputTokens
             });
 
+            var resultMessage = Models.AIChatMessage.Assistant(responseText);
+            if (toolCalls != null)
+            {
+                resultMessage.ToolCalls = toolCalls;
+            }
+
             return new Models.AIChatResult
             {
-                Message = Models.AIChatMessage.Assistant(responseText),
+                Message = resultMessage,
                 Success = true,
                 Provider = ProviderName,
-                FinishReason = "end_turn",
+                FinishReason = anthropicResponse.StopReason ?? "end_turn",
+                ToolCalls = toolCalls,
                 Usage = CreateUsageStats(usage.InputTokens, usage.OutputTokens, _config.CostPerInputToken, _config.CostPerOutputToken),
                 Duration = stopwatch.Elapsed,
                 Timestamp = DateTime.UtcNow
@@ -547,15 +626,20 @@ public class AnthropicResponse
     public string Role { get; set; } = string.Empty;
     public AnthropicContent[] Content { get; set; } = Array.Empty<AnthropicContent>();
     public AnthropicUsage Usage { get; set; } = new();
+    public string? StopReason { get; set; }
 }
 
 /// <summary>
-/// Anthropic content model
+/// Anthropic content block (can be "text" or "tool_use")
 /// </summary>
 public class AnthropicContent
 {
     public string Type { get; set; } = string.Empty;
-    public string Text { get; set; } = string.Empty;
+    public string? Text { get; set; }
+    // Tool use fields (present when Type == "tool_use")
+    public string? Id { get; set; }
+    public string? Name { get; set; }
+    public JsonElement? Input { get; set; }
 }
 
 /// <summary>

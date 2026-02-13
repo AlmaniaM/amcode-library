@@ -5,6 +5,7 @@ namespace AMCode.AI.Services;
 /// <summary>
 /// Interface for recipe validation service
 /// </summary>
+[Obsolete("Use pipeline-level validation instead. Add validation to your pipeline's ExecuteWithProviderAsync.")]
 public interface IRecipeValidationService
 {
     /// <summary>
