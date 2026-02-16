@@ -123,7 +123,7 @@ public class AIIntegrationTests
             .Build();
 
         // Act
-        var provider = factory.CreateProvider<OpenAIGPTProvider>("TestProvider", configuration);
+        var provider = factory.CreateCustomProvider("TestProvider", typeof(OpenAIGPTProvider), configuration);
 
         // Assert
         provider.Should().NotBeNull();

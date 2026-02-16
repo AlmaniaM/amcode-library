@@ -104,7 +104,7 @@ public class AIProviderFactoryTests
             .Returns(configSection.Object);
 
         // Act
-        var provider = _factory.CreateProvider<OpenAIGPTProvider>(providerName, _mockConfiguration.Object);
+        var provider = _factory.CreateCustomProvider(providerName, typeof(OpenAIGPTProvider), _mockConfiguration.Object);
 
         // Assert
         provider.Should().NotBeNull();
@@ -156,7 +156,7 @@ public class AIProviderFactoryTests
             .Returns(configSection.Object);
 
         // Act
-        var provider = _factory.CreateProvider<OpenAIGPTProvider>(providerName, _mockConfiguration.Object);
+        var provider = _factory.CreateCustomProvider(providerName, typeof(OpenAIGPTProvider), _mockConfiguration.Object);
 
         // Assert
         provider.Should().NotBeNull();
@@ -176,7 +176,7 @@ public class AIProviderFactoryTests
             .Returns(configSection.Object);
 
         // Act
-        var provider = _factory.CreateProvider<OpenAIGPTProvider>(providerName, _mockConfiguration.Object);
+        var provider = _factory.CreateCustomProvider(providerName, typeof(OpenAIGPTProvider), _mockConfiguration.Object);
 
         // Assert
         provider.Should().NotBeNull();
@@ -192,8 +192,8 @@ public class AIProviderFactoryTests
             .Throws(new InvalidOperationException("Service not found"));
 
         // Act & Assert
-        var action = () => _factory.CreateProvider<OpenAIGPTProvider>(providerName, _mockConfiguration.Object);
+        var action = () => _factory.CreateCustomProvider(providerName, typeof(OpenAIGPTProvider), _mockConfiguration.Object);
         action.Should().Throw<InvalidOperationException>()
-            .WithMessage("*Failed to create provider*");
+            .WithMessage("*Failed to create*");
     }
 }
