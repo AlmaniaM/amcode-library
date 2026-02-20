@@ -19,11 +19,15 @@ namespace AMCode.Exports.Recipes
     public class RecipeExportBuilder : IRecipeExportBuilder
     {
         private readonly SimpleExcelExportBuilder _excelBuilder;
+        private readonly IRecipeExcelBuilder _recipeExcelBuilder;
+        private readonly IRecipeCsvBuilder _recipeCsvBuilder;
         private readonly ILogger<RecipeExportBuilder> _logger;
-        
+
         public RecipeExportBuilder(ILogger<RecipeExportBuilder> logger)
         {
             _excelBuilder = new SimpleExcelExportBuilder();
+            _recipeExcelBuilder = new RecipeExcelBuilder();
+            _recipeCsvBuilder = new RecipeCsvBuilder();
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
         
@@ -44,7 +48,8 @@ namespace AMCode.Exports.Recipes
                 return options.Format.ToLower() switch
                 {
                     "excel" => await ExportToExcelAsync(recipes, options),
-                    _ => Result<Stream>.Failure($"Unsupported format: {options.Format}. Supported formats: Excel.")
+                    "csv" => await ExportToCsvAsync(recipes, options, RecipeColumnConfiguration.Default),
+                    _ => Result<Stream>.Failure($"Unsupported format: {options.Format}. Supported formats: Excel, CSV.")
                 };
             }
             catch (Exception ex)
@@ -53,7 +58,7 @@ namespace AMCode.Exports.Recipes
                 return Result<Stream>.Failure($"Export failed: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// Exports recipes with custom column configuration
         /// </summary>
@@ -62,19 +67,20 @@ namespace AMCode.Exports.Recipes
         /// <param name="columnConfig">Custom column configuration</param>
         /// <returns>Result containing the export stream</returns>
         public async Task<Result<Stream>> ExportRecipesAsync(
-            IEnumerable<Recipe> recipes, 
+            IEnumerable<Recipe> recipes,
             RecipeExportOptions options,
             RecipeColumnConfiguration columnConfig)
         {
             try
             {
-                _logger.LogInformation("Exporting {Count} recipes with custom columns to {Format}", 
+                _logger.LogInformation("Exporting {Count} recipes with custom columns to {Format}",
                     recipes.Count(), options.Format);
-                
+
                 return options.Format.ToLower() switch
                 {
                     "excel" => await ExportToExcelWithCustomColumnsAsync(recipes, options, columnConfig),
-                    _ => Result<Stream>.Failure($"Unsupported format: {options.Format}. Supported formats: Excel.")
+                    "csv" => await ExportToCsvAsync(recipes, options, columnConfig),
+                    _ => Result<Stream>.Failure($"Unsupported format: {options.Format}. Supported formats: Excel, CSV.")
                 };
             }
             catch (Exception ex)
@@ -110,7 +116,8 @@ namespace AMCode.Exports.Recipes
                 return options.Format.ToLower() switch
                 {
                     "excel" => await ExportShoppingListToExcelAsync(shoppingList, shoppingListOptions),
-                    _ => Result<Stream>.Failure($"Unsupported format: {options.Format}. Supported formats: Excel.")
+                    "csv" => await ExportShoppingListToCsvAsync(shoppingList, shoppingListOptions),
+                    _ => Result<Stream>.Failure($"Unsupported format: {options.Format}. Supported formats: Excel, CSV.")
                 };
             }
             catch (Exception ex)
@@ -120,7 +127,54 @@ namespace AMCode.Exports.Recipes
             }
         }
         
-        // CSV export functionality temporarily disabled - focusing on Excel export for now
+        // CSV export via RecipeCsvBuilder
+
+        private Task<Result<Stream>> ExportToCsvAsync(
+            IEnumerable<Recipe> recipes,
+            RecipeExportOptions options,
+            RecipeColumnConfiguration columnConfig)
+        {
+            try
+            {
+                var exportDataList = recipes.Select(RecipeExportData.FromRecipe).Where(r => r != null).ToList();
+                _recipeCsvBuilder.AddRecipes(exportDataList).WithColumns(columnConfig);
+                var stream = _recipeCsvBuilder.BuildToStream();
+                return Task.FromResult(Result<Stream>.Success(stream));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to export recipes to CSV");
+                return Task.FromResult(Result<Stream>.Failure($"CSV export failed: {ex.Message}"));
+            }
+        }
+
+        private Task<Result<Stream>> ExportShoppingListToCsvAsync(
+            IEnumerable<ShoppingListItem> shoppingList,
+            RecipeExportOptions options)
+        {
+            try
+            {
+                // Build shopping list CSV manually using RecipeCsvBuilder with ingredient-only data
+                var exportDataList = shoppingList.Select(item => new RecipeExportData
+                {
+                    Title = options.Title ?? "Shopping List",
+                    Ingredients = new List<Ingredient>
+                    {
+                        new Ingredient { Name = item.Name, Amount = item.Amount, Unit = item.Unit, Notes = item.Notes }
+                    }
+                }).ToList();
+
+                var csvBuilder = new RecipeCsvBuilder();
+                csvBuilder.AddRecipes(exportDataList).WithExpandedIngredients(true);
+                var stream = csvBuilder.BuildToStream();
+                return Task.FromResult(Result<Stream>.Success(stream));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to export shopping list to CSV");
+                return Task.FromResult(Result<Stream>.Failure($"Shopping list CSV export failed: {ex.Message}"));
+            }
+        }
 
         // Excel export methods now enabled with SimpleExcelExportBuilder
 

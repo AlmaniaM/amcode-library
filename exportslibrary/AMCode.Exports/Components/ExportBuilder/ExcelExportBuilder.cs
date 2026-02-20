@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -8,8 +8,8 @@ using AMCode.Exports.BookBuilder;
 using AMCode.Exports.BookBuilder.Actions;
 using AMCode.Exports.DataSource;
 using AMCode.Exports.Results;
-using AMCode.Storage;
-using AMCode.Documents.Xlsx;
+using AMCode.Exports.Storage;
+using AMCode.SyncfusionIo.Xlsx.Common;
 
 namespace AMCode.Exports.ExportBuilder
 {
@@ -21,7 +21,7 @@ namespace AMCode.Exports.ExportBuilder
         private readonly IBookCompiler bookCompiler;
 
         /// <summary>
-        /// Create an instance of the <see cref="CsvExportBuilder"/> class.
+        /// Create an instance of the <see cref="ExcelExportBuilder"/> class.
         /// </summary>
         /// <param name="builderConfig">Provide a <see cref="IExcelBookBuilderConfig"/> object to configure the export.</param>
         public ExcelExportBuilder(IExcelBookBuilderConfig builderConfig) : this(builderConfig, ExcelLimitValues.MaxRowCount) { }
