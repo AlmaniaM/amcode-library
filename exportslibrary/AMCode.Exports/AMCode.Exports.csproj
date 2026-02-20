@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net9.0</TargetFramework>
@@ -7,17 +7,17 @@
 		<NeutralLanguage>en</NeutralLanguage>
 		<IsPackable>true</IsPackable>
 		<PackageId>AMCode.Exports</PackageId>
-		<Version>1.2.2</Version>
+		<Version>1.3.0</Version>
 		<Authors>AMCode</Authors>
 		<Company>AMCode</Company>
 		<Product>AMCode Exports Library</Product>
-		<Description>AMCode Exports Library with recipe-specific export capabilities</Description>
+		<Description>AMCode Exports Library with recipe-specific export capabilities including multi-sheet Excel, CSV with proper escaping, and bulk export support</Description>
 		<Copyright>Copyright © AMCode 2024</Copyright>
 		<PackageTags>exports;excel;csv;recipes;data-export</PackageTags>
 		<PackageProjectUrl>https://github.com/AMCode/AMCode.Exports</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/AMCode/AMCode.Exports</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<PackageReleaseNotes>Added recipe-specific export features including RecipeExportBuilder and shopping list export functionality</PackageReleaseNotes>
+		<PackageReleaseNotes>v1.3.0: Enhanced recipe builders — multi-sheet Excel, configurable CSV, BulkRecipeExporter, custom column configuration. Fixed excluded components by removing AMCode.Storage.Local/Memory dependency.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -32,6 +32,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="DocumentFormat.OpenXml" Version="3.0.2" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
 		<PackageReference Include="Moq" Version="4.20.69" />
@@ -44,28 +46,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- Temporarily exclude DataSource and Results components that depend on missing AMCode.Storage.Local/Memory -->
-		<Compile Remove="Components/DataSources/FileStreamDataSourceFactory.cs" />
-		<Compile Remove="Components/DataSources/MemoryStreamDataSourceFactory.cs" />
-		<Compile Remove="Components/DataSources/IExportStreamDataSourceFactory.cs" />
-		<Compile Remove="Components/Results/DataSourceExportResult.cs" />
-		<Compile Remove="Components/Results/DataSourceExportResultFactory.cs" />
-		<Compile Remove="Components/Results/Models/IExportResultFactory.cs" />
-
-		<!-- Exclude components that depend on DataSource/Results components -->
-		<Compile Remove="Components/ExportBuilder/ExcelExportBuilder.cs" />
-		<Compile Remove="Components/ExportBuilder/CsvExportBuilder.cs" />
-		<Compile Remove="Components/ExportBuilder/BookBuilderFactory.cs" />
-		<Compile Remove="Components/BookBuilder/BookCompiler.cs" />
-		<Compile Remove="Components/BookBuilder/Csv/CsvBookBuilder.cs" />
-		<Compile Remove="Components/BookBuilder/Excel/ExcelBookBuilder.cs" />
-		<Compile Remove="Components/BookBuilder/Models/IBookBuilder.cs" />
-		<Compile Remove="Components/BookBuilder/Models/IBookBuilderFactory.cs" />
-		<Compile Remove="Components/BookBuilder/Models/IBookCompiler.cs" />
-		<Compile Remove="Components/BookBuilder/BookBuilderCommon.cs" />
-
-		<!-- Temporarily exclude problematic files that reference missing components -->
-		<Compile Remove="Recipes/Extensions/RecipeExportServiceCollectionExtensions.cs" />
+		<!-- Re-enabled: DataSource components now use AMCode.Exports.Storage (local implementations) instead of missing AMCode.Storage.Local/Memory -->
+		<!-- Re-enabled: Results components updated to use local storage abstractions -->
+		<!-- Re-enabled: BookBuilder and ExportBuilder components updated to use local storage abstractions -->
+		<!-- Re-enabled: RecipeExportServiceCollectionExtensions — fixed namespace reference -->
 		<Compile Remove="Recipes/Tests/RecipeExportBuilderTests.cs" />
 	</ItemGroup>
 
