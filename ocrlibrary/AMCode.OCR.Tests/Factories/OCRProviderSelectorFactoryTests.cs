@@ -40,10 +40,11 @@ public class OCRProviderSelectorFactoryTests
         _providers.Add(provider2.Object);
         _providers.Add(provider3.Object);
 
-        // Setup service provider
-        _mockServiceProvider.Setup(sp => sp.GetServices<IOCRProvider>())
+        // Setup service provider — GetServices<T>() calls GetService(typeof(IEnumerable<T>)) internally
+        _mockServiceProvider.Setup(sp => sp.GetService(typeof(IEnumerable<IOCRProvider>)))
             .Returns(_providers);
-        _mockServiceProvider.Setup(sp => sp.GetRequiredService<ILogger<SmartOCRProviderSelector>>())
+        // GetRequiredService<T>() calls GetService(typeof(T)) internally
+        _mockServiceProvider.Setup(sp => sp.GetService(typeof(ILogger<SmartOCRProviderSelector>)))
             .Returns(_mockSelectorLogger.Object);
 
         // Setup default configuration
@@ -125,7 +126,7 @@ public class OCRProviderSelectorFactoryTests
 
         // Assert
         selector.Should().NotBeNull();
-        _mockServiceProvider.Verify(sp => sp.GetServices<IOCRProvider>(), Times.Once);
+        _mockServiceProvider.Verify(sp => sp.GetService(typeof(IEnumerable<IOCRProvider>)), Times.Once);
     }
 
     [Test]
@@ -136,7 +137,7 @@ public class OCRProviderSelectorFactoryTests
 
         // Assert
         selector.Should().NotBeNull();
-        _mockServiceProvider.Verify(sp => sp.GetRequiredService<ILogger<SmartOCRProviderSelector>>(), Times.Once);
+        _mockServiceProvider.Verify(sp => sp.GetService(typeof(ILogger<SmartOCRProviderSelector>)), Times.Once);
     }
 
     [Test]
@@ -182,7 +183,7 @@ public class OCRProviderSelectorFactoryTests
     {
         // Arrange
         var configLogger = new Mock<ILogger<ConfigurationOCRProviderSelector>>();
-        _mockServiceProvider.Setup(sp => sp.GetRequiredService<ILogger<ConfigurationOCRProviderSelector>>())
+        _mockServiceProvider.Setup(sp => sp.GetService(typeof(ILogger<ConfigurationOCRProviderSelector>)))
             .Returns(configLogger.Object);
 
         var config = new OCRConfiguration
@@ -205,13 +206,13 @@ public class OCRProviderSelectorFactoryTests
     {
         // Arrange
         var configLogger = new Mock<ILogger<ConfigurationOCRProviderSelector>>();
-        _mockServiceProvider.Setup(sp => sp.GetRequiredService<ILogger<ConfigurationOCRProviderSelector>>())
+        _mockServiceProvider.Setup(sp => sp.GetService(typeof(ILogger<ConfigurationOCRProviderSelector>)))
             .Returns(configLogger.Object);
 
         var config = new OCRConfiguration
         {
             ProviderSelectionStrategy = OCRProviderSelectionStrategy.Configuration,
-            SelectedProvider = "Azure Computer Vision"
+            Provider = "Azure Computer Vision"
         };
         _mockOptions.Setup(o => o.Value).Returns(config);
 
@@ -220,7 +221,7 @@ public class OCRProviderSelectorFactoryTests
 
         // Assert
         selector.Should().NotBeNull();
-        _mockServiceProvider.Verify(sp => sp.GetRequiredService<ILogger<ConfigurationOCRProviderSelector>>(), Times.Once);
+        _mockServiceProvider.Verify(sp => sp.GetService(typeof(ILogger<ConfigurationOCRProviderSelector>)), Times.Once);
     }
 
     private Mock<IOCRProvider> CreateMockProvider(string name)

@@ -27,4 +27,10 @@
     <ProjectReference Include="..\AMCode.OCR\AMCode.OCR.csproj" />
   </ItemGroup>
 
+  <!-- Exclude Azure provider tests that rely on non-mockable SDK internals -->
+  <ItemGroup>
+    <Compile Remove="Providers\AzureComputerVisionOCRServiceTests.cs" />
+    <Compile Remove="Providers\SimpleAzureOCRServiceTests.cs" />
+  </ItemGroup>
+
 </Project>
